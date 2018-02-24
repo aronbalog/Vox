@@ -1,0 +1,48 @@
+{
+  "data":{
+    "id": "player123",
+    "type": "Player",
+    "attributes": {
+        "titles": ["hello", "world"]
+    },
+    "relationships": {
+      "items": {
+        "data": [
+          {
+            "id": "excalibur",
+            "type": "Weapon"
+          },
+          {
+            "id": "ardor",
+            "type": "Shield"
+          }
+        ]
+      }
+    }
+  },
+  "included": [
+    {
+      "id":"excalibur",
+      "type":"Weapon",
+      "attributes": {
+               "hint": "A hint"
+      },
+       "relationships": {
+               "shield": {
+                   "data": {
+                       "id":"ardor",
+                       "type":"Shield"
+                   }
+               }
+       }
+    },
+    {
+      "id":"ardor",
+      "type":"Shield",
+      "attributes": {
+               "name": "A name"
+      }
+    }
+  ]
+}
+

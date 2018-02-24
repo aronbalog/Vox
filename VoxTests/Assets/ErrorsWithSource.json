@@ -1,0 +1,17 @@
+{
+  "errors": [
+    {
+             "id":"1231123",
+             "source": {
+                "pointer":"/data/attributes/first-name",
+                "parameter":"asdasda"
+             },
+             "links": {},
+             "code": "422",
+             "status": "422",
+             "title":  "Invalid Attribute",
+             "detail": "First name must contain at least three characters.",
+             "meta": {}
+    }
+  ]
+}
