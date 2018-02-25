@@ -10,7 +10,7 @@ public class Context: NSObject {
         self.dictionary = dictionary
     }
     
-    let queue = DispatchQueue(label: "vox.contex.queue", attributes: .concurrent)
+    let queue = DispatchQueue(label: "vox.context.queue", attributes: .concurrent)
     
     @objc public static func registerClass(_ resourceClass: Resource.Type) {
         classes[resourceClass.resourceType] = resourceClass

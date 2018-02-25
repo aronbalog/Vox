@@ -1,6 +1,6 @@
 import Foundation
 
-public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceResultable {
+public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceResultable, QueryItemsCustomizable {
     public typealias DataSourceResourceSuccessfulBlock = SuccessCallbackType
     
     private var path: String
@@ -25,6 +25,12 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
         failureBlock = failure
         
         try execute()
+    }
+    
+    public func queryItems(_ queryItems: [URLQueryItem]) -> Self {
+        self.queryItems.append(contentsOf: queryItems)
+        
+        return self
     }
     
     func execute() throws {
@@ -65,6 +71,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
                 
                 do {
                     let document: Document<[ResourceType]> = try Deserializer.Collection().deserialize(data: data)
+                    document.client = self.client
                     success(document)
                 } catch let __error as JSONAPIError {
                     self.failureBlock?(__error)
@@ -92,15 +99,23 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
 }
 
 public class FetchRequest<ResourceType: Resource, SuccessCallbackType>: Request<ResourceType, SuccessCallbackType>, FetchConfigurable {
-    public var filter: FilterStrategy? {
+    public internal(set) var pagination: PaginationStrategy? {
         didSet {
-            self.filter?.filterURLQueryItems().forEach({ (queryItem) in
-                queryItems.append(queryItem)
-            })
+            guard let queryItems = self.pagination?.paginationURLQueryItems() else { return }
+            
+            self.queryItems.append(contentsOf: queryItems)
         }
     }
     
-    public var sort: [Sort] = [] {
+    public internal(set) var filter: FilterStrategy? {
+        didSet {
+            guard let queryItems = self.filter?.filterURLQueryItems() else { return }
+            
+            self.queryItems.append(contentsOf: queryItems)
+        }
+    }
+    
+    public internal(set) var sort: [Sort] = [] {
         didSet {
             let value = self.sort.map { element in
                 return element.value
@@ -110,7 +125,7 @@ public class FetchRequest<ResourceType: Resource, SuccessCallbackType>: Request<
         }
     }
     
-    public var fields: Fields? {
+    public internal(set) var fields: Fields? {
         didSet {
             var dictionary: [String: String] = [:]
             fields?.forEach({ (field) in
@@ -123,7 +138,7 @@ public class FetchRequest<ResourceType: Resource, SuccessCallbackType>: Request<
             queryItems.append(contentsOf: _queryItems)
         }
     }
-    public var include: [String] = [] {
+    public internal(set) var include: [String] = [] {
         didSet {
             let value = include.joined(separator: ",")
             let queryItem = URLQueryItem(name: "include", value: value)
@@ -154,5 +169,12 @@ public class FetchRequest<ResourceType: Resource, SuccessCallbackType>: Request<
         
         return self
         
+    }
+    
+    
+    public func paginate(_ pagination: PaginationStrategy) -> FetchRequest<ResourceType, SuccessCallbackType> {
+        self.pagination = pagination
+        
+        return self
     }
 }

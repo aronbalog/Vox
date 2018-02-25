@@ -1,5 +1,8 @@
 import Foundation
 
-public protocol FetchConfigurable: FetchFieldable, FetchIncludable, FetchSortable, FetchFilterable {
-    
-}
+public typealias FetchConfigurable = FetchFieldable &
+                                     FetchIncludable &
+                                     FetchSortable &
+                                     FetchFilterable &
+                                     FetchPageable
+

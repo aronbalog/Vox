@@ -1,0 +1,90 @@
+{
+    "data": [{
+        "id": "id2",
+        "type": "articles3",
+        "attributes": {
+            "title": "Title",
+            "description": "Desc",
+            "customObject": {
+                "value": "Hello"
+            },
+            "keywords": [
+                "key1", "key2"
+            ],
+            "customObject": {
+                "property": "value"
+            }
+        },
+        "meta": {
+            "hint": "Hint"
+        },
+        "relationships": {
+            "coauthors": {
+                "data": [
+                    {
+                        "id":"35126",
+                        "type": "persons3"
+                    },
+                    {
+                        "id":"35127",
+                        "type": "persons3"
+                    }
+                ]
+            },
+            "author": {
+                "data": {
+                    "id":"123123",
+                    "type": "persons3"
+                }
+            }
+        }
+    }],
+    "included": [
+        {
+             "id": "123123",
+             "type": "persons3",
+             "attributes": {
+                "name": "Aron"
+             },
+             "relationships": {
+                 "favoriteArticle": {
+                     "data": {
+                        "id":"id",
+                        "type":"articles3"
+                     }
+                 }
+             }
+        },
+        {
+             "id": "35126",
+             "type": "  ",
+             "attributes": {
+                "name": "Glupan"
+             },
+             "relationships": {
+                 "favoriteArticle": {
+                     "data": {
+                        "id":"id",
+                        "type":"articles3"
+                     }
+                 }
+             }
+        },
+        {
+             "id": "35127",
+             "type": "persons3",
+             "attributes": {
+                "name": "Debil"
+             },
+             "relationships": {
+                 "favoriteArticle": {
+                     "data": {
+                        "id":"id",
+                        "type":"articles3"
+                     }
+                 }
+             }
+        }
+    ]
+}
+

@@ -2,6 +2,9 @@
 
 Vox is a Swift JSONAPI standard implementation.
 
+[![Build Status](https://travis-ci.org/aronbalog/Vox.svg?branch=master)](https://travis-ci.org/aronbalog/Vox)
+[![codecov](https://codecov.io/gh/aronbalog/Vox/branch/master/graph/badge.svg)](https://codecov.io/gh/aronbalog/Vox)
+
 - 🎩 [The magic behind](#the-magic-behind)
 - 💻 [Installation](#motivation-)
 - 🚀 [Usage](#getting-started-)
@@ -13,12 +16,24 @@ Vox is a Swift JSONAPI standard implementation.
     - [Deserializing](#deserializing)
         - [Single resource](#single-resource)
         - [Resource collection](#resource-collection)
-    - [Network](#network)
+    - [Networking](#networking)
         - [Fetching single resource](#fetching-single-resource)
         - [Fetching resource collection](#fetching-resource-collection)
         - [Creating resource](#creating-resource)
         - [Updating resource](#updating-resource)
         - [Deleting resource](#deleting-resource)
+        - [Pagination](#pagination)
+            - [Pagination on initial request](#pagination-on-initial-request)
+                - [Custom pagination strategy](#custom-pagination-strategy)
+                - [Page-based pagination strategy](#page-based-pagination-strategy)
+                - [Offset-based pagination strategy](#offset-based-pagination-strategy)
+                - [Cursor-based pagination strategy](#cursor-based-pagination-strategy)
+            - [Appending next page to current document](#appending-next-page-to-current-document)
+            - [Fetching next document page](#fetching-next-document-page)
+            - [Fetching previous document page](#fetching-previous-document-page)
+            - [Fetching first document page](#fetching-first-document-page)
+            - [Fetching last document page](#fetching-last-document-page)
+            - [Reloading current document page](#reloading-current-document-page)
         - [Custom routing](#custom-routing)
 - ✅ [Tests](#tests)
 - [Contributing](#contributing)
@@ -26,7 +41,7 @@ Vox is a Swift JSONAPI standard implementation.
 
 ## The magic behind
 
-Vox combines Swift with Objective-C dynamism and C selectors. During serialization and deserialization JSON is not mapped to resource object(s). Instead, it uses [Marshalling](https://en.wikipedia.org/wiki/Marshalling_(computer_science)) and [Unmarshalling](https://en.wikipedia.org/wiki/Unmarshalling) techniques to deal with direct memory access and performance challenges. Proxy (surrogat) design pattern gives us an opportunity to manipulate JSON's value directly through class properties and vice versa.
+Vox combines Swift with Objective-C dynamism and C selectors. During serialization and deserialization JSON is not mapped to resource object(s). Instead, it uses [Marshalling](https://en.wikipedia.org/wiki/Marshalling_(computer_science)) and [Unmarshalling](https://en.wikipedia.org/wiki/Unmarshalling) techniques to deal with direct memory access and performance challenges. Proxy (surrogate) design pattern gives us an opportunity to manipulate JSON's value directly through class properties and vice versa.
 
 ```swift
 import Vox
@@ -51,7 +66,7 @@ Let's explain what's going on under the hood!
 
 Every attribute or relationship (`Resource` subclass property) must have `@objc dynamic` prefix to be able to do so.
 
-> Think about your `Resource` classes as strong typed interafaces to a JSON object.
+> Think about your `Resource` classes as strong typed interfaces to a JSON object.
 
 
 This opens up the possibility to easily handle the cases with:
@@ -300,16 +315,17 @@ Deserializer can also be declared without generic parameter but in that case the
 | `links`         | `Links`           | `Links` object, e.g. can contain pagination data
 | `included`      | `[[String: Any]]` | `included` array of dictionaries
 
-### Network
+### Networking
 
+You can use `<id>` and `<type>` annotations in path strings. If possible, they'll get replaced with adequate values.
 
 #### Fetching single resource
 
 ```swift
-let dataSource = DataSource<Person>(strategy: .path("persons/1"), client: client)
+let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>/<id>"), client: client)
 
 dataSource
-    .fetch(id:"1") // when using path strategy `id` will be ignored because there is custom path defined
+    .fetch(id:"1")
     .include([
         "favoriteArticle"
     ])
@@ -330,7 +346,7 @@ dataSource
 #### Fetching resource collection
 
 ```swift
-let dataSource = DataSource<Person>(strategy: .path("persons"), client: client)
+let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>"), client: client)
 
 Person.dataSource(url: url)
     .fetch()
@@ -353,7 +369,7 @@ let person = Person()
     person.age = 40
     person.gender = "female"
             
-let dataSource = DataSource<Person>(strategy: .path("persons"), client: client)
+let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>"), client: client)
 
 dataSource
     .create(person)
@@ -372,7 +388,7 @@ let person = Person()
     person.age = 41
     person.gender = .null
             
-let dataSource = DataSource<Person>(strategy: .path("persons/1"), client: client)
+let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>/<id>"), client: client)
 
 dataSource
     .update(resource: person)
@@ -386,18 +402,151 @@ dataSource
 #### Deleting resource
 
 ```swift
-let person = Person()
-    person.id = "1"
-    
-let dataSource = DataSource<Person>(strategy: .path("persons/1"), client: client)
+let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>/<id>"), client: client)
             
-Person.dataSource
-    .delete(id: person.id!) // when using path strategy `id` will be ignored because there is custom path defined
+dataSource
+    .delete(id: "1")
     .result({
             
     }) { (error) in
         
     }
+```
+
+#### Pagination
+
+##### Pagination on initial request
+
+###### Custom pagination strategy
+
+```swift
+let paginationStrategy: PaginationStrategy // -> your object conforming `PaginationStrategy` protocol
+
+let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>"), client: client)
+
+dataSource
+    .fetch()
+    .paginate(paginationStrategy)
+    .result({ (document) in
+        
+    }, { (error) in
+        
+    })
+```
+
+###### Page-based pagination strategy
+
+```swift
+let paginationStrategy = Pagination.PageBased(number: 1, size: 10)
+
+let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>"), client: client)
+
+dataSource
+    .fetch()
+    .paginate(paginationStrategy)
+    .result({ (document) in
+        
+    }, { (error) in
+        
+    })
+```
+
+###### Offset-based pagination strategy
+
+```swift
+let paginationStrategy = Pagination.OffsetBased(offset: 10, limit: 10)
+
+let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>"), client: client)
+
+dataSource
+    .fetch()
+    .paginate(paginationStrategy)
+    .result({ (document) in
+        
+    }, { (error) in
+        
+    })
+```
+
+###### Cursor-based pagination strategy
+
+```swift
+let paginationStrategy = Pagination.CursorBased(cursor: "cursor")
+
+let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>"), client: client)
+
+dataSource
+    .fetch()
+    .paginate(paginationStrategy)
+    .result({ (document) in
+        
+    }, { (error) in
+        
+    })
+```
+
+##### Appending next page to current document
+
+```swift
+document.appendNext({ (data) in
+    // data.old -> Resource values before pagination
+    // data.new -> Resource values from pagination
+    // data.all -> Resource values after pagination
+    
+    // document.data === data.all -> true
+}, { (error) in
+
+})
+```
+
+##### Fetching next document page
+
+```swift
+document.next?.result({ (nextDocument) in
+    // `nextDocument` is same type as `document`
+}, { (error) in
+    
+})
+```
+
+##### Fetching previous document page
+
+```swift
+document.previous?.result({ (previousDocument) in
+    // `previousDocument` is same type as `document`
+}, { (error) in
+    
+})
+```
+
+##### Fetching first document page
+
+```swift
+document.first?.result({ (firstDocument) in
+    // `firstDocument` is same type as `document`
+}, { (error) in
+    
+})
+```
+
+##### Fetching last document page
+
+```swift
+document.last?.result({ (lastDocument) in
+    // `lastDocument` is same type as `document`
+}, { (error) in
+    
+})
+```
+
+##### Reloading current document page
+
+```swift
+document.reload?.result({ (reloadedDocument) in
+    // `reloadedDocument` is same type as `document`
+}, { (error) in
+    
+})
 ```
 
 #### Custom routing
@@ -409,29 +558,29 @@ Make a new object conforming `Router`. Simple example:
 ```swift
 class ResourceRouter: Router {
     func fetch(id: String, type: Resource.Type) -> String {
-        let type = type.typeIdentifier()
+        let type = type.resourceType
         
-        return type + "/" + id
+        return type + "/" + id // or "<type>/<id>"
     }
     
     func fetch(type: Resource.Type) -> String {
-        return type.typeIdentifier()
+        return type.resourceType // or "<type>"
     }
     
     func create(resource: Resource) -> String {
-        return resource.type
+        return resource.type // or "<type>"
     }
     
     func update(resource: Resource) -> String {
-        let type = type.typeIdentifier()
+        let type = type.resourceType
         
-        return type + "/" + id
+        return type + "/" + id // or "<type>/<id>"
     }
     
     func delete(id: String, type: Resource.Type) -> String {
-        let type = type.typeIdentifier()
+        let type = type.resourceType
         
-        return type + "/" + id
+        return type + "/" + id // or "<type>/<id>"
     }
 }
 ```

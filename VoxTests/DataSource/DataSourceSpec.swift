@@ -9,9 +9,10 @@ fileprivate let fetchSinglePath = "fetch/single"
 fileprivate let createPath = "create"
 fileprivate let updatePath = "update"
 fileprivate let deletePath = "delete"
-fileprivate let queryItem = URLQueryItem(name: "name", value: "value")
+fileprivate let filterQueryItem = URLQueryItem(name: "name", value: "value")
+fileprivate let paginationQueryItem = URLQueryItem(name: "page", value: "value")
 
-fileprivate let immutablePath = "path"
+fileprivate let immutablePath = "path/<type>"
 
 fileprivate class MockRouter: Router {
     class Invocation {
@@ -101,7 +102,14 @@ fileprivate class MockClient: Client {
 
 fileprivate class MockFilterStrategy: FilterStrategy {
     func filterURLQueryItems() -> [URLQueryItem] {
-        return [queryItem]
+        return [filterQueryItem]
+    }
+}
+
+
+fileprivate class MockPaginationStrategy: PaginationStrategy {
+    func paginationURLQueryItems() -> [URLQueryItem] {
+        return [paginationQueryItem]
     }
 }
 
@@ -148,7 +156,7 @@ class DataSourceSpec: QuickSpec {
                 let client = MockClient()
                 let router = MockRouter()
                 let filterStrategy = MockFilterStrategy()
-                let sut = DataSource(strategy: .router(router), client: client)
+                let sut = DataSource<MockResource>(strategy: .router(router), client: client)
                 
                 try! sut
                     .fetch(id: "mock")
@@ -197,8 +205,8 @@ class DataSourceSpec: QuickSpec {
                     let filterQueryItem = queryItems[1]
                     
                     // http://jsonapi.org/format/#fetching-filtering
-                    expect(filterQueryItem.name).to(equal(queryItem.name))
-                    expect(filterQueryItem.value).to(equal(queryItem.value))
+                    expect(filterQueryItem.name).to(equal(filterQueryItem.name))
+                    expect(filterQueryItem.value).to(equal(filterQueryItem.value))
                     
                     let includeQueryItem = queryItems[2]
                     
@@ -211,16 +219,17 @@ class DataSourceSpec: QuickSpec {
                     // http://jsonapi.org/format/#fetching-sorting
                     expect(sortQueryItem.name).to(equal("sort"))
                     expect(sortQueryItem.value).to(equal("value1,-value2"))
-                    
                 })
             })
             
             context("when fetching resource collection", {
                 let client = MockClient()
                 let router = MockRouter()
-                let sut = DataSource(strategy: .router(router), client: client)
+                let paginationStrategy = MockPaginationStrategy()
                 
-                try! sut.fetch().result({ (document) in
+                let sut = DataSource<MockResource>(strategy: .router(router), client: client)
+                
+                try! sut.fetch().paginate(paginationStrategy).result({ (document) in
                     
                 }, { (error) in
                     
@@ -241,6 +250,14 @@ class DataSourceSpec: QuickSpec {
                 it("client receives correct data from router for execution", closure: {
                     expect(client.executeRequestInspector.path).to(equal(fetchCollectionPath))
                     expect(client.executeRequestInspector.path).to(equal(fetchCollectionPath))
+                    
+                    let queryItems = client.executeRequestInspector.queryItems
+
+                    let _paginationQueryItem = queryItems[0]
+                    
+                    // http://jsonapi.org/format/#fetching-pagination
+                    expect(_paginationQueryItem.name).to(equal(paginationQueryItem.name))
+                    expect(_paginationQueryItem.value).to(equal(paginationQueryItem.value))
                 })
             })
             
@@ -276,7 +293,7 @@ class DataSourceSpec: QuickSpec {
             context("when deleting resource", {
                 let client = MockClient()
                 let router = MockRouter()
-                let sut = DataSource(strategy: .router(router), client: client)
+                let sut = DataSource<MockResource>(strategy: .router(router), client: client)
                 
                 try! sut.delete(id: "mock").result({
                     
@@ -320,14 +337,14 @@ class DataSourceSpec: QuickSpec {
                 })
 
                 it("client receives correct data for execution", closure: {
-                    expect(client.executeRequestInspector.path).to(equal(immutablePath))
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
                 })
             })
             
             context("when fetching single resource", {
                 let client = MockClient()
                 let filterStrategy = MockFilterStrategy()
-                let sut = DataSource(strategy: .path(immutablePath), client: client)
+                let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
                 try! sut
                     .fetch(id: "mock")
                     .fields([
@@ -351,7 +368,7 @@ class DataSourceSpec: QuickSpec {
                 })
                 
                 it("client receives correct data for execution", closure: {
-                    expect(client.executeRequestInspector.path).to(equal(immutablePath))
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
                     
                     let queryItems = client.executeRequestInspector.queryItems
                     
@@ -366,8 +383,8 @@ class DataSourceSpec: QuickSpec {
                     let filterQueryItem = queryItems[1]
                     
                     // http://jsonapi.org/format/#fetching-filtering
-                    expect(filterQueryItem.name).to(equal(queryItem.name))
-                    expect(filterQueryItem.value).to(equal(queryItem.value))
+                    expect(filterQueryItem.name).to(equal(filterQueryItem.name))
+                    expect(filterQueryItem.value).to(equal(filterQueryItem.value))
                     
                     let includeQueryItem = queryItems[2]
                     
@@ -384,11 +401,12 @@ class DataSourceSpec: QuickSpec {
                 })
             })
             
-            context("when fetching resource collection", {
+            context("when fetching resource collection with custom pagination", {
                 let client = MockClient()
-                let sut = DataSource(strategy: .path(immutablePath), client: client)
+                let paginationStrategy = MockPaginationStrategy()
+                let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
                 
-                try! sut.fetch().result({ (document) in
+                try! sut.fetch().paginate(paginationStrategy).result({ (document) in
                     
                 }, { (error) in
                     
@@ -399,7 +417,111 @@ class DataSourceSpec: QuickSpec {
                 })
                 
                 it("client receives correct data for execution", closure: {
-                    expect(client.executeRequestInspector.path).to(equal(immutablePath))
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
+                    
+                    let queryItems = client.executeRequestInspector.queryItems
+
+                    let _paginationQueryItem = queryItems[0]
+                    
+                    // http://jsonapi.org/format/#fetching-pagination
+                    expect(_paginationQueryItem.name).to(equal(paginationQueryItem.name))
+                    expect(_paginationQueryItem.value).to(equal(paginationQueryItem.value))
+                })
+            })
+            
+            context("when fetching resource collection with page based pagination", {
+                let client = MockClient()
+                let paginationStrategy = Pagination.PageBased(number: 1, size: 2)
+                let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
+                
+                try! sut.fetch().paginate(paginationStrategy).result({ (document) in
+                    
+                }, { (error) in
+                    
+                })
+                
+                it("invokes execute request on client", closure: {
+                    expect(client.invocation.executeRequest.isInvokedOnce).to(beTrue())
+                })
+                
+                it("client receives correct data for execution", closure: {
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
+                    
+                    let queryItems = client.executeRequestInspector.queryItems
+                    
+                    var _paginationQueryItem = queryItems[0]
+                    
+                    // http://jsonapi.org/format/#fetching-pagination
+                    expect(_paginationQueryItem.name).to(equal("page[number]"))
+                    expect(_paginationQueryItem.value).to(equal("1"))
+                    
+                    _paginationQueryItem = queryItems[1]
+                    
+                    // http://jsonapi.org/format/#fetching-pagination
+                    expect(_paginationQueryItem.name).to(equal("page[size]"))
+                    expect(_paginationQueryItem.value).to(equal("2"))
+                })
+            })
+            
+            context("when fetching resource collection with offset based pagination", {
+                let client = MockClient()
+                let paginationStrategy = Pagination.OffsetBased(offset: 1, limit: 2)
+                let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
+                
+                try! sut.fetch().paginate(paginationStrategy).result({ (document) in
+                    
+                }, { (error) in
+                    
+                })
+                
+                it("invokes execute request on client", closure: {
+                    expect(client.invocation.executeRequest.isInvokedOnce).to(beTrue())
+                })
+                
+                it("client receives correct data for execution", closure: {
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
+                    
+                    let queryItems = client.executeRequestInspector.queryItems
+                    
+                    var _paginationQueryItem = queryItems[0]
+                    
+                    // http://jsonapi.org/format/#fetching-pagination
+                    expect(_paginationQueryItem.name).to(equal("page[offset]"))
+                    expect(_paginationQueryItem.value).to(equal("1"))
+                    
+                    _paginationQueryItem = queryItems[1]
+                    
+                    // http://jsonapi.org/format/#fetching-pagination
+                    expect(_paginationQueryItem.name).to(equal("page[limit]"))
+                    expect(_paginationQueryItem.value).to(equal("2"))
+                })
+            })
+            
+            context("when fetching resource collection with cursor based pagination", {
+                let client = MockClient()
+                let paginationStrategy = Pagination.CursorBased(cursor: "mock-cursor")
+                let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
+                
+                try! sut.fetch().paginate(paginationStrategy).result({ (document) in
+                    
+                }, { (error) in
+                    
+                })
+                
+                it("invokes execute request on client", closure: {
+                    expect(client.invocation.executeRequest.isInvokedOnce).to(beTrue())
+                })
+                
+                it("client receives correct data for execution", closure: {
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
+                    
+                    let queryItems = client.executeRequestInspector.queryItems
+                    
+                    let _paginationQueryItem = queryItems[0]
+                    
+                    // http://jsonapi.org/format/#fetching-pagination
+                    expect(_paginationQueryItem.name).to(equal("page[cursor]"))
+                    expect(_paginationQueryItem.value).to(equal("mock-cursor"))
                 })
             })
             
@@ -419,13 +541,13 @@ class DataSourceSpec: QuickSpec {
                 })
                 
                 it("client receives correct data for execution", closure: {
-                    expect(client.executeRequestInspector.path).to(equal(immutablePath))
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
                 })
             })
             
             context("when deleting resource", {
                 let client = MockClient()
-                let sut = DataSource(strategy: .path(immutablePath), client: client)
+                let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
                 
                 try! sut.delete(id: "mock").result({
                     
@@ -439,7 +561,7 @@ class DataSourceSpec: QuickSpec {
                 
                 
                 it("client receives correct data for execution", closure: {
-                    expect(client.executeRequestInspector.path).to(equal(immutablePath))
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
                 })
             })
         }

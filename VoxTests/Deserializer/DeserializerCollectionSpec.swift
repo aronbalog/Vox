@@ -47,11 +47,11 @@ class DeserializerCollectionSpec: QuickSpec {
             let sut = Deserializer.Collection<Article2>()
 
             context("when deserializing resource collection", {
-                let document = try? sut.deserialize(data: self.data)
+                let document = try! sut.deserialize(data: self.data)
                 
                 it("maps correctly", closure: {
                     expect(document).notTo(beNil())
-                    let articles = document?.data
+                    let articles = document.data
                     
                     expect(articles).notTo(beNil())
                     expect(articles?.count).to(equal(1))

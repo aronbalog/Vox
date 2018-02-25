@@ -7,6 +7,11 @@ public class DataSource<ResourceType: Resource>: NSObject, CRUD {
         case router(_: Router)
     }
     
+    private enum AnnotationStrategy {
+        case resourceIdentifier(id: String?, type: String)
+        case resource(ResourceType)
+    }
+    
     public typealias DocumentType<Type> = Document<Type>
     public typealias ResourceSuccessBlock = (_ document: DocumentType<ResourceType>) -> Void
     public typealias OptionalResourceSuccessBlock = (_ document: DocumentType<ResourceType>?) -> Void
@@ -28,7 +33,7 @@ public class DataSource<ResourceType: Resource>: NSObject, CRUD {
     }
     
     public func create(_ resource: ResourceType) -> Request<ResourceType, OptionalResourceSuccessBlock> {
-        let path: String = {
+        var path: String = {
             switch strategy {
             case .path(let path):
                 return path
@@ -37,6 +42,8 @@ public class DataSource<ResourceType: Resource>: NSObject, CRUD {
             }
         }()
         
+        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resource(resource))
+
         let request = Request<ResourceType, OptionalResourceSuccessBlock>(path: path, httpMethod: "POST", client: client)
         
         request.resource = resource
@@ -45,7 +52,7 @@ public class DataSource<ResourceType: Resource>: NSObject, CRUD {
     }
     
     public func fetch() -> FetchRequest<ResourceType, ResourceCollectionSuccessBlock> {
-        let path: String = {
+        var path: String = {
             switch strategy {
             case .path(let path):
                 return path
@@ -54,13 +61,15 @@ public class DataSource<ResourceType: Resource>: NSObject, CRUD {
             }
         }()
         
+        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resourceIdentifier(id: nil, type: ResourceType.resourceType))
+
         let request = FetchRequest<ResourceType, ResourceCollectionSuccessBlock>(path: path, httpMethod: "GET", client: client)
         
         return request
     }
     
     public func fetch(id: String) -> FetchRequest<ResourceType, ResourceSuccessBlock> {
-        let path: String = {
+        var path: String = {
             switch strategy {
             case .path(let path):
                 return path
@@ -69,13 +78,15 @@ public class DataSource<ResourceType: Resource>: NSObject, CRUD {
             }
         }()
         
+        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resourceIdentifier(id: id, type: ResourceType.resourceType))
+        
         let request = FetchRequest<ResourceType, ResourceSuccessBlock>(path: path, httpMethod: "GET", client: client)
         
         return request
     }
     
     public func update(_ resource: ResourceType) -> Request<ResourceType, OptionalResourceSuccessBlock> {
-        let path: String = {
+        var path: String = {
             switch strategy {
             case .path(let path):
                 return path
@@ -84,6 +95,8 @@ public class DataSource<ResourceType: Resource>: NSObject, CRUD {
             }
         }()
         
+        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resource(resource))
+
         let request = Request<ResourceType, OptionalResourceSuccessBlock>(path: path, httpMethod: "PATCH", client: client)
         
         request.resource = resource
@@ -92,7 +105,7 @@ public class DataSource<ResourceType: Resource>: NSObject, CRUD {
     }
     
     public func delete(id: String) -> Request<ResourceType, DeleteSuccessBlock> {
-        let path: String = {
+        var path: String = {
             switch strategy {
             case .path(let path):
                 return path
@@ -101,8 +114,30 @@ public class DataSource<ResourceType: Resource>: NSObject, CRUD {
             }
         }()
         
+        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resourceIdentifier(id: id, type: ResourceType.resourceType))
+        
         let request = Request<ResourceType, DeleteSuccessBlock>(path: path, httpMethod: "DELETE", client: client)
         
         return request
     }
+    
+    private func replaceAnnotations(on path: String, with strategy: AnnotationStrategy) -> String {
+        var newPath = path
+        
+        switch strategy {
+        case .resource(let resource):
+            if let id = resource.id {
+                newPath = newPath.replacingOccurrences(of: "<id>", with: id)
+            }
+            newPath = newPath.replacingOccurrences(of: "<type>", with: resource.type)
+        case .resourceIdentifier(let id, let type):
+            if let id = id {
+                newPath = newPath.replacingOccurrences(of: "<id>", with: id)
+            }
+            newPath = newPath.replacingOccurrences(of: "<type>", with: type)
+        }
+        
+        return newPath
+    }
 }
+
