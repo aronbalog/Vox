@@ -344,7 +344,7 @@ class DataSourceSpec: QuickSpec {
             context("when fetching single resource", {
                 let client = MockClient()
                 let filterStrategy = MockFilterStrategy()
-                let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
+                let sut = DataSource<MockResource>(strategy: .path("path/<type>/<id>"), client: client)
                 try! sut
                     .fetch(id: "mock")
                     .fields([
@@ -368,7 +368,7 @@ class DataSourceSpec: QuickSpec {
                 })
                 
                 it("client receives correct data for execution", closure: {
-                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource/mock"))
                     
                     let queryItems = client.executeRequestInspector.queryItems
                     
@@ -527,8 +527,9 @@ class DataSourceSpec: QuickSpec {
             
             context("when updating resource", {
                 let client = MockClient()
-                let sut = DataSource(strategy: .path(immutablePath), client: client)
+                let sut = DataSource(strategy: .path("path/<type>/<id>"), client: client)
                 let resource = MockResource()
+                resource.id = "mock"
                 
                 try! sut.update(resource).result({ (document) in
                     
@@ -541,7 +542,7 @@ class DataSourceSpec: QuickSpec {
                 })
                 
                 it("client receives correct data for execution", closure: {
-                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource"))
+                    expect(client.executeRequestInspector.path).to(equal("path/mock-resource/mock"))
                 })
             })
             

@@ -6,9 +6,9 @@ class Cellphone: Resource {
     }
 }
 
-class Weed: Resource {
+class Wallet: Resource {
     override class var resourceType: String {
-        return "Weed"
+        return "Wallet"
     }
 }
 
@@ -24,7 +24,7 @@ class Person: Resource {
     @objc dynamic var goodFriends: [Person]?
     @objc dynamic var favoriteWords: [String]?
     @objc dynamic var items: [Resource]?
-    @objc dynamic var favoriteWeed: Resource?
+    @objc dynamic var favoriteItem: Resource?
 }
 
 Resource.load()
@@ -46,13 +46,13 @@ anotherFriend.id = "ANOTHER-FRIEND-ID"
 person.bestFriend = bestFriend
 person.goodFriends = [bestFriend, anotherFriend]
 
-let weed = Weed()
-weed.id = "weed"
+let wallet = Wallet()
+wallet.id = "wallet"
 let cellphone = Cellphone()
 cellphone.id = "cellphone"
-person.items = [weed, cellphone]
+person.items = [wallet, cellphone]
 
-person.favoriteWeed = weed
+person.favoriteItem = wallet
 
 let documentDictionary = try! person.documentDictionary()
 

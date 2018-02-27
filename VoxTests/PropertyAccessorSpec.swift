@@ -24,9 +24,9 @@ fileprivate class Cellphone: Resource {
     }
 }
 
-fileprivate class Weed: Resource {
+fileprivate class Wallet: Resource {
     override class var resourceType: String {
-        return "Weed"
+        return "Wallet"
     }
 }
 
@@ -51,12 +51,12 @@ class PropertyAccessorSpec: QuickSpec {
                 person.bestFriend = bestFriend
                 person.goodFriends = [bestFriend, anotherFriend]
                 
-                let weed = Weed(context: person.context)
-                weed.id = "weed id"
+                let wallet = Wallet(context: person.context)
+                wallet.id = "wallet id"
                 let cellphone = Cellphone()
                 cellphone.id = "cellphone id"
                 
-                person.items = [weed, cellphone]
+                person.items = [wallet, cellphone]
 
                 it("values are accessible", closure: {
                     expect(person.name).to(equal("MOCK"))
@@ -79,7 +79,7 @@ class PropertyAccessorSpec: QuickSpec {
                     expect(person.goodFriends?[1] === anotherFriend).to(beTrue())
                     
                     expect(person.items).to(haveCount(2))
-                    expect(person.items?[0] === weed).to(beTrue())
+                    expect(person.items?[0] === wallet).to(beTrue())
                     expect(person.items?[1] === cellphone).to(beTrue())
 
                 })

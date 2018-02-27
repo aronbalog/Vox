@@ -20,19 +20,14 @@
     
 + (SEL)setterForPropertyWithName:(NSString*)name {
     const char* propertyName = [name cStringUsingEncoding:NSASCIIStringEncoding];
-    objc_property_t prop = class_getProperty(self, propertyName);
     
-    char *selectorName = property_copyAttributeValue(prop, "S");
     NSString* selectorString;
-    if (selectorName == NULL) {
-        char firstChar = (char)toupper(propertyName[0]);
-        NSString* capitalLetter = [NSString stringWithFormat:@"%c", firstChar];
-        NSString* reminder = [NSString stringWithCString: propertyName+1
-                                                encoding: NSASCIIStringEncoding];
-        selectorString = [@[@"set", capitalLetter, reminder, @":"] componentsJoinedByString:@""];
-    } else {
-        selectorString = [NSString stringWithCString:selectorName encoding:NSASCIIStringEncoding];
-    }
+    
+    char firstChar = (char)toupper(propertyName[0]);
+    NSString* capitalLetter = [NSString stringWithFormat:@"%c", firstChar];
+    NSString* reminder = [NSString stringWithCString: propertyName+1
+                                            encoding: NSASCIIStringEncoding];
+    selectorString = [@[@"set", capitalLetter, reminder, @":"] componentsJoinedByString:@""];
     
     return NSSelectorFromString(selectorString);
 }

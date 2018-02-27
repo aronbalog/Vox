@@ -4,6 +4,8 @@ Vox is a Swift JSONAPI standard implementation.
 
 [![Build Status](https://travis-ci.org/aronbalog/Vox.svg?branch=master)](https://travis-ci.org/aronbalog/Vox)
 [![codecov](https://codecov.io/gh/aronbalog/Vox/branch/master/graph/badge.svg)](https://codecov.io/gh/aronbalog/Vox)
+[![Platform](https://img.shields.io/cocoapods/p/Vox.svg?style=flat)](https://github.com/aronbalog/Vox)
+[![CocoaPods Compatible](https://img.shields.io/cocoapods/v/Vox.svg)](https://img.shields.io/cocoapods/v/Vox.svg)
 
 - 🎩 [The magic behind](#the-magic-behind)
 - 💻 [Installation](#motivation-)
@@ -623,16 +625,36 @@ dataSource
 - [x] DataSource with path and client when creating resource client receives correct data for execution
 - [x] DataSource with path and client when fetching single resource invokes execute request on client
 - [x] DataSource with path and client when fetching single resource client receives correct data for execution
-- [x] DataSource with path and client when fetching resource collection invokes execute request on client
-- [x] DataSource with path and client when fetching resource collection client receives correct data for execution
+- [x] DataSource with path and client when fetching resource collection with custom pagination invokes execute request on client
+- [x] DataSource with path and client when fetching resource collection with custom pagination client receives correct data for execution
+- [x] DataSource with path and client when fetching resource collection with page based pagination invokes execute request on client
+- [x] DataSource with path and client when fetching resource collection with page based pagination client receives correct data for execution
+- [x] DataSource with path and client when fetching resource collection with offset based pagination invokes execute request on client
+- [x] DataSource with path and client when fetching resource collection with offset based pagination client receives correct data for execution
+- [x] DataSource with path and client when fetching resource collection with cursor based pagination invokes execute request on client
+- [x] DataSource with path and client when fetching resource collection with cursor based pagination client receives correct data for execution
 - [x] DataSource with path and client when updating resource invokes execute request on client
 - [x] DataSource with path and client when updating resource client receives correct data for execution
 - [x] DataSource with path and client when deleting resource invokes execute request on client
 - [x] DataSource with path and client when deleting resource client receives correct data for execution
 - [x] Deserializer when deserializing resource collection maps correctly
-- [x] Deserializer when deserializing single resource and error data provided maps to errors object
+- [x] Deserializer when deserializing single resource and error data provided with source object included in errors maps to errors object
+- [x] Deserializer when deserializing single resource and error data provided with source object included in errors maps to errors object 2
 - [x] Deserializer when deserializing document with polymorphic objects in relationships maps correctly
 - [x] Deserializer when deserializing single resource maps correctly
+- [x] Paginated DataSource when fetching first page returns first page document
+- [x] Paginated DataSource when fetching first page when fetching next page returns next page document
+- [x] Paginated DataSource when fetching first page returns first page document 2
+- [x] Paginated DataSource when fetching first page when fetching first page of document returns first page document
+- [x] Paginated DataSource when fetching first page returns first page document 3
+- [x] Paginated DataSource when fetching first page when appending next page document is appended
+- [x] Paginated DataSource when fetching first page when appending next page included is appended
+- [x] Paginated DataSource when fetching first page returns first page document 4
+- [x] Paginated DataSource when fetching first page when reloading current page receives page
+- [x] Paginated DataSource when fetching first page returns first page document 5
+- [x] Paginated DataSource when fetching first page when fetching previous page receives page
+- [x] Paginated DataSource when fetching first page returns first page document 6
+- [x] Paginated DataSource when fetching first page when fetching last page returns last page document
 - [x] Serializer when serializing resource collection maps correctly
 - [x] Serializer when serializing resource collection returns document data
 - [x] Serializer when serializing resource collection returns document dictionary
