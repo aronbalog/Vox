@@ -12,7 +12,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
     var resource: ResourceType?
     
     var successBlock: SuccessCallbackType?
-    var failureBlock: ((Error) -> Void)?
+    var failureBlock: ((Error?) -> Void)?
     
     init(path: String, httpMethod: String, client: Client) {
         self.path = path
@@ -20,7 +20,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
         self.client = client
     }
     
-    public func result(_ success: SuccessCallbackType, _ failure: ((Error) -> Void)?) throws {
+    public func result(_ success: SuccessCallbackType, _ failure: ((Error?) -> Void)?) throws {
         successBlock = success
         failureBlock = failure
         
@@ -36,7 +36,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
     func execute() throws {
         let parameters: [String: Any]? = try resource?.documentDictionary()
         
-        client.executeRequest(path, method: httpMethod, queryItems: queryItems, parameters: parameters, success: { (response, data) in
+        client.executeRequest(path: path, method: httpMethod, queryItems: queryItems, bodyParameters: parameters, success: { (response, data) in
             if let success = self.successBlock as? DataSource<ResourceType>.ResourceSuccessBlock {
                 guard let data = data else {
                     fatalError("Unhandled exception")
@@ -45,10 +45,8 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
                 do {
                     let document: Document<ResourceType> = try Deserializer.Single().deserialize(data: data)
                     success(document)
-                } catch let __error as JSONAPIError {
+                } catch let __error {
                     self.failureBlock?(__error)
-                } catch {
-                    fatalError("Unhandled exception")
                 }
             } else if let success = self.successBlock as? DataSource<ResourceType>.OptionalResourceSuccessBlock {
                 guard let data = data else {
@@ -59,10 +57,8 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
                 do {
                     let document: Document<ResourceType> = try Deserializer.Single().deserialize(data: data)
                     success(document)
-                } catch let __error as JSONAPIError {
+                } catch let __error {
                     self.failureBlock?(__error)
-                } catch {
-                    fatalError("Unhandled exception")
                 }
             } else if let success = self.successBlock as? DataSource<ResourceType>.ResourceCollectionSuccessBlock {
                 guard let data = data else {
@@ -73,10 +69,8 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
                     let document: Document<[ResourceType]> = try Deserializer.Collection().deserialize(data: data)
                     document.client = self.client
                     success(document)
-                } catch let __error as JSONAPIError {
+                } catch let __error {
                     self.failureBlock?(__error)
-                } catch {
-                    fatalError("Unhandled exception")
                 }
             } else if let success = self.successBlock as? DataSource<ResourceType>.DeleteSuccessBlock {
                 success()
@@ -89,10 +83,8 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
             
             do {
                 let _: Document<DataType> = try JSONAPIDecoder.decode(data: data)
-            } catch let error as JSONAPIError {
-                self.failureBlock?(error)
-            } catch {
-                fatalError("Unhandled exception")
+            } catch let __error {
+                self.failureBlock?(__error)
             }
         }
     }
@@ -168,7 +160,6 @@ public class FetchRequest<ResourceType: Resource, SuccessCallbackType>: Request<
         self.filter = filter
         
         return self
-        
     }
     
     

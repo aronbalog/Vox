@@ -93,7 +93,7 @@ fileprivate class MockClient: Client {
     let invocation = Invocation()
     let executeRequestInspector = ExecuteRequestInspector()
     
-    func executeRequest(_ path: String, method: String, queryItems: [URLQueryItem], parameters: [String : Any]?, success: @escaping ClientSuccessBlock, _ failure: @escaping ClientFailureBlock) {
+    func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock) {
         invocation.executeRequest.invoke()
         executeRequestInspector.path = path
         executeRequestInspector.queryItems = queryItems

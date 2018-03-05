@@ -11,6 +11,8 @@
 		3811C014203D888700EE52B8 /* ErrorsWithoutSource.json in Resources */ = {isa = PBXBuildFile; fileRef = 3811C013203D888700EE52B8 /* ErrorsWithoutSource.json */; };
 		3821D26A2039E51D00AE241E /* Context_Query.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3821D2692039E51D00AE241E /* Context_Query.swift */; };
 		3821D26C2039F64F00AE241E /* ResourcePool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3821D26B2039F64F00AE241E /* ResourcePool.swift */; };
+		384F03B5204E04FE0086F5E1 /* JSONAPIClient_Alamofire.swift in Sources */ = {isa = PBXBuildFile; fileRef = 384F03B4204E04FE0086F5E1 /* JSONAPIClient_Alamofire.swift */; };
+		384F03B8204E0B070086F5E1 /* AlamofireClientSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 384F03B7204E0B070086F5E1 /* AlamofireClientSpec.swift */; };
 		3872FA3820379F8300CC26BD /* Vox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3872FA2E20379F8300CC26BD /* Vox.framework */; };
 		3872FA3D20379F8300CC26BD /* VoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3872FA3C20379F8300CC26BD /* VoxTests.swift */; };
 		3872FA3F20379F8300CC26BD /* Vox.h in Headers */ = {isa = PBXBuildFile; fileRef = 3872FA3120379F8300CC26BD /* Vox.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -72,6 +74,7 @@
 		38E00D41203911A100B45B4C /* ErrorObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E00D40203911A100B45B4C /* ErrorObject.swift */; };
 		38E00D44203911B700B45B4C /* JSONAPIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E00D43203911B700B45B4C /* JSONAPIError.swift */; };
 		38E00D4620391CE500B45B4C /* DeserializerSinglePolymorphic.json in Resources */ = {isa = PBXBuildFile; fileRef = 38E00D4520391CE400B45B4C /* DeserializerSinglePolymorphic.json */; };
+		38EE017B204E2124009A1FCF /* JSONAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38EE017A204E2124009A1FCF /* JSONAPIClient.swift */; };
 		70EC6E6C7F0EC2212D677322 /* Pods_Vox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F6BBA32DFBB2745B08DC67C /* Pods_Vox.framework */; };
 /* End PBXBuildFile section */
 
@@ -93,6 +96,8 @@
 		3821D26B2039F64F00AE241E /* ResourcePool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResourcePool.swift; sourceTree = "<group>"; };
 		3821D273203A02B200AE241E /* SerializerCollectionSpec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerializerCollectionSpec.swift; sourceTree = "<group>"; };
 		3821D274203A02B200AE241E /* SerializerSingleSpec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerializerSingleSpec.swift; sourceTree = "<group>"; };
+		384F03B4204E04FE0086F5E1 /* JSONAPIClient_Alamofire.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONAPIClient_Alamofire.swift; sourceTree = "<group>"; };
+		384F03B7204E0B070086F5E1 /* AlamofireClientSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlamofireClientSpec.swift; sourceTree = "<group>"; };
 		3872FA2E20379F8300CC26BD /* Vox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Vox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3872FA3120379F8300CC26BD /* Vox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Vox.h; sourceTree = "<group>"; };
 		3872FA3220379F8300CC26BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -153,6 +158,7 @@
 		38E00D4520391CE400B45B4C /* DeserializerSinglePolymorphic.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = DeserializerSinglePolymorphic.json; sourceTree = "<group>"; };
 		38E00D4820391D3A00B45B4C /* DataSourceSpec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataSourceSpec.swift; sourceTree = "<group>"; };
 		38E00D4B20391E2A00B45B4C /* PerformanceSpec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PerformanceSpec.swift; sourceTree = "<group>"; };
+		38EE017A204E2124009A1FCF /* JSONAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONAPIClient.swift; sourceTree = "<group>"; };
 		4C377C4C5E8EC0F47CC8A09A /* Pods_VoxTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VoxTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		57CD3473858065C0C3F263AF /* Pods-Vox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Vox.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Vox/Pods-Vox.debug.xcconfig"; sourceTree = "<group>"; };
 		8F6BBA32DFBB2745B08DC67C /* Pods_Vox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Vox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -200,6 +206,30 @@
 			path = Serializer;
 			sourceTree = "<group>";
 		};
+		384F03B2204E04480086F5E1 /* Plugins */ = {
+			isa = PBXGroup;
+			children = (
+				384F03B3204E045E0086F5E1 /* Alamofire */,
+			);
+			path = Plugins;
+			sourceTree = "<group>";
+		};
+		384F03B3204E045E0086F5E1 /* Alamofire */ = {
+			isa = PBXGroup;
+			children = (
+				384F03B4204E04FE0086F5E1 /* JSONAPIClient_Alamofire.swift */,
+			);
+			path = Alamofire;
+			sourceTree = "<group>";
+		};
+		384F03B6204E0AFE0086F5E1 /* Alamofire */ = {
+			isa = PBXGroup;
+			children = (
+				384F03B7204E0B070086F5E1 /* AlamofireClientSpec.swift */,
+			);
+			path = Alamofire;
+			sourceTree = "<group>";
+		};
 		3872FA2420379F8300CC26BD = {
 			isa = PBXGroup;
 			children = (
@@ -224,12 +254,8 @@
 		3872FA3020379F8300CC26BD /* Vox */ = {
 			isa = PBXGroup;
 			children = (
-				38E00D42203911B700B45B4C /* Enum */,
-				38E00CFF20390C2D00B45B4C /* Networking */,
-				38E00CFC2038D30400B45B4C /* Helpers */,
-				3872FA532037ABC600CC26BD /* Protocol */,
-				3872FA4820379FD600CC26BD /* Class */,
-				3872FA3120379F8300CC26BD /* Vox.h */,
+				38EE017C204E2569009A1FCF /* Core */,
+				384F03B2204E04480086F5E1 /* Plugins */,
 				3872FA3220379F8300CC26BD /* Info.plist */,
 			);
 			path = Vox;
@@ -238,6 +264,7 @@
 		3872FA3B20379F8300CC26BD /* VoxTests */ = {
 			isa = PBXGroup;
 			children = (
+				384F03B6204E0AFE0086F5E1 /* Alamofire */,
 				3821D272203A02B200AE241E /* Serializer */,
 				38E00D4A20391E2A00B45B4C /* Performance */,
 				38E00D4720391D3A00B45B4C /* DataSource */,
@@ -316,6 +343,7 @@
 		38E00CFF20390C2D00B45B4C /* Networking */ = {
 			isa = PBXGroup;
 			children = (
+				38EE0179204E2110009A1FCF /* Client */,
 				3899555E20430EBC007E2DE5 /* Extensions */,
 				38E00D0020390C2D00B45B4C /* Class */,
 				38E00D0320390C2D00B45B4C /* Protocol */,
@@ -390,6 +418,27 @@
 				38E00D4B20391E2A00B45B4C /* PerformanceSpec.swift */,
 			);
 			path = Performance;
+			sourceTree = "<group>";
+		};
+		38EE0179204E2110009A1FCF /* Client */ = {
+			isa = PBXGroup;
+			children = (
+				38EE017A204E2124009A1FCF /* JSONAPIClient.swift */,
+			);
+			path = Client;
+			sourceTree = "<group>";
+		};
+		38EE017C204E2569009A1FCF /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				3872FA3120379F8300CC26BD /* Vox.h */,
+				38E00D42203911B700B45B4C /* Enum */,
+				38E00CFF20390C2D00B45B4C /* Networking */,
+				38E00CFC2038D30400B45B4C /* Helpers */,
+				3872FA532037ABC600CC26BD /* Protocol */,
+				3872FA4820379FD600CC26BD /* Class */,
+			);
+			path = Core;
 			sourceTree = "<group>";
 		};
 		F88997C466CC6768904BE1D9 /* Frameworks */ = {
@@ -573,11 +622,13 @@
 				"${SRCROOT}/Pods/Target Support Files/Pods-VoxTests/Pods-VoxTests-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/Nimble/Nimble.framework",
 				"${BUILT_PRODUCTS_DIR}/Quick/Quick.framework",
+				"${BUILT_PRODUCTS_DIR}/Alamofire/Alamofire.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Nimble.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Quick.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Alamofire.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -626,9 +677,11 @@
 				3899556620431121007E2DE5 /* Pagination_CursorBased.swift in Sources */,
 				38E00D41203911A100B45B4C /* ErrorObject.swift in Sources */,
 				38E00D1A20390C2D00B45B4C /* FetchConfigurable.swift in Sources */,
+				38EE017B204E2124009A1FCF /* JSONAPIClient.swift in Sources */,
 				38E00D1520390C2D00B45B4C /* Creatable.swift in Sources */,
 				38E00D2720390D5B00B45B4C /* Deserializer_Single.swift in Sources */,
 				38995564204310D0007E2DE5 /* Pagination_OffsetBased.swift in Sources */,
+				384F03B5204E04FE0086F5E1 /* JSONAPIClient_Alamofire.swift in Sources */,
 				38E00D44203911B700B45B4C /* JSONAPIError.swift in Sources */,
 				3872FA502037A10800CC26BD /* Resource.swift in Sources */,
 				38E00D1D20390C2D00B45B4C /* FetchIncludable.swift in Sources */,
@@ -674,6 +727,7 @@
 				387FB92B203D08C100CE47F9 /* SerializerCollectionSpec.swift in Sources */,
 				387FB927203D07A500CE47F9 /* DataSourceSpec.swift in Sources */,
 				387FB925203D030800CE47F9 /* DeserializerCollectionSpec.swift in Sources */,
+				384F03B8204E0B070086F5E1 /* AlamofireClientSpec.swift in Sources */,
 				387FB91E203CF04700CE47F9 /* DeserializerSingleSpec.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -820,6 +874,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.aronbalog.Vox;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG ALAMOFIRE";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -844,6 +899,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.aronbalog.Vox;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = ALAMOFIRE;
 				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

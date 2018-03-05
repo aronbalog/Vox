@@ -64,7 +64,7 @@ public extension Document where DataType: Collection, DataType.Element: Resource
         return dataSource.fetch()
     }
     
-    public func appendNext(_ completion: ((PaginationData<DataType.Element>) -> Void)? = nil, _ failure: ((Error) -> Void)? = nil) {
+    public func appendNext(_ completion: ((PaginationData<DataType.Element>) -> Void)? = nil, _ failure: ((Error?) -> Void)? = nil) {
         guard let next = self.links?.next else {
             return
         }

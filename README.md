@@ -13,12 +13,15 @@ Vox is a Swift JSONAPI standard implementation.
     - [Defining resource](#defining-resource)
     - [Serializing](#serializing)
         - [Single resource](#single-resource)
+        - [Alamofire plugin](#alamofire-plugin)
         - [Resource collection](#resource-collection)
         - [Nullability](#nullability)
     - [Deserializing](#deserializing)
         - [Single resource](#single-resource)
         - [Resource collection](#resource-collection)
     - [Networking](#networking)
+        - [Client protocol](#client-protocol)
+        - [Alamofire client plugin](#alamofire-client-plugin)
         - [Fetching single resource](#fetching-single-resource)
         - [Fetching resource collection](#fetching-resource-collection)
         - [Creating resource](#creating-resource)
@@ -84,8 +87,16 @@ This opens up the possibility to easily handle the cases with:
 * Xcode 9
 * Cocoapods
 
+Basic
+
 ```ruby
 pod 'Vox'
+```
+
+With [Alamofire](https://github.com/Alamofire/Alamofire) plugin
+
+```ruby
+pod 'Vox/Alamofire'
 ```
 
 ## Usage
@@ -157,7 +168,7 @@ let person = Person()
             
 let json: [String: Any] = try! person.documentDictionary()
 
-// or if you need Data
+// or if `Data` is needed
 let data: Data = try! person.documentData()
 ```
 
@@ -208,8 +219,8 @@ let person2 = Person()
 
 let json: [String: Any] = try! [person1, person2].documentDictionary()
 
-// or if you need Data
-let data: Data = try! person.documentData()
+// or if `Data` is needed
+let data: Data = try! [person1, person2].documentData()
 ```
 
 Previous example will resolve to following JSON:
@@ -271,7 +282,7 @@ let data: Data // -> provide data received from JSONAPI server
 let deserializer = Deserializer.Single<Article>()
 
 do {
-    let document = try sut.deserialize(data: self.data)
+    let document = try deserializer.deserialize(data: self.data)
     
     // `document.data` is an Article object
     
@@ -296,7 +307,7 @@ let data: Data // -> provide data received from JSONAPI server
 
 let deserializer = Deserializer.Collection<Article>()
 
-let document = try! sut.deserialize(data: self.data)
+let document = try! deserializer.deserialize(data: self.data)
 
 // `document.data` is an [Article] object
 ```
@@ -319,7 +330,49 @@ Deserializer can also be declared without generic parameter but in that case the
 
 ### Networking
 
-You can use `<id>` and `<type>` annotations in path strings. If possible, they'll get replaced with adequate values.
+`<id>` and `<type>` annotations can be used in path strings. If possible, they'll get replaced with adequate values.
+
+#### Client protocol
+
+Implement following method from `Client` protocol:
+
+```swift
+func executeRequest(path: String,
+                  method: String,
+              queryItems: [URLQueryItem],
+          bodyParameters: [String : Any]?,
+                 success: @escaping ClientSuccessBlock,
+                 failure: @escaping ClientFailureBlock)
+```
+
+where
+
+- `ClientSuccessBlock` = `(HTTPURLResponse?, Data?) -> Void`
+- `ClientFailureBlock` = `(Error?, Data?) -> Void`
+
+#### Alamofire client plugin
+
+If custom networking is not required, there is a plugin which wraps [Alamofire](https://github.com/Alamofire/Alamofire) and provides networking client in accordance  with JSON:API specification.
+
+> Alamofire is Elegant HTTP Networking in Swift
+
+Example:
+
+```swift
+let baseURL = URL(string: "http://demo7377577.mockable.io")!
+let client = JSONAPIClient.Alamofire(baseURL: baseURL)
+let dataSource = DataSource<Article>(strategy: .path("vox/articles"), client: client)
+
+dataSource
+    .fetch()
+    ...
+```
+
+##### Installation
+
+```ruby
+pod 'Vox/Alamofire'
+```
 
 #### Fetching single resource
 

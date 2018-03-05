@@ -39,11 +39,6 @@
                BlueprintName = "VoxTests"
                ReferencedContainer = "container:Vox.xcodeproj">
             </BuildableReference>
-            <SkippedTests>
-               <Test
-                  Identifier = "PerformanceSpec">
-               </Test>
-            </SkippedTests>
          </TestableReference>
       </Testables>
       <MacroExpansion>
