@@ -69,7 +69,7 @@ fileprivate class MockClient: Client {
     var nextPath: String?
     var queryItems: [URLQueryItem]?
     
-    func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock) {
+    func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock, userInfo: [String: Any]) {
         
         if count == 0 {
             count += 1

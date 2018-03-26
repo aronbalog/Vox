@@ -334,10 +334,11 @@ Deserializer can also be declared without generic parameter but in that case the
 
 #### Client protocol
 
-Implement following method from `Client` protocol:
+Implement following method from `Client` protocol - userInfo contains custom data you can pass to the client to do some internal logic: e.g. add some extra headers, add encryption etc.:
 
 ```swift
-func executeRequest(path: String,
+func executeRequest(userInfo: [String: Any],
+                  path: String,
                   method: String,
               queryItems: [URLQueryItem],
           bodyParameters: [String : Any]?,
@@ -676,6 +677,7 @@ dataSource
 - [x] DataSource with router and client when deleting resource client receives correct data from router for execution
 - [x] DataSource with path and client when creating resource invokes execute request on client
 - [x] DataSource with path and client when creating resource client receives correct data for execution
+- [x] DataSource with path and client when creating resource client receives userInfo for execution
 - [x] DataSource with path and client when fetching single resource invokes execute request on client
 - [x] DataSource with path and client when fetching single resource client receives correct data for execution
 - [x] DataSource with path and client when fetching resource collection with custom pagination invokes execute request on client

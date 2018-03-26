@@ -37,7 +37,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
     func execute() throws {
         let parameters: [String: Any]? = try resource?.documentDictionary()
         
-        client.executeRequest(request: unsafeBitCast(self, to: Request<Resource, Any>.self), path: path, method: httpMethod, queryItems: queryItems, bodyParameters: parameters, success: { (response, data) in
+        client.executeRequest(path: path, method: httpMethod, queryItems: queryItems, bodyParameters: parameters, success: { (response, data) in
             if let success = self.successBlock as? DataSource<ResourceType>.ResourceSuccessBlock {
                 guard let data = data else {
                     fatalError("Unhandled exception")
@@ -76,7 +76,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
             } else if let success = self.successBlock as? DataSource<ResourceType>.DeleteSuccessBlock {
                 success()
             }
-        }) { (error, data) in
+        }, failure: { (error, data) in
             guard let data = data else {
                 self.failureBlock?(error)
                 return
@@ -87,7 +87,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
             } catch let __error {
                 self.failureBlock?(__error)
             }
-        }
+        }, userInfo: userInfo)
     }
 }
 
