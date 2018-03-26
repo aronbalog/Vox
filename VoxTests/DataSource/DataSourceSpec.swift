@@ -88,15 +88,17 @@ fileprivate class MockClient: Client {
     class ExecuteRequestInspector {
         var path: String!
         var queryItems: [URLQueryItem] = []
+        var userInfo: [String: Any] = [:]
     }
     
     let invocation = Invocation()
     let executeRequestInspector = ExecuteRequestInspector()
     
-    func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock) {
+    func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock, userInfo: [String: Any]) {
         invocation.executeRequest.invoke()
         executeRequestInspector.path = path
         executeRequestInspector.queryItems = queryItems
+        executeRequestInspector.userInfo = userInfo
     }
 }
 
@@ -119,6 +121,13 @@ fileprivate class MockResource: Resource {
     }
 }
 
+fileprivate extension Request {
+    func mockConfiguration() -> Self {
+        self.userInfo["key"] = "value"
+        return self
+    }
+}
+
 class DataSourceSpec: QuickSpec {
     
     override func spec() {
@@ -129,11 +138,14 @@ class DataSourceSpec: QuickSpec {
                 let sut = DataSource(strategy: .router(router), client: client)
                 let resource = MockResource()
                 
-                try! sut.create(resource).result({ (document) in
-                    
-                }, { (error) in
-                    
-                })
+                try! sut
+                    .create(resource)
+                    .mockConfiguration()
+                    .result({ (document) in
+                        
+                    }, { (error) in
+                        
+                    })
                 
                 it("invokes execute request on client", closure: {
                     expect(client.invocation.executeRequest.isInvokedOnce).to(beTrue())
@@ -149,6 +161,10 @@ class DataSourceSpec: QuickSpec {
                 
                 it("client receives correct data from router for execution", closure: {
                     expect(client.executeRequestInspector.path).to(equal(createPath))
+                })
+                
+                it("client receives correct data from request for execution", closure: {
+                    expect(client.executeRequestInspector.userInfo as NSDictionary).to(equal(["key": "value"] as NSDictionary))
                 })
             })
             

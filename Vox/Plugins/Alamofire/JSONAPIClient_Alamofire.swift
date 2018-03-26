@@ -10,7 +10,7 @@ extension JSONAPIClient {
             self.baseURL = baseURL
         }
         
-        public func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock) {
+        public func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock, userInfo: [String: Any]) {
             let sessionManager = SessionManager.default
             let url = baseURL.appendingPathComponent(path)
             let headers: HTTPHeaders = [
