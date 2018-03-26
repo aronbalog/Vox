@@ -334,22 +334,26 @@ Deserializer can also be declared without generic parameter but in that case the
 
 #### Client protocol
 
-Implement following method from `Client` protocol - userInfo contains custom data you can pass to the client to do some internal logic: e.g. add some extra headers, add encryption etc.:
+Implement following method from `Client` protocol:
 
 ```swift
-func executeRequest(userInfo: [String: Any],
-                  path: String,
+func executeRequest(path: String,
                   method: String,
               queryItems: [URLQueryItem],
           bodyParameters: [String : Any]?,
                  success: @escaping ClientSuccessBlock,
-                 failure: @escaping ClientFailureBlock)
+                 failure: @escaping ClientFailureBlock,
+                userInfo: [String: Any])
 ```
 
 where
 
 - `ClientSuccessBlock` = `(HTTPURLResponse?, Data?) -> Void`
 - `ClientFailureBlock` = `(Error?, Data?) -> Void`
+
+Note:
+
+`userInfo` contains custom data you can pass to the client to do some custom logic: e.g. add some extra headers, add encryption etc.
 
 #### Alamofire client plugin
 
@@ -404,7 +408,7 @@ dataSource
 ```swift
 let dataSource = DataSource<Person>(strategy: .path("custom-path/<type>"), client: client)
 
-Person.dataSource(url: url)
+dataSource(url: url)
     .fetch()
     .include([
         "favoriteArticle"
