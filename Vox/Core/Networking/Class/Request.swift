@@ -6,6 +6,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
     private var path: String
     private var httpMethod: String
     private var client: Client
+    public var userInfo: [String: Any] = [:]
     
     fileprivate var queryItems: [URLQueryItem] = []
     
@@ -36,7 +37,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
     func execute() throws {
         let parameters: [String: Any]? = try resource?.documentDictionary()
         
-        client.executeRequest(path: path, method: httpMethod, queryItems: queryItems, bodyParameters: parameters, success: { (response, data) in
+        client.executeRequest(request: unsafeBitCast(self, to: Request<Resource, Any>.self), path: path, method: httpMethod, queryItems: queryItems, bodyParameters: parameters, success: { (response, data) in
             if let success = self.successBlock as? DataSource<ResourceType>.ResourceSuccessBlock {
                 guard let data = data else {
                     fatalError("Unhandled exception")
