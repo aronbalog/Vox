@@ -3,19 +3,17 @@ import Alamofire
 
 extension JSONAPIClient {
     #if ALAMOFIRE
-    public class Alamofire: Client {
+    open class Alamofire: Client {
         public let baseURL: URL
         
         public init(baseURL: URL) {
             self.baseURL = baseURL
         }
         
-        public func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock, userInfo: [String: Any]) {
+        open func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock, userInfo: [String: Any]) {
             let sessionManager = SessionManager.default
             let url = baseURL.appendingPathComponent(path)
-            let headers: HTTPHeaders = [
-                "Content-Type": "application/vnd.api+json"
-            ]
+            let headers: HTTPHeaders = getHeaders()
             
             let request = multiEncodedURLRequest(url: url, method: method, queryItems: queryItems, bodyParameters: bodyParameters, headers: headers)
             
@@ -23,23 +21,33 @@ extension JSONAPIClient {
                 .request(request)
                 .validate(statusCode: 200..<300)
                 .validate(contentType: ["application/vnd.api+json"])
-                .responseData { (dataResponse) in
-                    let response = dataResponse.response
-                    let data = dataResponse.data
-                    let error = dataResponse.error
-                    
-                    dataResponse
-                        .result
-                        .ifSuccess {
-                            success(response, data)
-                        }
-                        .ifFailure {
-                            failure(error, data)
-                    }
+                .responseData { (data) in
+                    self.responseHandler(data, success, failure)
             }
         }
         
-        private func multiEncodedURLRequest(url: URL, method: String, queryItems: [URLQueryItem], bodyParameters: [String: Any]?, headers: HTTPHeaders) -> URLRequest {
+        open func getHeaders() -> HTTPHeaders {
+            return [
+                "Content-Type": "application/vnd.api+json"
+            ]
+        }
+        
+        open func responseHandler(_ dataResponse: DataResponse<Data>, _ success: @escaping ClientSuccessBlock, _ failure: @escaping ClientFailureBlock) {
+            let response = dataResponse.response
+            let data = dataResponse.data
+            let error = dataResponse.error
+            
+            dataResponse
+                .result
+                .ifSuccess {
+                    success(response, data)
+                }
+                .ifFailure {
+                    failure(error, data)
+            }
+        }
+        
+        open func multiEncodedURLRequest(url: URL, method: String, queryItems: [URLQueryItem], bodyParameters: [String: Any]?, headers: HTTPHeaders) -> URLRequest {
             let temporaryRequest = URLRequest(url: url)
             
             var parameters: [String: Any] = [:]
