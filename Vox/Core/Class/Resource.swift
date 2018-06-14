@@ -16,7 +16,7 @@ open class Resource: BaseResource {
     weak var context: Context?
     weak var object: NSMutableDictionary?
     
-    public var id: String?
+    @objc public var id: String?
     public lazy var type: String = Swift.type(of: self).resourceType
     
     public var meta: NSMutableDictionary? {
