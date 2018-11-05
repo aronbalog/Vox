@@ -48,6 +48,16 @@ open class Resource: BaseResource {
         
         return _relationships
     }
+
+    public var links: NSMutableDictionary? {
+        var _links: NSMutableDictionary?
+
+        context?.queue.sync {
+            _links = object?["links"] as? NSMutableDictionary
+        }
+
+        return _links
+    }
     
     public required init(context: Context? = nil) {
         super.init()
@@ -77,6 +87,7 @@ open class Resource: BaseResource {
     public func documentDictionary() throws -> [String: Any] {
         let attributes = self.attributes
         let relationships = self.relationships
+        let links = self.links
         
         var dictionary: [String: Any] = [
             "type": self.type
@@ -94,6 +105,11 @@ open class Resource: BaseResource {
         if let relationships = relationships,
             relationships.count > 0 {
             dictionary["relationships"] = relationships
+        }
+
+        if let links = links,
+            links.count > 0 {
+            dictionary["links"] = links
         }
         
         return ["data": dictionary]
@@ -131,6 +147,7 @@ extension Array where Element: Resource {
             
             let attributes = resource.attributes
             let relationships = resource.relationships
+            let links = resource.links
             
             var dictionary: [String: Any] = [
                 "id": id,
@@ -145,6 +162,11 @@ extension Array where Element: Resource {
             if let relationships = relationships,
                 relationships.count > 0 {
                 dictionary["relationships"] = relationships
+            }
+
+            if let links = links,
+                links.count > 0 {
+                dictionary["links"] = links
             }
             
             return dictionary

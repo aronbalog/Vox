@@ -25,6 +25,13 @@ extension Context {
                 } else if data is NSNull {
                     value = nil
                 }
+            } else if let linkDocumentData = resource.object?.value(forKeyPath: "links.\(key)") {
+                if let stringObject = linkDocumentData as? String, let urlObject = URL(string: stringObject) {
+                    value = urlObject // assume simple string url
+                } else if let dictionary = linkDocumentData as? [String: Any] {
+                    // need to parse { href: "", meta : {..}}
+                    value = dictionary
+                }
             }
         }
         

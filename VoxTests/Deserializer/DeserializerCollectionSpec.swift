@@ -23,6 +23,9 @@ fileprivate class Article2: Resource {
     @objc dynamic var author: Person2?
     @objc dynamic var hint: String?
     @objc dynamic var customObject: [String: Any]?
+    @objc dynamic var here: URL?
+    @objc dynamic var there: URL?
+    @objc dynamic var related: [String: Any]?
 }
 
 
@@ -61,6 +64,8 @@ class DeserializerCollectionSpec: QuickSpec {
                     expect(article?.descriptionText).to(equal("Desc"))
                     expect(article?.keywords).notTo(beNil())
                     expect(article?.customObject).notTo(beNil())
+                    expect(article?.here).to(equal(URL(string: "www.example.com")!))
+                    expect(article?.related).notTo(beNil())
 
                     let coauthors = article?.coauthors
                     let author = article?.author
