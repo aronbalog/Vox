@@ -66,7 +66,7 @@ class DeserializerCollectionSpec: QuickSpec {
                     expect(article?.customObject).notTo(beNil())
                     expect(article?.here).to(equal(URL(string: "www.example.com")!))
                     expect(article?.related).notTo(beNil())
-
+                    expect(article?.links).notTo(beNil())
                     let coauthors = article?.coauthors
                     let author = article?.author
 
