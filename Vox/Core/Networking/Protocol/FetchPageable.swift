@@ -106,7 +106,7 @@ public extension Document where DataType: Collection, DataType.Element: Resource
         if let array = document.context.dictionary["data"] as? [Any] {
             let selfData = self.context.dictionary["data"] as? NSMutableArray
             
-            let resources = array.compactMap({ (resourceJson) -> Resource? in
+            let resources = array.flatMap({ (resourceJson) -> Resource? in
                 guard let resourceJson = resourceJson as? NSMutableDictionary else { return nil }
                 let copy = resourceJson.mutableCopy() as! NSMutableDictionary
                 

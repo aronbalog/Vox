@@ -31,7 +31,7 @@ public class Context: NSObject {
                 let resource = mapResource(for: data)
                 dataType = .resource(resource)
             } else if let data = dictionary["data"] as? NSMutableArray {
-                let resources = data.compactMap({ (resourceData) -> Resource? in
+                let resources = data.flatMap({ (resourceData) -> Resource? in
                     guard let dictionary = resourceData as? NSMutableDictionary else { fatalError("Invalid data type") }
                     let resource = mapResource(for: dictionary)
                     
@@ -40,7 +40,7 @@ public class Context: NSObject {
                 
                 dataType = .collection(resources)
             } else if let errors = dictionary["errors"] as? NSMutableArray {
-                let errorObjects = errors.compactMap({ (object) -> ErrorObject? in
+                let errorObjects = errors.flatMap({ (object) -> ErrorObject? in
                     guard let object = object as? [String: Any] else { return nil }
                     return ErrorObject(dictionary: object)
                 })

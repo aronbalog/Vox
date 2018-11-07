@@ -17,7 +17,7 @@ extension Context {
                 let data = relationshipDocumentData["data"]
                 if let arrayOfBasicObjects = data as? NSMutableArray {
                     
-                    value = arrayOfBasicObjects.compactMap({ (basicObject) -> Resource? in
+                    value = arrayOfBasicObjects.flatMap({ (basicObject) -> Resource? in
                         return resourcePool.resource(forBasicObject: basicObject as! [String: String])
                     })
                 } else if let basicObject = data as? NSMutableDictionary {
