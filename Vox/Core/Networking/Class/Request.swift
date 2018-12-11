@@ -50,7 +50,10 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
                     self.failureBlock?(__error)
                 }
             } else if let success = self.successBlock as? DataSource<ResourceType>.OptionalResourceSuccessBlock {
-                guard let data = data else {
+                guard
+                    let data = data,
+                    !data.isEmpty
+                else {
                     success(nil)
                     return
                 }

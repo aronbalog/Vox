@@ -333,13 +333,6 @@
 			path = Assets;
 			sourceTree = "<group>";
 		};
-		38E00CFC2038D30400B45B4C /* Helpers */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Helpers;
-			sourceTree = "<group>";
-		};
 		38E00CFF20390C2D00B45B4C /* Networking */ = {
 			isa = PBXGroup;
 			children = (
@@ -434,7 +427,6 @@
 				3872FA3120379F8300CC26BD /* Vox.h */,
 				38E00D42203911B700B45B4C /* Enum */,
 				38E00CFF20390C2D00B45B4C /* Networking */,
-				38E00CFC2038D30400B45B4C /* Helpers */,
 				3872FA532037ABC600CC26BD /* Protocol */,
 				3872FA4820379FD600CC26BD /* Class */,
 			);
@@ -474,7 +466,6 @@
 				3872FA2A20379F8300CC26BD /* Frameworks */,
 				3872FA2B20379F8300CC26BD /* Headers */,
 				3872FA2C20379F8300CC26BD /* Resources */,
-				B69D21D2071A346B1D4FF9FF /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -494,7 +485,6 @@
 				3872FA3420379F8300CC26BD /* Frameworks */,
 				3872FA3520379F8300CC26BD /* Resources */,
 				6F291A416A23E12D3201311E /* [CP] Embed Pods Frameworks */,
-				8CD5B7FC9E9936A372617039 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -633,36 +623,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-VoxTests/Pods-VoxTests-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		8CD5B7FC9E9936A372617039 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-VoxTests/Pods-VoxTests-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		B69D21D2071A346B1D4FF9FF /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Vox/Pods-Vox-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
