@@ -76,7 +76,7 @@ extension Resource: NullableAware {
         return self.id == .null
     }
     
-    static func null() -> Self {
+    public static func null() -> Self {
         let _null = self.init()
         _null.id = .null
         
