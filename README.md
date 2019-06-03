@@ -1,6 +1,8 @@
 # Vox
 
-Vox is a Swift JSONAPI standard implementation.
+Vox is a Swift JSONAPI standard implementation. 🔌
+
+🔜 More stable version (written in Swift 5) coming soon.
 
 [![Build Status](https://travis-ci.org/aronbalog/Vox.svg?branch=master)](https://travis-ci.org/aronbalog/Vox)
 [![codecov](https://codecov.io/gh/aronbalog/Vox/branch/master/graph/badge.svg)](https://codecov.io/gh/aronbalog/Vox)
