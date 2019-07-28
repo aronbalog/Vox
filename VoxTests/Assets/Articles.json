@@ -37,7 +37,17 @@
                     "type": "persons2"
                 }
             }
-        }
+        },
+        "links": {
+	    		"here": "www.example.com",
+	    		"there": "www.example2.com",
+	    		"related": {
+					    "href": "http://example.com/articles/1/comments",
+					    "meta": {
+					      "count": 10
+							}
+	    		}
+    		}
     }],
     "included": [
         {
