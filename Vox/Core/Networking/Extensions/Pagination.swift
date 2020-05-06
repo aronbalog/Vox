@@ -1,5 +1,5 @@
 import Foundation
 
-struct Pagination {
+public struct Pagination {
     
 }
