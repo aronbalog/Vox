@@ -1,7 +1,5 @@
-import UIKit
-
-import Quick
-import Nimble
+import Foundation
+import Testing
 
 @testable import Vox
 
@@ -38,39 +36,26 @@ fileprivate class Person2: Resource {
     
 }
 
-
-class DeserializerCollectionSpec: QuickSpec {
-    lazy var data = Data(jsonFileName: "Articles")
+@Suite("Deserializer when deserializing resource collection")
+struct DeserializerCollectionSpec {
+    let data = Data(jsonFileName: "Articles")
     
-    override func spec() {
-        describe("Deserializer") {
-            let sut = Deserializer.Collection<Article2>()
-
-            context("when deserializing resource collection", {
-                let document = try! sut.deserialize(data: self.data)
-                
-                it("maps correctly", closure: {
-                    expect(document).notTo(beNil())
-                    let articles = document.data
-                    
-                    expect(articles).notTo(beNil())
-                    expect(articles?.count).to(equal(1))
-                    
-                    let article = articles?.first
-                    expect(article?.title).to(equal("Title"))
-                    expect(article?.descriptionText).to(equal("Desc"))
-                    expect(article?.keywords).notTo(beNil())
-                    expect(article?.customObject).notTo(beNil())
-
-                    let coauthors = article?.coauthors
-                    let author = article?.author
-
-                    expect(author).notTo(beNil())
-                    expect(author?.name).to(equal("Aron"))
-
-                    expect(coauthors!.count).to(equal(2))
-                })
-            })
-        }
+    @Test("maps correctly")
+    func mapsCorrectly() throws {
+        let document = try Deserializer.Collection<Article2>().deserialize(data: data)
+        let articles = try #require(document.data)
+        
+        #expect(articles.count == 1)
+        
+        let article = try #require(articles.first)
+        #expect(article.title == "Title")
+        #expect(article.descriptionText == "Desc")
+        #expect(article.keywords != nil)
+        #expect(article.customObject != nil)
+        
+        let author = try #require(article.author)
+        #expect(author.name == "Aron")
+        
+        #expect(article.coauthors?.count == 2)
     }
 }

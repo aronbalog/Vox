@@ -1,6 +1,5 @@
-import UIKit
-import Quick
-import Nimble
+import Foundation
+import Testing
 
 @testable import Vox
 
@@ -30,35 +29,22 @@ fileprivate class Shield: Resource {
     @objc dynamic var name: String?
 }
 
-class DeserializerSinglePolymorphic: QuickSpec {
-    lazy var data = Data(jsonFileName: "DeserializerSinglePolymorphic")
+@Suite("Deserializer when deserializing document with polymorphic objects in relationships")
+struct DeserializerSinglePolymorphicSpec {
+    let data = Data(jsonFileName: "DeserializerSinglePolymorphic")
     
-    override func spec() {
-        let sut = Deserializer.Single<Player>()
-
-        describe("Deserializer") {
-            context("when deserializing document with polymorphic objects in relationships", {
-                let document = try? sut.deserialize(data: self.data)
-                
-                it("maps correctly", closure: {
-                    let player = document?.data
-                    expect(player).notTo(beNil())
-                    
-                    let items = player?.items
-                    expect(items).notTo(beNil())
-                    
-                    let weapon = items?.first as? Weapon
-                    let shield = items?.last as? Shield
-                    
-                    expect(weapon).to(beAKindOf(Weapon.self))
-                    expect(weapon?.hint).to(equal("A hint"))
-                    expect(weapon?.shield).notTo(beNil())
-                    expect(shield).to(beAKindOf(Shield.self))
-                    expect(shield?.name).to(equal("A name"))
-                    
-                    expect(weapon?.shield === shield).to(beTrue())
-                })
-            })
-        }
+    @Test("maps correctly")
+    func mapsCorrectly() throws {
+        let document = try Deserializer.Single<Player>().deserialize(data: data)
+        let player = try #require(document.data)
+        let items = try #require(player.items)
+        
+        let weapon = try #require(items.first as? Weapon)
+        let shield = try #require(items.last as? Shield)
+        
+        #expect(weapon.hint == "A hint")
+        #expect(weapon.shield != nil)
+        #expect(shield.name == "A name")
+        #expect(weapon.shield === shield)
     }
 }

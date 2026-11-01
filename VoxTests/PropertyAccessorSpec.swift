@@ -1,6 +1,5 @@
-import UIKit
-import Quick
-import Nimble
+import Foundation
+import Testing
 
 @testable import Vox
 
@@ -30,89 +29,70 @@ fileprivate class Wallet: Resource {
     }
 }
 
-class PropertyAccessorSpec: QuickSpec {
-    override func spec() {
-        describe("resource") {
-            let person = Person()
-            
-            context("when values are set to properties", {
-                person.id = "MOCK-ID"
-                person.name = "MOCK"
-                person.age = 28
-                person.isHappy = true
-                person.favoriteWords = ["vox", "bucks"]
-
-                let bestFriend = Person()
-                bestFriend.id = "FRIEND-ID"
-                
-                let anotherFriend = Person()
-                anotherFriend.id = "ANOTHER-FRIEND-ID"
-                
-                person.bestFriend = bestFriend
-                person.goodFriends = [bestFriend, anotherFriend]
-                
-                let wallet = Wallet(context: person.context)
-                wallet.id = "wallet id"
-                let cellphone = Cellphone()
-                cellphone.id = "cellphone id"
-                
-                person.items = [wallet, cellphone]
-
-                it("values are accessible", closure: {
-                    expect(person.name).to(equal("MOCK"))
-                    expect(person["name"] as? String).to(equal("MOCK"))
-                    
-                    expect(person.age).to(equal(28))
-                    expect(person["age"] as? Int).to(equal(28))
-                    
-                    expect(person.isHappy as? Bool).to(beTrue())
-                    expect(person["isHappy"] as? Bool).to(beTrue())
-                    
-                    expect(person.favoriteWords).to(equal(["vox", "bucks"]))
-                    expect(person["favoriteWords"] as? [String]).to(equal(["vox", "bucks"]))
-
-                    expect(person.bestFriend).to(equal(bestFriend))
-                    expect(person["bestFriend"] as? Resource).to(equal(bestFriend))
-
-                    expect(person.goodFriends).to(haveCount(2))
-                    expect(person.goodFriends?[0] === bestFriend).to(beTrue())
-                    expect(person.goodFriends?[1] === anotherFriend).to(beTrue())
-                    
-                    expect(person.items).to(haveCount(2))
-                    expect(person.items?[0] === wallet).to(beTrue())
-                    expect(person.items?[1] === cellphone).to(beTrue())
-
-                })
-                
-                let documentDictionary = person.documentDictionary
-                
-                let data = person.documentData
-                
-                let string = String(data: data, encoding: .utf8)!
-                
-                print(string)
-                
-                it("can export document dictionary", closure: {
-                    expect(documentDictionary).notTo(beNil())
-                })
-            })
-        }
+@Suite("Resource property accessors")
+struct PropertyAccessorSpec {
+    @Test("values set to properties are accessible")
+    func valuesAreAccessible() throws {
+        let person = Person()
+        person.id = "MOCK-ID"
+        person.name = "MOCK"
+        person.age = 28
+        person.isHappy = true
+        person.favoriteWords = ["vox", "bucks"]
         
-        describe("resource") {
-            let person = Person()
-            
-            let anotherPerson = Person()
-            anotherPerson.id = "123"
-            anotherPerson.age = 20
-            
-            person.bestFriend = anotherPerson
-            
-            context("when setting relationship", {
-                it("is accessible", closure: {
-                    expect(person.bestFriend === anotherPerson).to(beTrue())
-                })
-            })
-            
-        }
+        let bestFriend = Person()
+        bestFriend.id = "FRIEND-ID"
+        
+        let anotherFriend = Person()
+        anotherFriend.id = "ANOTHER-FRIEND-ID"
+        
+        person.bestFriend = bestFriend
+        person.goodFriends = [bestFriend, anotherFriend]
+        
+        let wallet = Wallet(context: person.context)
+        wallet.id = "wallet id"
+        let cellphone = Cellphone()
+        cellphone.id = "cellphone id"
+        
+        person.items = [wallet, cellphone]
+        
+        #expect(person.name == "MOCK")
+        #expect(person["name"] as? String == "MOCK")
+        
+        #expect(person.age == 28)
+        #expect(person["age"] as? Int == 28)
+        
+        #expect(person.isHappy?.boolValue == true)
+        #expect(person["isHappy"] as? Bool == true)
+        
+        #expect(person.favoriteWords == ["vox", "bucks"])
+        #expect(person["favoriteWords"] as? [String] == ["vox", "bucks"])
+        
+        #expect(person.bestFriend === bestFriend)
+        #expect(person["bestFriend"] as? Resource === bestFriend)
+        
+        #expect(person.goodFriends?.count == 2)
+        #expect(person.goodFriends?[0] === bestFriend)
+        #expect(person.goodFriends?[1] === anotherFriend)
+        
+        #expect(person.items?.count == 2)
+        #expect(person.items?[0] === wallet)
+        #expect(person.items?[1] === cellphone)
+        
+        #expect(try !person.documentData().isEmpty)
+        #expect(try person.documentDictionary()["data"] != nil)
+    }
+    
+    @Test("relationship set to a resource is accessible")
+    func relationshipIsAccessible() {
+        let person = Person()
+        
+        let anotherPerson = Person()
+        anotherPerson.id = "123"
+        anotherPerson.age = 20
+        
+        person.bestFriend = anotherPerson
+        
+        #expect(person.bestFriend === anotherPerson)
     }
 }

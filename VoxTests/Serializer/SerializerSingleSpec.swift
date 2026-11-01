@@ -1,6 +1,5 @@
-import UIKit
-import Quick
-import Nimble
+import Foundation
+import Testing
 
 @testable import Vox
 
@@ -46,113 +45,99 @@ fileprivate class Person: Resource {
     
 }
 
-class SerializerSingleSpec: QuickSpec {
-    override func spec() {
-        describe("Serializer") {
-            context("when serializing single resource", {
-                
-                let article = Article()
-                article.id = "id"
-                article.type = Article.resourceType
-                article["title"] = "title"
-                article.descriptionText = .null
-                article.keywords = .null
-                article.hint = "hint"
-                article.rank = 3
-                article.featured = .null
-                article.dictionary = [
-                    "firstName": "fist",
-                    "lastName": "last"
-                ]
-                article.anotherDictionary = .null
-                
-                article.numericArray = .null
-                article.arrayOfDictionaries = .null
-                article.anotherArrayOfDictionaries = [
-                    [
-                        "key":"value"
-                    ]
-                ]
-                article.optionalValue = nil
-                article.fans = .null
-
-                let person = Person()
-                person.id = "id"
-                person.type = Person.resourceType
-                person.name = "name"
-                person.age = 30
-                person.gender = "male"
-                
-                article.author = .null()
-                article.coauthors = .null
-                
-                let expectedAttributes: [String: Any] = [
-                    "title": "title",
-                    "description": NSNull(),
-                    "keywords": NSNull(),
-                    "hint": "hint",
-                    "rank": 3,
-                    "featured": NSNull(),
-                    "dictionary": [
-                        "firstName": "fist",
-                        "lastName": "last"
-                    ],
-                    "anotherDictionary": NSNull(),
-                    "numericArray": NSNull(),
-                    "arrayOfDictionaries": NSNull(),
-                    "anotherArrayOfDictionaries": [
-                        ["key":"value"]
-                    ]
-                ]
-                
-                let expectedRelationships: [String: Any] = [
-                    "author": [
-                        "data": NSNull()
-                    ],
-                    "coauthors": [
-                        "data": NSNull()
-                    ],
-                    "fans": [
-                        "data": NSNull()
-                    ]
-                ]
-                
-                it("maps correctly", closure: {
-                    let attributes = article.attributes!
-                    let relationships = article.relationships!
-                    
-                    print(String(data: try! JSONSerialization.data(withJSONObject: relationships, options: .prettyPrinted), encoding: .utf8)!)
-                    
-                    print("------------")
-                    
-                    print(String(data: try! JSONSerialization.data(withJSONObject: expectedRelationships, options: .prettyPrinted), encoding: .utf8)!)
-                    
-                    expect((attributes as NSDictionary).isEqual(expectedAttributes as NSDictionary)).to(beTrue())
-                    expect((relationships as NSDictionary).isEqual(expectedRelationships as NSDictionary)).to(beTrue())
-                })
-                
-                it("returns document data", closure: {
-                    let documentData = try! article.documentData()
-                    
-                    expect(documentData).notTo(beNil())
-                })
-                
-                it("returns document dictionary", closure: {
-                    let documentDictionary = try! article.documentDictionary()
-
-                    let expectedDictionary: [String: Any] = [
-                        "data": [
-                            "id":"id",
-                            "type":Article.resourceType,
-                            "attributes": expectedAttributes,
-                            "relationships": expectedRelationships
-                        ]
-                    ]
-                    
-                    expect((documentDictionary as NSDictionary).isEqual(expectedDictionary)).to(beTrue())
-                })
-            })
-        }
+@Suite("Serializer when serializing single resource")
+struct SerializerSingleSpec {
+    private let expectedAttributes: [String: Any] = [
+        "title": "title",
+        "description": NSNull(),
+        "keywords": NSNull(),
+        "hint": "hint",
+        "rank": 3,
+        "featured": NSNull(),
+        "dictionary": [
+            "firstName": "fist",
+            "lastName": "last"
+        ],
+        "anotherDictionary": NSNull(),
+        "numericArray": NSNull(),
+        "arrayOfDictionaries": NSNull(),
+        "anotherArrayOfDictionaries": [
+            ["key": "value"]
+        ]
+    ]
+    
+    private let expectedRelationships: [String: Any] = [
+        "author": [
+            "data": NSNull()
+        ],
+        "coauthors": [
+            "data": NSNull()
+        ],
+        "fans": [
+            "data": NSNull()
+        ]
+    ]
+    
+    private func makeArticle() -> Article {
+        let article = Article()
+        article.id = "id"
+        article.type = Article.resourceType
+        article["title"] = "title"
+        article.descriptionText = .null
+        article.keywords = .null
+        article.hint = "hint"
+        article.rank = 3
+        article.featured = .null
+        article.dictionary = [
+            "firstName": "fist",
+            "lastName": "last"
+        ]
+        article.anotherDictionary = .null
+        article.numericArray = .null
+        article.arrayOfDictionaries = .null
+        article.anotherArrayOfDictionaries = [
+            [
+                "key": "value"
+            ]
+        ]
+        article.optionalValue = nil
+        article.fans = .null
+        article.author = .null()
+        article.coauthors = .null
+        
+        return article
+    }
+    
+    @Test("maps correctly")
+    func mapsCorrectly() throws {
+        let article = makeArticle()
+        let attributes = try #require(article.attributes)
+        let relationships = try #require(article.relationships)
+        
+        #expect(attributes.isEqual(expectedAttributes as NSDictionary))
+        #expect(relationships.isEqual(expectedRelationships as NSDictionary))
+    }
+    
+    @Test("returns document data")
+    func returnsDocumentData() throws {
+        let documentData = try makeArticle().documentData()
+        
+        #expect(!documentData.isEmpty)
+    }
+    
+    @Test("returns document dictionary")
+    func returnsDocumentDictionary() throws {
+        let documentDictionary = try makeArticle().documentDictionary()
+        
+        let expectedDictionary: [String: Any] = [
+            "data": [
+                "id": "id",
+                "type": Article.resourceType,
+                "attributes": expectedAttributes,
+                "relationships": expectedRelationships
+            ]
+        ]
+        
+        #expect((documentDictionary as NSDictionary).isEqual(expectedDictionary))
     }
 }
-

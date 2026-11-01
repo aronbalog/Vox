@@ -1,6 +1,5 @@
-import UIKit
-import Quick
-import Nimble
+import Foundation
+import Testing
 
 @testable import Vox
 
@@ -37,7 +36,6 @@ fileprivate class Person3: Resource {
     
 }
 
-
 fileprivate class MockRouter: Router {
     func fetch(id: String, type: Resource.Type) -> String {
         fatalError()
@@ -60,9 +58,10 @@ fileprivate class MockRouter: Router {
     }
 }
 
+/// Responds to the first request with `Pagination1.json` and to every following one with `Pagination2.json`.
 fileprivate class MockClient: Client {
-    lazy var data1 = Data(jsonFileName: "Pagination1")
-    lazy var data2 = Data(jsonFileName: "Pagination2")
+    let firstPage = Data(jsonFileName: "Pagination1")
+    let nextPage = Data(jsonFileName: "Pagination2")
     
     var count: Int = 0
     var firstPath: String?
@@ -70,275 +69,103 @@ fileprivate class MockClient: Client {
     var queryItems: [URLQueryItem]?
     
     func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock, userInfo: [String: Any]) {
-        
         if count == 0 {
             count += 1
             firstPath = path
-            success(nil, data1)
+            success(nil, firstPage)
         } else {
             self.queryItems = queryItems
             nextPath = path
-            success(nil, data2)
+            success(nil, nextPage)
         }
     }
 }
 
-fileprivate class PageableResource: Resource {
-    override class var resourceType: String {
-        return "pageable-resource"
+@Suite("Paginated DataSource when fetching first page")
+struct PaginationSpec {
+    private let router = MockRouter()
+    private let client = MockClient()
+    
+    private func fetchFirstPage() throws -> Document<[Article3]> {
+        let dataSource = DataSource<Article3>(strategy: .router(router), client: client)
+        var document: Document<[Article3]>?
+        
+        try dataSource.fetch().result({ document = $0 }, { error in
+            Issue.record("Unexpected error: \(String(describing: error))")
+        })
+        
+        #expect(client.firstPath == router.fetch(type: Article3.self))
+        
+        let firstPage = try #require(document)
+        #expect(firstPage.links != nil)
+        
+        return firstPage
+    }
+    
+    private func fetch(_ request: FetchRequest<Article3, DataSource<Article3>.ResourceCollectionSuccessBlock>?) throws -> Document<[Article3]>? {
+        var document: Document<[Article3]>?
+        
+        try request?.result({ document = $0 }, { error in
+            Issue.record("Unexpected error: \(String(describing: error))")
+        })
+        
+        return document
+    }
+    
+    @Test("when fetching next page returns next page document")
+    func fetchingNextPage() throws {
+        let document = try fetchFirstPage()
+        
+        #expect(try fetch(document.next) != nil)
+    }
+    
+    @Test("when fetching first page of document returns first page document")
+    func fetchingFirstPageOfDocument() throws {
+        let document = try fetchFirstPage()
+        
+        #expect(try fetch(document.first) != nil)
+    }
+    
+    @Test("when reloading current page receives page")
+    func reloadingCurrentPage() throws {
+        let document = try fetchFirstPage()
+        
+        #expect(try fetch(document.reload) != nil)
+    }
+    
+    @Test("when fetching previous page receives page")
+    func fetchingPreviousPage() throws {
+        let document = try fetchFirstPage()
+        
+        #expect(try fetch(document.previous) != nil)
+    }
+    
+    @Test("when fetching last page returns last page document")
+    func fetchingLastPage() throws {
+        let document = try fetchFirstPage()
+        
+        #expect(try fetch(document.last) != nil)
+    }
+    
+    @Test("when appending next page document and included are appended")
+    func appendingNextPage() throws {
+        let document = try fetchFirstPage()
+        var pagination: PaginationData<Article3>?
+        
+        document.appendNext({ pagination = $0 }, { error in
+            Issue.record("Unexpected error: \(String(describing: error))")
+        })
+        
+        let page = try #require(pagination)
+        #expect(page.new.count == 1)
+        #expect(page.old.count == 1)
+        #expect(page.all.count == 2)
+        #expect(document.data?.count == 2)
+        #expect(document.included?.count == 6)
+        #expect(client.nextPath == "/articles")
+        #expect(client.queryItems == [
+            URLQueryItem(name: "page[number]", value: "4"),
+            URLQueryItem(name: "page[size]", value: "1")
+        ])
     }
 }
-
-class PaginationSpec: QuickSpec {
-    override func spec() {
-
-        describe("Paginated DataSource") {
-            let router = MockRouter()
-            let client = MockClient()
-            let dataSource: DataSource = DataSource<Article3>(strategy: .router(router), client: client)
-
-            var document: Document<[Article3]>?
-            var nextDocument: Document<[Article3]>?
-            var error: Error?
-            
-            context("when fetching first page", {
-                try! dataSource.fetch().result({ (_document) in
-                    document = _document
-                }, { (_error) in
-                    error = _error
-                })
-                
-                it("returns first page document", closure: {
-                    expect(error).toEventually(beNil())
-                    expect(document).toEventuallyNot(beNil())
-                    expect(error).toEventually(beNil())
-                    expect(client.firstPath).toEventually(equal(router.fetch(type: Article3.self)))
-                })
-                
-                context("when fetching next page", {
-                    try! document?.next?.result({ (_nextDocument) in
-                        nextDocument = _nextDocument
-                    }, { (_error) in
-                        error = _error
-                    })
-                    
-                    it("returns next page document", closure: {
-                        expect(error).toEventually(beNil())
-                        expect(nextDocument).toEventuallyNot(beNil())
-                    })
-                })
-            })
-        }
-        
-        describe("Paginated DataSource") {
-            let router = MockRouter()
-            let client = MockClient()
-            let dataSource: DataSource = DataSource<Article3>(strategy: .router(router), client: client)
-            
-            var document: Document<[Article3]>?
-            var firstDocument: Document<[Article3]>?
-            var error: Error?
-            
-            context("when fetching first page", {
-                try! dataSource.fetch().result({ (_document) in
-                    document = _document
-                }, { (_error) in
-                    error = _error
-                })
-                
-                it("returns first page document", closure: {
-                    expect(error).toEventually(beNil())
-                    expect(document).toEventuallyNot(beNil())
-                    expect(error).toEventually(beNil())
-                    expect(client.firstPath).toEventually(equal(router.fetch(type: Article3.self)))
-                })
-                
-                context("when fetching first page of document", {
-                    try! document?.first?.result({ (_firstDocument) in
-                        firstDocument = _firstDocument
-                    }, { (_error) in
-                        error = _error
-                    })
-                    
-                    it("returns first page document", closure: {
-                        expect(error).toEventually(beNil())
-                        expect(firstDocument).toEventuallyNot(beNil())
-                    })
-                })
-            })
-        }
-        
-        describe("Paginated DataSource") {
-            let router = MockRouter()
-            let client = MockClient()
-            let dataSource: DataSource = DataSource<Article3>(strategy: .router(router), client: client)
-
-            var document: Document<[Article3]>?
-            var pagination: PaginationData<Article3>?
-            var error: Error?
-
-            context("when fetching first page", {
-                try! dataSource.fetch().result({ (_document) in
-                    document = _document
-                }, { (_error) in
-                    error = _error
-                })
-                
-                it("returns first page document", closure: {
-                    expect(document).toEventuallyNot(beNil())
-                    expect(document?.links).toEventuallyNot(beNil())
-                    expect(error).toEventually(beNil())
-                    expect(client.firstPath).toEventually(equal(router.fetch(type: Article3.self)))
-                })
-                
-                                
-                context("when appending next page", {
-                    document?.appendNext({ (_pagination) in
-                        pagination = _pagination
-                    }, { (_error) in
-                        error = _error
-                    })
-                
-                    it("receives pagination", closure: {
-                        expect(error).toEventually(beNil())
-                        expect(pagination).toEventuallyNot(beNil())
-                        expect(pagination?.new).toEventually(haveCount(1))
-                        expect(pagination?.old).toEventually(haveCount(1))
-                        expect(pagination?.all).toEventually(haveCount(2))
-                        expect(document?.data).toEventually(haveCount(2))
-                        expect(client.nextPath).toEventually(equal("/articles"))
-                        expect(client.queryItems).toEventually(equal([
-                            URLQueryItem.init(name: "page[number]", value: "4"),
-                            URLQueryItem.init(name: "page[size]", value: "1")
-                            ]))
-                    })
-                    
-                    it("document is appended", closure: {
-                        expect(document?.data).toEventually(haveCount(2))
-                    })
-                    
-                    it("included is appended", closure: {
-                        expect(document?.included).toEventually(haveCount(6))
-                    })
-                })
-            })
-        }
-        
-        describe("Paginated DataSource") {
-            let router = MockRouter()
-            let client = MockClient()
-            let dataSource: DataSource = DataSource<Article3>(strategy: .router(router), client: client)
-            
-            var document: Document<[Article3]>?
-            var reloadedDocument: Document<[Article3]>?
-            var error: Error?
-            
-            context("when fetching first page", {
-                try! dataSource.fetch().result({ (_document) in
-                    document = _document
-                }, { (_error) in
-                    error = _error
-                })
-                
-                it("returns first page document", closure: {
-                    expect(document).toEventuallyNot(beNil())
-                    expect(document?.links).toEventuallyNot(beNil())
-                    expect(error).toEventually(beNil())
-                    expect(client.firstPath).toEventually(equal(router.fetch(type: Article3.self)))
-                })
-                
-                
-                context("when reloading current page", {
-                    try! document?.reload?.result({ (document) in
-                        reloadedDocument = document
-                    }, { (_error) in
-                        error = _error
-                    })
-                    
-                    it("receives page", closure: {
-                        expect(error).toEventually(beNil())
-                        expect(reloadedDocument).toEventuallyNot(beNil())
-                    })
-                })
-            })
-        }
-        
-        describe("Paginated DataSource") {
-            let router = MockRouter()
-            let client = MockClient()
-            let dataSource: DataSource = DataSource<Article3>(strategy: .router(router), client: client)
-            
-            var document: Document<[Article3]>?
-            var previousDocument: Document<[Article3]>?
-            var error: Error?
-            
-            context("when fetching first page", {
-                try! dataSource.fetch().result({ (_document) in
-                    document = _document
-                }, { (_error) in
-                    error = _error
-                })
-                
-                it("returns first page document", closure: {
-                    expect(document).toEventuallyNot(beNil())
-                    expect(document?.links).toEventuallyNot(beNil())
-                    expect(error).toEventually(beNil())
-                    expect(client.firstPath).toEventually(equal(router.fetch(type: Article3.self)))
-                })
-                
-                
-                context("when fetching previous page", {
-                    try! document?.previous?.result({ (document) in
-                        previousDocument = document
-                    }, { (_error) in
-                        error = _error
-                    })
-                    
-                    it("receives page", closure: {
-                        expect(error).toEventually(beNil())
-                        expect(previousDocument).toEventuallyNot(beNil())
-                    })
-                })
-            })
-        }
-        
-        describe("Paginated DataSource") {
-            let router = MockRouter()
-            let client = MockClient()
-            let dataSource: DataSource = DataSource<Article3>(strategy: .router(router), client: client)
-            
-            var document: Document<[Article3]>?
-            var lastDocument: Document<[Article3]>?
-            var error: Error?
-            
-            context("when fetching first page", {
-                try! dataSource.fetch().result({ (_document) in
-                    document = _document
-                }, { (_error) in
-                    error = _error
-                })
-                
-                it("returns first page document", closure: {
-                    expect(error).toEventually(beNil())
-                    expect(document).toEventuallyNot(beNil())
-                    expect(error).toEventually(beNil())
-                    expect(client.firstPath).toEventually(equal(router.fetch(type: Article3.self)))
-                })
-                
-                context("when fetching last page", {
-                    try! document?.last?.result({ (_lastDocument) in
-                        lastDocument = _lastDocument
-                    }, { (_error) in
-                        error = _error
-                    })
-                    
-                    it("returns last page document", closure: {
-                        expect(error).toEventually(beNil())
-                        expect(lastDocument).toEventuallyNot(beNil())
-                    })
-                })
-            })
-        }
-    }
-}
-

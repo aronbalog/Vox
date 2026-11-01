@@ -1,6 +1,5 @@
-import UIKit
-import Quick
-import Nimble
+import Foundation
+import Testing
 
 @testable import Vox
 
@@ -37,109 +36,91 @@ fileprivate class Person: Resource {
     
 }
 
-class SerializerCollectionSpec: QuickSpec {
-    override func spec() {
-        describe("Serializer") {
-            context("when serializing resource collection", {
-                
-                let article1 = Article()
-                article1.id = "id1"
-                article1.type = Article.resourceType
-                article1.title = "title"
-                article1.descriptionText = "desc"
-                article1.keywords = ["key1", "key2"]
-                article1.hint = "hint" // is meta object so it should not be mapped
-                
-                let article2 = Article()
-                article2.id = "id2"
-                article2.type = Article.resourceType
-                article2.title = "title"
-                article2.descriptionText = "desc"
-                article2.keywords = ["key1", "key2"]
-                article2.hint = "hint" // is meta object so it should not be mapped
-                
-                // create person
-                
-                let person = Person()
-                person.id = "id"
-                person.type = Person.resourceType
-                person.name = "name"
-                person.age = 10
-                person.gender = "male"
-                
-                article1.author = person
-                article1.coauthors = [person]
-                
-                article2.author = person
-                article2.coauthors = [person]
-
-                let expectedAttributes: [String: Any] = [
-                    "title": "title",
-                    "description": "desc",
-                    "keywords": ["key1", "key2"],
-                    "hint": "hint"
+@Suite("Serializer when serializing resource collection")
+struct SerializerCollectionSpec {
+    private let expectedAttributes: [String: Any] = [
+        "title": "title",
+        "description": "desc",
+        "keywords": ["key1", "key2"],
+        "hint": "hint"
+    ]
+    
+    private let expectedRelationships: [String: Any] = [
+        "author": [
+            "data": [
+                "id": "id",
+                "type": Person.resourceType
+            ]
+        ],
+        "coauthors": [
+            "data": [
+                [
+                    "id": "id",
+                    "type": Person.resourceType
                 ]
-                
-                let expectedRelationships: [String: Any] = [
-                    "author": [
-                        "data": [
-                            "id": "id",
-                            "type": Person.resourceType
-                        ]
-                    ],
-                    "coauthors": [
-                        "data": [
-                            [
-                                "id": "id",
-                                "type": Person.resourceType
-                            ]
-                        ]
-                    ]
-                ]
-                
-                it("maps correctly", closure: {
-                    let attributes1 = article1.attributes
-                    let relationships = article1.relationships
-                    
-                    expect(attributes1?.isEqual(expectedAttributes as NSDictionary)).to(beTrue())
-                    expect((relationships)?.isEqual(expectedRelationships as NSDictionary)).to(beTrue())
-                    
-                    expect((article2.attributes)?.isEqual(expectedAttributes as NSDictionary)).to(beTrue())
-                    expect((article2.relationships)?.isEqual(expectedRelationships as NSDictionary)).to(beTrue())
-                })
-                
-                let collection = [article1, article2]
-
-                it("returns document data", closure: {
-                    let documentData = collection.documentData
-
-                    expect(documentData).notTo(beNil())
-                })
-
-                it("returns document dictionary", closure: {
-                    let documentDictionary = try! collection.documentDictionary()
-
-                    let expectedDictionary: [String: Any] = [
-                        "data": [[
-                                "id":"id1",
-                                "type":Article.resourceType,
-                                "attributes": expectedAttributes,
-                                "relationships": expectedRelationships
-                            ],
-                             [
-                                "id":"id2",
-                                "type":Article.resourceType,
-                                "attributes": expectedAttributes,
-                                "relationships": expectedRelationships
-                            ]
-                        ]
-                    ]
-
-                    expect((documentDictionary as NSDictionary).isEqual(expectedDictionary)).to(beTrue())
-                })
-            })
+            ]
+        ]
+    ]
+    
+    private func makeArticles() -> [Article] {
+        let person = Person()
+        person.id = "id"
+        person.type = Person.resourceType
+        person.name = "name"
+        person.age = 10
+        person.gender = "male"
+        
+        return ["id1", "id2"].map { id in
+            let article = Article()
+            article.id = id
+            article.type = Article.resourceType
+            article.title = "title"
+            article.descriptionText = "desc"
+            article.keywords = ["key1", "key2"]
+            article.hint = "hint"
+            article.author = person
+            article.coauthors = [person]
+            
+            return article
         }
     }
+    
+    @Test("maps correctly")
+    func mapsCorrectly() {
+        for article in makeArticles() {
+            #expect(article.attributes?.isEqual(expectedAttributes as NSDictionary) == true)
+            #expect(article.relationships?.isEqual(expectedRelationships as NSDictionary) == true)
+        }
+    }
+    
+    @Test("returns document data")
+    func returnsDocumentData() throws {
+        let documentData = try makeArticles().documentData()
+        
+        #expect(!documentData.isEmpty)
+    }
+    
+    @Test("returns document dictionary")
+    func returnsDocumentDictionary() throws {
+        let documentDictionary = try makeArticles().documentDictionary()
+        
+        let expectedDictionary: [String: Any] = [
+            "data": [
+                [
+                    "id": "id1",
+                    "type": Article.resourceType,
+                    "attributes": expectedAttributes,
+                    "relationships": expectedRelationships
+                ],
+                [
+                    "id": "id2",
+                    "type": Article.resourceType,
+                    "attributes": expectedAttributes,
+                    "relationships": expectedRelationships
+                ]
+            ]
+        ]
+        
+        #expect((documentDictionary as NSDictionary).isEqual(expectedDictionary))
+    }
 }
-
-

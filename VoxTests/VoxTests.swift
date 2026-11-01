@@ -10,14 +10,12 @@ extension Int {
     }
 }
 
-fileprivate class FakeClass {}
+private final class BundleToken {}
 
 extension Data {
     init(jsonFileName: String) {
-        let path = Bundle(for: FakeClass.self).url(forResource: jsonFileName, withExtension: "json")!
+        let url = Bundle(for: BundleToken.self).url(forResource: jsonFileName, withExtension: "json")!
         
-        
-        self = try! Data(contentsOf: path)
+        self = try! Data(contentsOf: url)
     }
 }
-
