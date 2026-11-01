@@ -1,5 +1,5 @@
 import Foundation
 
-public protocol PaginationStrategy {
+public protocol PaginationStrategy: Sendable {
     func paginationURLQueryItems() -> [URLQueryItem]
 }

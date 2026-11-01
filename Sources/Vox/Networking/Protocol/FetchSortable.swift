@@ -1,7 +1,7 @@
 import Foundation
 
 /// A sort field of a collection request.
-public struct Sort: Equatable {
+public struct Sort: Equatable, Sendable {
     public let field: String
     public let isDescending: Bool
     

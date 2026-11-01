@@ -1,5 +1,5 @@
 import Foundation
 
-public protocol FilterStrategy {
+public protocol FilterStrategy: Sendable {
     func filterURLQueryItems() -> [URLQueryItem]
 }

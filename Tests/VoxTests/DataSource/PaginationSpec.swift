@@ -38,7 +38,7 @@ fileprivate class Person3: Resource {
     
 }
 
-fileprivate class MockRouter: Router {
+fileprivate struct MockRouter: Router {
     func fetch(id: String, type: Resource.Type) -> String {
         fatalError()
     }
@@ -60,115 +60,80 @@ fileprivate class MockRouter: Router {
     }
 }
 
-/// Responds to the first request with `Pagination1.json` and to every following one with `Pagination2.json`.
-fileprivate class MockClient: Client {
-    let firstPage = Data(jsonFileName: "Pagination1")
-    let nextPage = Data(jsonFileName: "Pagination2")
-    
-    var count: Int = 0
-    var firstPath: String?
-    var nextPath: String?
-    var queryItems: [URLQueryItem]?
-    
-    func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock, userInfo: [String: Any]) {
-        if count == 0 {
-            count += 1
-            firstPath = path
-            success(nil, firstPage)
-        } else {
-            self.queryItems = queryItems
-            nextPath = path
-            success(nil, nextPage)
-        }
-    }
-}
-
 @Suite("Paginated DataSource when fetching first page")
 struct PaginationSpec {
     private let router = MockRouter()
-    private let client = MockClient()
+    /// Responds to the first request with `Pagination1.json` and to every following one with `Pagination2.json`.
+    private let client = RecordingClient(jsonFileNames: ["Pagination1", "Pagination2"])
     
-    private func fetchFirstPage() throws -> Document<[Article3]> {
+    private func fetchFirstPage() async throws -> Document<[Article3]> {
         let dataSource = DataSource<Article3>(strategy: .router(router), client: client)
-        var document: Document<[Article3]>?
+        let document = try await dataSource.fetch().result()
         
-        try dataSource.fetch().result({ document = $0 }, { error in
-            Issue.record("Unexpected error: \(String(describing: error))")
-        })
-        
-        #expect(client.firstPath == router.fetch(type: Article3.self))
-        
-        let firstPage = try #require(document)
-        #expect(firstPage.links != nil)
-        
-        return firstPage
-    }
-    
-    private func fetch(_ request: FetchRequest<Article3, DataSource<Article3>.ResourceCollectionSuccessBlock>?) throws -> Document<[Article3]>? {
-        var document: Document<[Article3]>?
-        
-        try request?.result({ document = $0 }, { error in
-            Issue.record("Unexpected error: \(String(describing: error))")
-        })
+        #expect(client.requests.first?.target == .path(router.fetch(type: Article3.self)))
+        #expect(document.links != nil)
         
         return document
     }
     
-    @Test("when fetching next page returns next page document")
-    func fetchingNextPage() throws {
-        let document = try fetchFirstPage()
+    private func expectRequest(_ request: Document<[Article3]>.PageRequest?, following link: String) async throws {
+        let document = try await #require(request).result()
         
-        #expect(try fetch(document.next) != nil)
+        #expect(document.data?.first?.id == "id2")
+        #expect(client.requests.count == 2)
+        #expect(client.requests.last?.target == .link(link))
+        #expect(client.requests.last?.queryItems == [])
+    }
+    
+    @Test("when fetching next page returns next page document")
+    func fetchingNextPage() async throws {
+        let document = try await fetchFirstPage()
+        
+        try await expectRequest(document.next, following: "http://example.com/articles?page[number]=4&page[size]=1")
     }
     
     @Test("when fetching first page of document returns first page document")
-    func fetchingFirstPageOfDocument() throws {
-        let document = try fetchFirstPage()
+    func fetchingFirstPageOfDocument() async throws {
+        let document = try await fetchFirstPage()
         
-        #expect(try fetch(document.first) != nil)
+        try await expectRequest(document.first, following: "http://example.com/articles?page[number]=1&page[size]=1")
     }
     
     @Test("when reloading current page receives page")
-    func reloadingCurrentPage() throws {
-        let document = try fetchFirstPage()
+    func reloadingCurrentPage() async throws {
+        let document = try await fetchFirstPage()
         
-        #expect(try fetch(document.reload) != nil)
+        try await expectRequest(document.reload, following: "http://example.com/articles?page[number]=3&page[size]=1")
     }
     
     @Test("when fetching previous page receives page")
-    func fetchingPreviousPage() throws {
-        let document = try fetchFirstPage()
+    func fetchingPreviousPage() async throws {
+        let document = try await fetchFirstPage()
         
-        #expect(try fetch(document.previous) != nil)
+        try await expectRequest(document.previous, following: "http://example.com/articles?page[number]=2&page[size]=1")
     }
     
     @Test("when fetching last page returns last page document")
-    func fetchingLastPage() throws {
-        let document = try fetchFirstPage()
+    func fetchingLastPage() async throws {
+        let document = try await fetchFirstPage()
         
-        #expect(try fetch(document.last) != nil)
+        try await expectRequest(document.last, following: "http://example.com/articles?page[number]=13&page[size]=1")
     }
     
     @Test("when appending next page document and included are appended")
-    func appendingNextPage() throws {
-        let document = try fetchFirstPage()
-        var pagination: PaginationData<Article3>?
+    func appendingNextPage() async throws {
+        let document = try await fetchFirstPage()
         
-        document.appendNext({ pagination = $0 }, { error in
-            Issue.record("Unexpected error: \(String(describing: error))")
-        })
+        let page: PaginationData<Article3> = try await withCheckedThrowingContinuation { continuation in
+            document.appendNext({ continuation.resume(returning: $0) }, { continuation.resume(throwing: $0) })
+        }
         
-        let page = try #require(pagination)
         #expect(page.new.count == 1)
         #expect(page.old.count == 1)
         #expect(page.all.count == 2)
         #expect(document.data?.count == 2)
         #expect(document.included?.count == 6)
-        #expect(client.nextPath == "/articles")
-        #expect(client.queryItems == [
-            URLQueryItem(name: "page[number]", value: "4"),
-            URLQueryItem(name: "page[size]", value: "1")
-        ])
+        #expect(client.requests.last?.target == .link("http://example.com/articles?page[number]=4&page[size]=1"))
     }
 }
 

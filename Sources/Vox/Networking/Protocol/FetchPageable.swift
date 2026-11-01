@@ -8,98 +8,68 @@ public protocol FetchPageable {
     func paginate(_ pagination: PaginationStrategy) -> FetchConfigurableType
 }
 
-
-
-public struct PaginationData<T> {
-    let old: [T]
-    let new: [T]
-    let all: [T]
+public struct PaginationData<T>: @unchecked Sendable {
+    public let old: [T]
+    public let new: [T]
+    public let all: [T]
 }
 
-public extension Document where DataType: Collection, DataType.Element: Resource {
-    typealias ResourceCollectionSuccessBlock = DataSource<DataType.Element>.ResourceCollectionSuccessBlock
+extension Document where DataType: Collection, DataType.Element: Resource {
+    public typealias PageRequest = FetchRequest<DataType.Element, Document<[DataType.Element]>>
     
-    public var first: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
-        guard let client = client else { fatalError("Client not available") }
-        guard let first = self.links?.first?.url else { return nil }
-        
-        let dataSource = DataSource<DataType.Element>(strategy: .path(first.path), client: client)
-        
-        return dataSource.fetch()
+    /// A request for the first page, or `nil` when the document has no `first` link.
+    public var first: PageRequest? {
+        return request(following: links?.first)
     }
     
-    public var next: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
-        guard let client = client else { fatalError("Client not available") }
-        guard let next = self.links?.next?.url else { return nil }
-        
-        let dataSource = DataSource<DataType.Element>(strategy: .path(next.path), client: client)
-        
-        return dataSource.fetch()
+    /// A request for the next page, or `nil` when the document has no `next` link.
+    public var next: PageRequest? {
+        return request(following: links?.next)
     }
     
-    public var previous: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
-        guard let client = client else { fatalError("Client not available") }
-        guard let prev = self.links?.prev?.url else { return nil }
-        
-        let dataSource = DataSource<DataType.Element>(strategy: .path(prev.path), client: client)
-        
-        return dataSource.fetch()
+    /// A request for the previous page, or `nil` when the document has no `prev` link.
+    public var previous: PageRequest? {
+        return request(following: links?.prev)
     }
     
-    public var last: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
-        guard let client = client else { fatalError("Client not available") }
-        guard let last = self.links?.last?.url else { return nil }
-        
-        let dataSource = DataSource<DataType.Element>(strategy: .path(last.path), client: client)
-        
-        return dataSource.fetch()
+    /// A request for the last page, or `nil` when the document has no `last` link.
+    public var last: PageRequest? {
+        return request(following: links?.last)
     }
     
-    public var reload: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
-        guard let client = client else { fatalError("Client not available") }
-        guard let _self = self.links?.selfLink?.url else { return nil }
-        
-        let dataSource = DataSource<DataType.Element>(strategy: .path(_self.path), client: client)
-        
-        return dataSource.fetch()
+    /// A request for the current page, or `nil` when the document has no `self` link.
+    public var reload: PageRequest? {
+        return request(following: links?.selfLink)
     }
     
-    public func appendNext(_ completion: ((PaginationData<DataType.Element>) -> Void)? = nil, _ failure: ((Error?) -> Void)? = nil) {
-        guard let next = self.links?.next?.url else {
+    /// Fetches the next page and appends its resources and included resources to the document.
+    /// Does nothing when the document has no `next` link.
+    public func appendNext(_ completion: (@MainActor (PaginationData<DataType.Element>) -> Void)? = nil, _ failure: (@MainActor (Error) -> Void)? = nil) {
+        guard let next = next else {
             return
         }
         
-        guard let client = client else {
-            fatalError("Client not available")
+        next.result({ document in
+            let oldElements = self.data as? [DataType.Element] ?? []
+            let newElements = document.data ?? []
+            
+            self.mergeDocument(document)
+            
+            let allElements = self.data as? [DataType.Element] ?? []
+            
+            completion?(PaginationData(old: oldElements, new: newElements, all: allElements))
+        }, failure)
+    }
+    
+    /// A request following `link` with the client that fetched the document.
+    private func request(following link: Link?) -> PageRequest? {
+        guard let link = link, let client = client else {
+            return nil
         }
         
-        let path = URLComponents(url: next, resolvingAgainstBaseURL: false)
-        
-        let queryItems = path?.queryItems ?? []
-        
-        let dataSource = DataSource<DataType.Element>(strategy: .path(next.path), client: client)
-        
-        do {
-            try dataSource
-                .fetch()
-                .queryItems(queryItems)
-                .result({ (document) in
-                    let oldElements = self.data as? [DataType.Element] ?? []
-                    let newElements = document.data ?? []
-                    
-                    self.mergeDocument(document)
-
-                    let allElements = self.data as? [DataType.Element] ?? []
-                    
-                    let page = PaginationData<DataType.Element>.init(old: oldElements, new: newElements, all: allElements)
-                    completion?(page)
-                }) { (error) in
-                    failure?(error)
-                }
-        } catch let error {
-            failure?(error)
-        }
-        
+        return FetchRequest(Request(client: client, method: "GET", target: .link(link.href)) { response, client in
+            try ResponseDecoding.collection(response, client: client)
+        })
     }
     
     private func mergeDocument(_ document: Document<[DataType.Element]>) {

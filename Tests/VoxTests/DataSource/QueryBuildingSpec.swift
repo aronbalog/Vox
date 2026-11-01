@@ -9,27 +9,17 @@ fileprivate final class Song: Resource {
     }
 }
 
-fileprivate final class QueryRecordingClient: Client {
-    var queryItems: [URLQueryItem]?
-    
-    func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String: Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock, userInfo: [String: Any]) {
-        self.queryItems = queryItems
-    }
-}
-
 @Suite("Query building")
 struct QueryBuildingSpec {
-    private let client = QueryRecordingClient()
+    private let dataSource = DataSource<Song>(strategy: .path("songs"), client: RecordingClient())
     
-    private func queryItems(of request: (DataSource<Song>) -> FetchRequest<Song, DataSource<Song>.ResourceCollectionSuccessBlock>) throws -> [URLQueryItem] {
-        try request(DataSource<Song>(strategy: .path("songs"), client: client)).result({ _ in }, nil)
-        
-        return try #require(client.queryItems)
+    private func queryItems(of request: (DataSource<Song>) -> FetchRequest<Song, Document<[Song]>>) -> [URLQueryItem] {
+        return request(dataSource).makeQueryItems()
     }
     
     @Test("parameters are sent once, in a fixed order")
-    func order() throws {
-        let queryItems = try queryItems {
+    func order() {
+        let queryItems = queryItems {
             $0.fetch()
                 .queryItems([URLQueryItem(name: "custom", value: "1")])
                 .paginate(Pagination.PageBased(number: 2))
@@ -51,8 +41,8 @@ struct QueryBuildingSpec {
     }
     
     @Test("includes accumulate without duplicates")
-    func includes() throws {
-        let queryItems = try queryItems {
+    func includes() {
+        let queryItems = queryItems {
             $0.fetch().include(["album", "artist"]).include(["artist", "album.label"])
         }
         
@@ -60,8 +50,8 @@ struct QueryBuildingSpec {
     }
     
     @Test("sort, filter and pagination are replaced by later calls")
-    func replacements() throws {
-        let queryItems = try queryItems {
+    func replacements() {
+        let queryItems = queryItems {
             $0.fetch()
                 .sort([.ascending("title")])
                 .sort([.descending("year"), .ascending("title")])
@@ -79,8 +69,8 @@ struct QueryBuildingSpec {
     }
     
     @Test("fields are merged per type, and an empty list requests no fields")
-    func fields() throws {
-        let queryItems = try queryItems {
+    func fields() {
+        let queryItems = queryItems {
             $0.fetch()
                 .fields(["query-songs": ["title"], "albums": ["name"]])
                 .fields(["query-songs": ["title", "year"], "artists": []])
@@ -94,8 +84,8 @@ struct QueryBuildingSpec {
     }
     
     @Test("empty includes and sorts are left out")
-    func emptyParameters() throws {
-        let queryItems = try queryItems {
+    func emptyParameters() {
+        let queryItems = queryItems {
             $0.fetch().include([]).sort([])
         }
         

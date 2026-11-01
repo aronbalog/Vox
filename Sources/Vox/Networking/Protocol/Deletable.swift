@@ -1,7 +1,5 @@
 import Foundation
 
-typealias DeletableSuccessBlock = () -> Void
-
 public protocol Deletable {
     associatedtype DeletableResourceTypeCompletable
     

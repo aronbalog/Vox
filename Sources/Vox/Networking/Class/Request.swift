@@ -1,97 +1,94 @@
 import Foundation
 
-public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceResultable, QueryItemsCustomizable {
-    public typealias DataSourceResourceSuccessfulBlock = SuccessCallbackType
+/// The media type of JSON:API documents.
+let jsonAPIMediaType = "application/vnd.api+json"
+
+/// A request of a data source. Configure it with the modifiers, which return modified copies,
+/// and send it with `result()`.
+public struct Request<ResourceType: Resource, Output: Sendable>: DataSourceResultable, QueryItemsCustomizable, @unchecked Sendable {
+    let client: any Client
+    let method: String
+    let target: ClientRequest.Target
+    /// The resource sent as the request document.
+    let resource: ResourceType?
+    let decode: @Sendable (ClientResponse, any Client) throws -> Output
     
-    private var path: String
-    private var httpMethod: String
-    private var client: Client
-    public var userInfo: [String: Any] = [:]
+    private(set) var customQueryItems: [URLQueryItem] = []
     
-    private var customQueryItems: [URLQueryItem] = []
+    /// Headers sent in addition to the JSON:API ones.
+    public var headers: [String: String] = [:]
     
-    var resource: ResourceType?
+    /// Values passed to the client with the request.
+    public var userInfo: [String: any Sendable] = [:]
     
-    var successBlock: SuccessCallbackType?
-    var failureBlock: ((Error?) -> Void)?
-    
-    init(path: String, httpMethod: String, client: Client) {
-        self.path = path
-        self.httpMethod = httpMethod
+    init(client: any Client, method: String, target: ClientRequest.Target, resource: ResourceType? = nil, decode: @escaping @Sendable (ClientResponse, any Client) throws -> Output) {
         self.client = client
-    }
-    
-    public func result(_ success: SuccessCallbackType, _ failure: ((Error?) -> Void)?) throws {
-        successBlock = success
-        failureBlock = failure
-        
-        try execute()
+        self.method = method
+        self.target = target
+        self.resource = resource
+        self.decode = decode
     }
     
     /// Adds query items, which are sent after the ones the request builds itself.
-    public func queryItems(_ queryItems: [URLQueryItem]) -> Self {
-        customQueryItems.append(contentsOf: queryItems)
+    public func queryItems(_ queryItems: [URLQueryItem]) -> Request {
+        var request = self
+        request.customQueryItems += queryItems
         
-        return self
+        return request
     }
     
-    /// The query items of the request.
-    func makeQueryItems() -> [URLQueryItem] {
-        return customQueryItems
+    /// Adds headers, which replace the JSON:API headers with the same name, compared
+    /// case-insensitively.
+    public func headers(_ headers: [String: String]) -> Request {
+        var request = self
+        request.headers.merge(headers) { _, new in new }
+        
+        return request
     }
     
-    func execute() throws {
-        let parameters: [String: Any]? = try resource?.documentDictionary()
+    /// Adds values passed to the client with the request.
+    public func userInfo(_ userInfo: [String: any Sendable]) -> Request {
+        var request = self
+        request.userInfo.merge(userInfo) { _, new in new }
         
-        client.executeRequest(path: path, method: httpMethod, queryItems: makeQueryItems(), bodyParameters: parameters, success: { (response, data) in
-            if let success = self.successBlock as? DataSource<ResourceType>.ResourceSuccessBlock {
-                guard let data = data else {
-                    fatalError("Unhandled exception")
-                }
-                
-                do {
-                    let document: Document<ResourceType> = try Deserializer.Single().deserialize(data: data)
-                    success(document)
-                } catch let __error {
-                    self.failureBlock?(__error)
-                }
-            } else if let success = self.successBlock as? DataSource<ResourceType>.OptionalResourceSuccessBlock {
-                guard
-                    let data = data,
-                    !data.isEmpty
-                else {
-                    success(nil)
-                    return
-                }
-                
-                do {
-                    let document: Document<ResourceType> = try Deserializer.Single().deserialize(data: data)
-                    success(document)
-                } catch let __error {
-                    self.failureBlock?(__error)
-                }
-            } else if let success = self.successBlock as? DataSource<ResourceType>.ResourceCollectionSuccessBlock {
-                guard let data = data else {
-                    fatalError("Unhandled exception")
-                }
-                
-                do {
-                    let document: Document<[ResourceType]> = try Deserializer.Collection().deserialize(data: data)
-                    document.client = self.client
-                    success(document)
-                } catch let __error {
-                    self.failureBlock?(__error)
-                }
-            } else if let success = self.successBlock as? DataSource<ResourceType>.DeleteSuccessBlock {
-                success()
+        return request
+    }
+    
+    /// Sends the request.
+    ///
+    /// - Throws: `JSONAPIError.API` for responses with error objects,
+    ///   `JSONAPIError.unacceptableStatusCode` for other responses with a status code outside
+    ///   200–299, `JSONAPIError.invalidDocument` for responses that aren't the expected document,
+    ///   `JSONAPIError.serialization` when the resource can't be sent, and the errors of the
+    ///   client.
+    public func result() async throws -> Output {
+        return try await perform(queryItems: customQueryItems)
+    }
+    
+    func perform(queryItems: [URLQueryItem]) async throws -> Output {
+        var headers = ["Accept": jsonAPIMediaType]
+        let body = try resource.map { try $0.documentData() }
+        
+        if body != nil {
+            headers["Content-Type"] = jsonAPIMediaType
+        }
+        
+        for (name, value) in self.headers {
+            if let defaultName = headers.keys.first(where: { $0.caseInsensitiveCompare(name) == .orderedSame }) {
+                headers[defaultName] = nil
             }
-        }, failure: { (error, data) in
-            if let data = data, let apiError = JSONAPIDecoder.apiError(in: data) {
-                self.failureBlock?(apiError)
-            } else {
-                self.failureBlock?(error)
-            }
-        }, userInfo: userInfo)
+            
+            headers[name] = value
+        }
+        
+        let request = ClientRequest(method: method, target: target, queryItems: queryItems, headers: headers, body: body, userInfo: userInfo)
+        let response = try await client.execute(request)
+        
+        guard (200..<300).contains(response.statusCode) else {
+            throw JSONAPIDecoder.apiError(in: response.data) ?? JSONAPIError.unacceptableStatusCode(response.statusCode, body: response.data)
+        }
+        
+        return try decode(response, client)
     }
 }
 
@@ -99,56 +96,112 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
 ///
 /// The parameters are sent in a fixed order: sparse fieldsets sorted by type, the filter,
 /// `include`, `sort`, the pagination, and query items added with `queryItems(_:)`.
-public class FetchRequest<ResourceType: Resource, SuccessCallbackType>: Request<ResourceType, SuccessCallbackType>, FetchConfigurable {
-    public internal(set) var pagination: PaginationStrategy?
+public struct FetchRequest<ResourceType: Resource, Output: Sendable>: DataSourceResultable, QueryItemsCustomizable, FetchConfigurable, @unchecked Sendable {
+    private var request: Request<ResourceType, Output>
     
-    public internal(set) var filter: FilterStrategy?
+    public private(set) var pagination: PaginationStrategy?
     
-    public internal(set) var sort: [Sort] = []
+    public private(set) var filter: FilterStrategy?
     
-    public internal(set) var fields: Fields?
+    public private(set) var sort: [Sort] = []
     
-    public internal(set) var include: [String] = []
+    public private(set) var fields: Fields?
+    
+    public private(set) var include: [String] = []
+    
+    /// Headers sent in addition to the JSON:API ones.
+    public var headers: [String: String] {
+        get { return request.headers }
+        set { request.headers = newValue }
+    }
+    
+    /// Values passed to the client with the request.
+    public var userInfo: [String: any Sendable] {
+        get { return request.userInfo }
+        set { request.userInfo = newValue }
+    }
+    
+    init(_ request: Request<ResourceType, Output>) {
+        self.request = request
+    }
     
     /// Replaces the sort fields.
-    public func sort(_ sort: [Sort]) -> FetchRequest<ResourceType, SuccessCallbackType> {
-        self.sort = sort
+    public func sort(_ sort: [Sort]) -> FetchRequest {
+        var request = self
+        request.sort = sort
         
-        return self
+        return request
     }
     
     /// Sets the sparse fieldsets of the given types. An empty field list requests no fields of
     /// that type.
-    public func fields(_ fields: Fields) -> FetchRequest<ResourceType, SuccessCallbackType> {
-        self.fields = (self.fields ?? [:]).merging(fields) { _, new in new }
+    public func fields(_ fields: Fields) -> FetchRequest {
+        var request = self
+        request.fields = (self.fields ?? [:]).merging(fields) { _, new in new }
         
-        return self
+        return request
     }
     
     /// Adds relationship paths to include, leaving out the ones included already.
-    public func include(_ include: [String]) -> FetchRequest<ResourceType, SuccessCallbackType> {
-        for path in include where !self.include.contains(path) {
-            self.include.append(path)
+    public func include(_ include: [String]) -> FetchRequest {
+        var request = self
+        
+        for path in include where !request.include.contains(path) {
+            request.include.append(path)
         }
         
-        return self
+        return request
     }
     
     /// Replaces the filter.
-    public func filter(_ filter: FilterStrategy) -> FetchRequest<ResourceType, SuccessCallbackType> {
-        self.filter = filter
+    public func filter(_ filter: FilterStrategy) -> FetchRequest {
+        var request = self
+        request.filter = filter
         
-        return self
+        return request
     }
     
     /// Replaces the pagination.
-    public func paginate(_ pagination: PaginationStrategy) -> FetchRequest<ResourceType, SuccessCallbackType> {
-        self.pagination = pagination
+    public func paginate(_ pagination: PaginationStrategy) -> FetchRequest {
+        var request = self
+        request.pagination = pagination
         
-        return self
+        return request
     }
     
-    override func makeQueryItems() -> [URLQueryItem] {
+    /// Adds query items, which are sent after the ones the request builds itself.
+    public func queryItems(_ queryItems: [URLQueryItem]) -> FetchRequest {
+        var request = self
+        request.request = self.request.queryItems(queryItems)
+        
+        return request
+    }
+    
+    /// Adds headers, which replace the JSON:API headers with the same name, compared
+    /// case-insensitively.
+    public func headers(_ headers: [String: String]) -> FetchRequest {
+        var request = self
+        request.request = self.request.headers(headers)
+        
+        return request
+    }
+    
+    /// Adds values passed to the client with the request.
+    public func userInfo(_ userInfo: [String: any Sendable]) -> FetchRequest {
+        var request = self
+        request.request = self.request.userInfo(userInfo)
+        
+        return request
+    }
+    
+    /// Sends the request.
+    ///
+    /// - Throws: The errors of `Request.result()`.
+    public func result() async throws -> Output {
+        return try await request.perform(queryItems: makeQueryItems())
+    }
+    
+    func makeQueryItems() -> [URLQueryItem] {
         var queryItems: [URLQueryItem] = []
         
         for (type, fieldNames) in (fields ?? [:]).sorted(by: { $0.key < $1.key }) {
@@ -167,6 +220,36 @@ public class FetchRequest<ResourceType: Resource, SuccessCallbackType>: Request<
         
         queryItems += pagination?.paginationURLQueryItems() ?? []
         
-        return queryItems + super.makeQueryItems()
+        return queryItems + request.customQueryItems
+    }
+}
+
+/// Decodes the responses of data source requests.
+enum ResponseDecoding {
+    static func resource<T: Resource>(_ response: ClientResponse, client: any Client) throws -> Document<T> {
+        guard !response.data.isEmpty else {
+            throw JSONAPIError.invalidDocument(reason: "The response has no content.")
+        }
+        
+        let document = try Deserializer.Single<T>().deserialize(data: response.data)
+        document.client = client
+        
+        return document
+    }
+    
+    /// `nil` for responses without content, such as 204 No Content.
+    static func optionalResource<T: Resource>(_ response: ClientResponse, client: any Client) throws -> Document<T>? {
+        return response.data.isEmpty ? nil : try resource(response, client: client)
+    }
+    
+    static func collection<T: Resource>(_ response: ClientResponse, client: any Client) throws -> Document<[T]> {
+        guard !response.data.isEmpty else {
+            throw JSONAPIError.invalidDocument(reason: "The response has no content.")
+        }
+        
+        let document = try Deserializer.Collection<T>().deserialize(data: response.data)
+        document.client = client
+        
+        return document
     }
 }

@@ -1,143 +1,100 @@
 import Foundation
 
-public class DataSource<ResourceType: Resource>: NSObject, CRUD {
-    
-    public enum Strategy {
+/// Creates the requests for the resources of one type.
+///
+/// ```swift
+/// let dataSource = DataSource<Article>(strategy: .path("articles/<id>"), client: client)
+///
+/// let document = try await dataSource.fetch(id: "1").include(["author"]).result()
+/// ```
+public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
+    /// How the paths of requests are determined.
+    public enum Strategy: Sendable {
+        /// A path for all requests, in which the `<type>` and `<id>` placeholders are replaced.
         case path(_: String)
         case router(_: Router)
     }
     
-    private enum AnnotationStrategy {
-        case resourceIdentifier(id: String?, type: String)
-        case resource(ResourceType)
-    }
+    public typealias ResourceSuccessBlock = @MainActor (_ document: Document<ResourceType>) -> Void
+    public typealias OptionalResourceSuccessBlock = @MainActor (_ document: Document<ResourceType>?) -> Void
+    public typealias ResourceCollectionSuccessBlock = @MainActor (_ document: Document<[ResourceType]>) -> Void
+    public typealias DeleteSuccessBlock = @MainActor () -> Void
     
-    public typealias DocumentType<Type> = Document<Type>
-    public typealias ResourceSuccessBlock = (_ document: DocumentType<ResourceType>) -> Void
-    public typealias OptionalResourceSuccessBlock = (_ document: DocumentType<ResourceType>?) -> Void
-    public typealias ResourceCollectionSuccessBlock = (_ document: DocumentType<[ResourceType]>) -> Void
-    public typealias DeleteSuccessBlock = () -> Void
+    public typealias CreatableResourceTypeCompletable = Request<ResourceType, Document<ResourceType>?>
+    public typealias FetchableResourceTypeConfigurable = FetchRequest<ResourceType, Document<ResourceType>>
+    public typealias FetchableResourceCollectionTypeConfigurable = FetchRequest<ResourceType, Document<[ResourceType]>>
+    public typealias UpdatableResourceTypeCompletable = Request<ResourceType, Document<ResourceType>?>
+    public typealias DeletableResourceTypeCompletable = Request<ResourceType, Void>
     
-    public typealias CreatableResourceTypeCompletable = Request<ResourceType, OptionalResourceSuccessBlock>
-    public typealias FetchableResourceTypeConfigurable = FetchRequest<ResourceType, ResourceSuccessBlock>
-    public typealias FetchableResourceCollectionTypeConfigurable = FetchRequest<ResourceType, ResourceCollectionSuccessBlock>
-    public typealias UpdatableResourceTypeCompletable = Request<ResourceType, OptionalResourceSuccessBlock>
-    public typealias DeletableResourceTypeCompletable = Request<ResourceType, DeleteSuccessBlock>
+    public let strategy: Strategy
+    public let client: any Client
     
-    let strategy: Strategy
-    let client: Client
-    
-    public init(strategy: Strategy, client: Client) {
+    public init(strategy: Strategy, client: any Client) {
         self.strategy = strategy
         self.client = client
     }
     
-    public func create(_ resource: ResourceType) -> Request<ResourceType, OptionalResourceSuccessBlock> {
-        var path: String = {
-            switch strategy {
-            case .path(let path):
-                return path
-            case .router(let router):
-                return router.create(resource: resource)
-            }
-        }()
+    /// A `POST` request with the resource. The document is `nil` when the server responds without
+    /// content.
+    public func create(_ resource: ResourceType) -> Request<ResourceType, Document<ResourceType>?> {
+        let path = self.path { router in router.create(resource: resource) }
         
-        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resource(resource))
-
-        let request = Request<ResourceType, OptionalResourceSuccessBlock>(path: path, httpMethod: "POST", client: client)
-        
-        request.resource = resource
-        
-        return request
+        return Request(client: client, method: "POST", target: .path(replacingPlaceholders(in: path, id: resource.id, type: resource.type)), resource: resource) { response, client in
+            try ResponseDecoding.optionalResource(response, client: client)
+        }
     }
     
-    public func fetch() -> FetchRequest<ResourceType, ResourceCollectionSuccessBlock> {
-        var path: String = {
-            switch strategy {
-            case .path(let path):
-                return path
-            case .router(let router):
-                return router.fetch(type: ResourceType.self)
-            }
-        }()
+    /// A `GET` request for the collection.
+    public func fetch() -> FetchRequest<ResourceType, Document<[ResourceType]>> {
+        let path = self.path { router in router.fetch(type: ResourceType.self) }
         
-        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resourceIdentifier(id: nil, type: ResourceType.resourceType))
-
-        let request = FetchRequest<ResourceType, ResourceCollectionSuccessBlock>(path: path, httpMethod: "GET", client: client)
-        
-        return request
+        return FetchRequest(Request(client: client, method: "GET", target: .path(replacingPlaceholders(in: path, id: nil, type: ResourceType.resourceType))) { response, client in
+            try ResponseDecoding.collection(response, client: client)
+        })
     }
     
-    public func fetch(id: String) -> FetchRequest<ResourceType, ResourceSuccessBlock> {
-        var path: String = {
-            switch strategy {
-            case .path(let path):
-                return path
-            case .router(let router):
-                return router.fetch(id: id, type: ResourceType.self)
-            }
-        }()
+    /// A `GET` request for the resource with the id.
+    public func fetch(id: String) -> FetchRequest<ResourceType, Document<ResourceType>> {
+        let path = self.path { router in router.fetch(id: id, type: ResourceType.self) }
         
-        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resourceIdentifier(id: id, type: ResourceType.resourceType))
-        
-        let request = FetchRequest<ResourceType, ResourceSuccessBlock>(path: path, httpMethod: "GET", client: client)
-        
-        return request
+        return FetchRequest(Request(client: client, method: "GET", target: .path(replacingPlaceholders(in: path, id: id, type: ResourceType.resourceType))) { response, client in
+            try ResponseDecoding.resource(response, client: client)
+        })
     }
     
-    public func update(_ resource: ResourceType) -> Request<ResourceType, OptionalResourceSuccessBlock> {
-        var path: String = {
-            switch strategy {
-            case .path(let path):
-                return path
-            case .router(let router):
-                return router.update(resource: resource)
-            }
-        }()
+    /// A `PATCH` request with the resource. The document is `nil` when the server responds without
+    /// content.
+    public func update(_ resource: ResourceType) -> Request<ResourceType, Document<ResourceType>?> {
+        let path = self.path { router in router.update(resource: resource) }
         
-        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resource(resource))
-
-        let request = Request<ResourceType, OptionalResourceSuccessBlock>(path: path, httpMethod: "PATCH", client: client)
-        
-        request.resource = resource
-        
-        return request
+        return Request(client: client, method: "PATCH", target: .path(replacingPlaceholders(in: path, id: resource.id, type: resource.type)), resource: resource) { response, client in
+            try ResponseDecoding.optionalResource(response, client: client)
+        }
     }
     
-    public func delete(id: String) -> Request<ResourceType, DeleteSuccessBlock> {
-        var path: String = {
-            switch strategy {
-            case .path(let path):
-                return path
-            case .router(let router):
-                return router.delete(id: id, type: ResourceType.self)
-            }
-        }()
+    /// A `DELETE` request for the resource with the id.
+    public func delete(id: String) -> Request<ResourceType, Void> {
+        let path = self.path { router in router.delete(id: id, type: ResourceType.self) }
         
-        path = replaceAnnotations(on: path, with: DataSource<ResourceType>.AnnotationStrategy.resourceIdentifier(id: id, type: ResourceType.resourceType))
-        
-        let request = Request<ResourceType, DeleteSuccessBlock>(path: path, httpMethod: "DELETE", client: client)
-        
-        return request
+        return Request(client: client, method: "DELETE", target: .path(replacingPlaceholders(in: path, id: id, type: ResourceType.resourceType))) { _, _ in }
     }
     
-    private func replaceAnnotations(on path: String, with strategy: AnnotationStrategy) -> String {
-        var newPath = path
-        
+    private func path(fromRouter route: (Router) -> String) -> String {
         switch strategy {
-        case .resource(let resource):
-            if let id = resource.id {
-                newPath = newPath.replacingOccurrences(of: "<id>", with: id)
-            }
-            newPath = newPath.replacingOccurrences(of: "<type>", with: resource.type)
-        case .resourceIdentifier(let id, let type):
-            if let id = id {
-                newPath = newPath.replacingOccurrences(of: "<id>", with: id)
-            }
-            newPath = newPath.replacingOccurrences(of: "<type>", with: type)
+        case .path(let path):
+            return path
+        case .router(let router):
+            return route(router)
+        }
+    }
+    
+    private func replacingPlaceholders(in path: String, id: String?, type: String) -> String {
+        var path = path
+        
+        if let id = id {
+            path = path.replacingOccurrences(of: "<id>", with: id)
         }
         
-        return newPath
+        return path.replacingOccurrences(of: "<type>", with: type)
     }
 }
-

@@ -89,19 +89,25 @@ public struct Link: @unchecked Sendable {
     /// Characters that aren't allowed in URLs, such as the brackets of unencoded `page[number]`
     /// query parameters, are percent-encoded.
     public var url: URL? {
-        if let url = URL(string: href) {
-            return url
-        }
-        
-        return href.addingPercentEncoding(withAllowedCharacters: Link.allowedCharacters).flatMap(URL.init(string:))
+        return Link.url(from: href, relativeTo: nil)
     }
     
-    private static let allowedCharacters: CharacterSet = {
+    /// Characters left unencoded when encoding a link: the ones allowed in a query, which
+    /// include `/`, `?` and `:`, and the `%` of existing escapes and the `#` of a fragment.
+    static let allowedCharacters: CharacterSet = {
         var characters = CharacterSet.urlQueryAllowed
         characters.insert(charactersIn: "#%")
         
         return characters
     }()
+    
+    static func url(from href: String, relativeTo baseURL: URL?) -> URL? {
+        if let url = URL(string: href, relativeTo: baseURL) {
+            return url
+        }
+        
+        return href.addingPercentEncoding(withAllowedCharacters: allowedCharacters).flatMap { URL(string: $0, relativeTo: baseURL) }
+    }
     
     init?(json: Any?) {
         switch json {

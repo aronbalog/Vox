@@ -13,8 +13,8 @@ fileprivate let paginationQueryItem = URLQueryItem(name: "page", value: "value")
 
 fileprivate let immutablePath = "path/<type>"
 
-fileprivate class MockRouter: Router {
-    class Invocation {
+fileprivate final class MockRouter: Router, @unchecked Sendable {
+    final class Invocation {
         var fetchCollection: Int = 0
         var fetchSingle: Int = 0
         var create: Int = 0
@@ -22,7 +22,7 @@ fileprivate class MockRouter: Router {
         var delete: Int = 0
     }
     
-    class Inspector {
+    final class Inspector {
         var singleFetchId: String?
         var singleFetchType: Resource.Type?
         var collectionFetchType: Resource.Type?
@@ -78,52 +78,26 @@ fileprivate class MockRouter: Router {
     }
 }
 
-fileprivate class MockClient: Client {
-    class Invocation {
-        var executeRequest: Int = 0
-    }
-    
-    class ExecuteRequestInspector {
-        var path: String?
-        var queryItems: [URLQueryItem] = []
-        var userInfo: [String: Any] = [:]
-    }
-    
-    let invocation = Invocation()
-    let executeRequestInspector = ExecuteRequestInspector()
-    
-    func executeRequest(path: String, method: String, queryItems: [URLQueryItem], bodyParameters: [String : Any]?, success: @escaping ClientSuccessBlock, failure: @escaping ClientFailureBlock, userInfo: [String: Any]) {
-        invocation.executeRequest.invoke()
-        executeRequestInspector.path = path
-        executeRequestInspector.queryItems = queryItems
-        executeRequestInspector.userInfo = userInfo
-    }
-}
-
-fileprivate class MockFilterStrategy: FilterStrategy {
+fileprivate struct MockFilterStrategy: FilterStrategy {
     func filterURLQueryItems() -> [URLQueryItem] {
         return [filterQueryItem]
     }
 }
 
-fileprivate class MockPaginationStrategy: PaginationStrategy {
+fileprivate struct MockPaginationStrategy: PaginationStrategy {
     func paginationURLQueryItems() -> [URLQueryItem] {
         return [paginationQueryItem]
     }
 }
 
-fileprivate class MockResource: Resource {
+fileprivate final class MockResource: Resource {
     override class var resourceType: String {
         return "mock-resource"
     }
 }
 
-fileprivate extension Request {
-    func mockConfiguration() -> Self {
-        self.userInfo["key"] = "value"
-        return self
-    }
-}
+fileprivate let singleResourceJSON = #"{ "data": { "type": "mock-resource", "id": "mock" } }"#
+fileprivate let collectionJSON = #"{ "data": [] }"#
 
 /// Checks the query items produced by `fetch(id:)` configured with fields, a filter, includes and sorting.
 fileprivate func expectConfiguredFetchQueryItems(_ queryItems: [URLQueryItem]) throws {
@@ -146,8 +120,8 @@ fileprivate func expectConfiguredFetchQueryItems(_ queryItems: [URLQueryItem]) t
     #expect(queryItems[3].value == "value1,-value2")
 }
 
-fileprivate func fetchConfigured(id: String, from dataSource: DataSource<MockResource>) throws {
-    try dataSource
+fileprivate func fetchConfigured(id: String, from dataSource: DataSource<MockResource>) async throws {
+    _ = try await dataSource
         .fetch(id: id)
         .fields([
             "key": ["value1", "value2"]
@@ -158,208 +132,198 @@ fileprivate func fetchConfigured(id: String, from dataSource: DataSource<MockRes
             .ascending("value1"),
             .descending("value2")
         ])
-        .result({ _ in }, { _ in })
+        .result()
 }
 
 @Suite("DataSource with router and client")
 struct DataSourceWithRouterSpec {
     @Test("when creating resource")
-    func creatingResource() throws {
-        let client = MockClient()
+    func creatingResource() async throws {
+        let client = RecordingClient()
         let router = MockRouter()
         let sut = DataSource<MockResource>(strategy: .router(router), client: client)
         let resource = MockResource()
         
-        try sut
+        _ = try await sut
             .create(resource)
-            .mockConfiguration()
-            .result({ _ in }, { _ in })
+            .userInfo(["key": "value"])
+            .result()
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
+        let request = try #require(client.requests.first)
+        #expect(client.requests.count == 1)
         #expect(router.invocation.create.isInvokedOnce)
         #expect(router.inspector.createResource === resource)
-        #expect(client.executeRequestInspector.path == createPath)
-        #expect((client.executeRequestInspector.userInfo as NSDictionary).isEqual(["key": "value"]))
+        #expect(request.method == "POST")
+        #expect(request.target == .path(createPath))
+        #expect(request.userInfo["key"] as? String == "value")
     }
     
     @Test("when fetching single resource")
-    func fetchingSingleResource() throws {
-        let client = MockClient()
+    func fetchingSingleResource() async throws {
+        let client = RecordingClient(json: singleResourceJSON)
         let router = MockRouter()
         let sut = DataSource<MockResource>(strategy: .router(router), client: client)
         
-        try fetchConfigured(id: "mock", from: sut)
+        try await fetchConfigured(id: "mock", from: sut)
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
+        let request = try #require(client.requests.first)
+        #expect(client.requests.count == 1)
         #expect(router.invocation.fetchSingle.isInvokedOnce)
         #expect(router.inspector.singleFetchType != nil)
         #expect(router.inspector.singleFetchId == "mock")
-        #expect(client.executeRequestInspector.path == fetchSinglePath)
-        try expectConfiguredFetchQueryItems(client.executeRequestInspector.queryItems)
+        #expect(request.method == "GET")
+        #expect(request.target == .path(fetchSinglePath))
+        try expectConfiguredFetchQueryItems(request.queryItems)
     }
     
     @Test("when fetching resource collection")
-    func fetchingResourceCollection() throws {
-        let client = MockClient()
+    func fetchingResourceCollection() async throws {
+        let client = RecordingClient(json: collectionJSON)
         let router = MockRouter()
         let sut = DataSource<MockResource>(strategy: .router(router), client: client)
         
-        try sut.fetch().paginate(MockPaginationStrategy()).result({ _ in }, { _ in })
+        _ = try await sut.fetch().paginate(MockPaginationStrategy()).result()
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
+        let request = try #require(client.requests.first)
         #expect(router.invocation.fetchCollection.isInvokedOnce)
         #expect(router.inspector.collectionFetchType != nil)
-        #expect(client.executeRequestInspector.path == fetchCollectionPath)
+        #expect(request.target == .path(fetchCollectionPath))
         
         // http://jsonapi.org/format/#fetching-pagination
-        let queryItem = try #require(client.executeRequestInspector.queryItems.first)
-        #expect(queryItem.name == paginationQueryItem.name)
-        #expect(queryItem.value == paginationQueryItem.value)
+        #expect(request.queryItems == [paginationQueryItem])
     }
     
     @Test("when updating resource")
-    func updatingResource() throws {
-        let client = MockClient()
+    func updatingResource() async throws {
+        let client = RecordingClient()
         let router = MockRouter()
         let sut = DataSource<MockResource>(strategy: .router(router), client: client)
         let resource = MockResource()
         
-        try sut.update(resource).result({ _ in }, { _ in })
+        _ = try await sut.update(resource).result()
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
+        let request = try #require(client.requests.first)
         #expect(router.invocation.update.isInvokedOnce)
         #expect(router.inspector.updateResource === resource)
-        #expect(client.executeRequestInspector.path == updatePath)
+        #expect(request.method == "PATCH")
+        #expect(request.target == .path(updatePath))
     }
     
     @Test("when deleting resource")
-    func deletingResource() throws {
-        let client = MockClient()
+    func deletingResource() async throws {
+        let client = RecordingClient()
         let router = MockRouter()
         let sut = DataSource<MockResource>(strategy: .router(router), client: client)
         
-        try sut.delete(id: "mock").result({}, { _ in })
+        try await sut.delete(id: "mock").result()
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
+        let request = try #require(client.requests.first)
         #expect(router.invocation.delete.isInvokedOnce)
         #expect(router.inspector.deleteId == "mock")
         #expect(router.inspector.deleteType != nil)
-        #expect(client.executeRequestInspector.path == deletePath)
+        #expect(request.method == "DELETE")
+        #expect(request.target == .path(deletePath))
     }
 }
 
 @Suite("DataSource with path and client")
 struct DataSourceWithPathSpec {
     @Test("when creating resource")
-    func creatingResource() throws {
-        let client = MockClient()
+    func creatingResource() async throws {
+        let client = RecordingClient()
         let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
         
-        try sut.create(MockResource()).result({ _ in }, { _ in })
+        _ = try await sut.create(MockResource()).result()
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
-        #expect(client.executeRequestInspector.path == "path/mock-resource")
+        #expect(client.requests.map(\.target) == [.path("path/mock-resource")])
     }
     
     @Test("when fetching single resource")
-    func fetchingSingleResource() throws {
-        let client = MockClient()
+    func fetchingSingleResource() async throws {
+        let client = RecordingClient(json: singleResourceJSON)
         let sut = DataSource<MockResource>(strategy: .path("path/<type>/<id>"), client: client)
         
-        try fetchConfigured(id: "mock", from: sut)
+        try await fetchConfigured(id: "mock", from: sut)
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
-        #expect(client.executeRequestInspector.path == "path/mock-resource/mock")
-        try expectConfiguredFetchQueryItems(client.executeRequestInspector.queryItems)
+        let request = try #require(client.requests.first)
+        #expect(request.target == .path("path/mock-resource/mock"))
+        try expectConfiguredFetchQueryItems(request.queryItems)
     }
     
     @Test("when fetching resource collection with custom pagination")
-    func fetchingWithCustomPagination() throws {
-        let client = MockClient()
+    func fetchingWithCustomPagination() async throws {
+        let client = RecordingClient(json: collectionJSON)
         let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
         
-        try sut.fetch().paginate(MockPaginationStrategy()).result({ _ in }, { _ in })
+        _ = try await sut.fetch().paginate(MockPaginationStrategy()).result()
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
-        #expect(client.executeRequestInspector.path == "path/mock-resource")
+        let request = try #require(client.requests.first)
+        #expect(request.target == .path("path/mock-resource"))
         
         // http://jsonapi.org/format/#fetching-pagination
-        let queryItem = try #require(client.executeRequestInspector.queryItems.first)
-        #expect(queryItem.name == paginationQueryItem.name)
-        #expect(queryItem.value == paginationQueryItem.value)
+        #expect(request.queryItems == [paginationQueryItem])
     }
     
     @Test("when fetching resource collection with page based pagination")
-    func fetchingWithPageBasedPagination() throws {
-        let client = MockClient()
+    func fetchingWithPageBasedPagination() async throws {
+        let client = RecordingClient(json: collectionJSON)
         let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
         
-        try sut.fetch().paginate(Pagination.PageBased(number: 1, size: 2)).result({ _ in }, { _ in })
-        
-        #expect(client.invocation.executeRequest.isInvokedOnce)
-        #expect(client.executeRequestInspector.path == "path/mock-resource")
+        _ = try await sut.fetch().paginate(Pagination.PageBased(number: 1, size: 2)).result()
         
         // http://jsonapi.org/format/#fetching-pagination
-        #expect(client.executeRequestInspector.queryItems == [
+        #expect(client.requests.first?.queryItems == [
             URLQueryItem(name: "page[number]", value: "1"),
             URLQueryItem(name: "page[size]", value: "2")
         ])
     }
     
     @Test("when fetching resource collection with offset based pagination")
-    func fetchingWithOffsetBasedPagination() throws {
-        let client = MockClient()
+    func fetchingWithOffsetBasedPagination() async throws {
+        let client = RecordingClient(json: collectionJSON)
         let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
         
-        try sut.fetch().paginate(Pagination.OffsetBased(offset: 1, limit: 2)).result({ _ in }, { _ in })
-        
-        #expect(client.invocation.executeRequest.isInvokedOnce)
-        #expect(client.executeRequestInspector.path == "path/mock-resource")
+        _ = try await sut.fetch().paginate(Pagination.OffsetBased(offset: 1, limit: 2)).result()
         
         // http://jsonapi.org/format/#fetching-pagination
-        #expect(client.executeRequestInspector.queryItems == [
+        #expect(client.requests.first?.queryItems == [
             URLQueryItem(name: "page[offset]", value: "1"),
             URLQueryItem(name: "page[limit]", value: "2")
         ])
     }
     
     @Test("when fetching resource collection with cursor based pagination")
-    func fetchingWithCursorBasedPagination() throws {
-        let client = MockClient()
+    func fetchingWithCursorBasedPagination() async throws {
+        let client = RecordingClient(json: collectionJSON)
         let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
         
-        try sut.fetch().paginate(Pagination.CursorBased(cursor: "mock-cursor")).result({ _ in }, { _ in })
-        
-        #expect(client.invocation.executeRequest.isInvokedOnce)
-        #expect(client.executeRequestInspector.path == "path/mock-resource")
+        _ = try await sut.fetch().paginate(Pagination.CursorBased(cursor: "mock-cursor")).result()
         
         // http://jsonapi.org/format/#fetching-pagination
-        #expect(client.executeRequestInspector.queryItems == [
+        #expect(client.requests.first?.queryItems == [
             URLQueryItem(name: "page[cursor]", value: "mock-cursor")
         ])
     }
     
     @Test("when updating resource")
-    func updatingResource() throws {
-        let client = MockClient()
+    func updatingResource() async throws {
+        let client = RecordingClient()
         let sut = DataSource<MockResource>(strategy: .path("path/<type>/<id>"), client: client)
         let resource = MockResource()
         resource.id = "mock"
         
-        try sut.update(resource).result({ _ in }, { _ in })
+        _ = try await sut.update(resource).result()
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
-        #expect(client.executeRequestInspector.path == "path/mock-resource/mock")
+        #expect(client.requests.map(\.target) == [.path("path/mock-resource/mock")])
     }
     
     @Test("when deleting resource")
-    func deletingResource() throws {
-        let client = MockClient()
+    func deletingResource() async throws {
+        let client = RecordingClient()
         let sut = DataSource<MockResource>(strategy: .path(immutablePath), client: client)
         
-        try sut.delete(id: "mock").result({}, { _ in })
+        try await sut.delete(id: "mock").result()
         
-        #expect(client.invocation.executeRequest.isInvokedOnce)
-        #expect(client.executeRequestInspector.path == "path/mock-resource")
+        #expect(client.requests.map(\.target) == [.path("path/mock-resource")])
     }
 }
