@@ -1,10 +1,8 @@
 import Foundation
 
-open class Resource: BaseResource {
-    let internalIdentifier = "<Resource_\(UUID().uuidString)>"
-    
-    open class var resourceType: String {
-        fatalError("Must override `static var resourceType: String`")
+open class Resource: NSObject {
+    @objc open class var resourceType: String {
+        fatalError("\(self) must override `class var resourceType: String`")
     }
     
     open class var codingKeys: [String: String] {
@@ -51,6 +49,8 @@ open class Resource: BaseResource {
     
     public required init(context: Context? = nil) {
         super.init()
+
+        ResourceRuntime.prepare(Swift.type(of: self))
 
         if context == nil {
             let _context = Context(dictionary: NSMutableDictionary())

@@ -27,8 +27,6 @@ class Person: Resource {
     @objc dynamic var favoriteItem: Resource?
 }
 
-Resource.load()
-
 
 let person = Person()
 person.id = "MOCK-ID"

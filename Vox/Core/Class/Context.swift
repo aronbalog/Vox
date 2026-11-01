@@ -1,8 +1,6 @@
 import Foundation
 
 public class Context: NSObject {
-    private static var classes: [String: Resource.Type] = [:]
-    
     let dictionary: NSMutableDictionary
     lazy var resourcePool = ResourcePool(queue: queue)
     
@@ -11,10 +9,6 @@ public class Context: NSObject {
     }
     
     let queue = DispatchQueue(label: "vox.context.queue", attributes: .concurrent)
-    
-    @objc public static func registerClass(_ resourceClass: Resource.Type) {
-        classes[resourceClass.resourceType] = resourceClass
-    }
     
     func dataType() -> DataType {
         var dataType: DataType!
@@ -76,9 +70,7 @@ public class Context: NSObject {
     }
     
     func resourceClass(for type: String) -> Resource.Type? {
-        guard let resourceClass = Context.classes[type] else { return nil }
-        
-        return resourceClass
+        return ResourceRuntime.resourceClass(for: type)
     }
     
     func reassign() {

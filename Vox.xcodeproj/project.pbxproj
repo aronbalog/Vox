@@ -17,8 +17,6 @@
 		3872FA3D20379F8300CC26BD /* VoxTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3872FA3C20379F8300CC26BD /* VoxTests.swift */; };
 		3872FA3F20379F8300CC26BD /* Vox.h in Headers */ = {isa = PBXBuildFile; fileRef = 3872FA3120379F8300CC26BD /* Vox.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		3872FA4A20379FDD00CC26BD /* Context.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3872FA4920379FDD00CC26BD /* Context.swift */; };
-		3872FA4D2037A07C00CC26BD /* BaseResource.h in Headers */ = {isa = PBXBuildFile; fileRef = 3872FA4B2037A07C00CC26BD /* BaseResource.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		3872FA4E2037A07C00CC26BD /* BaseResource.m in Sources */ = {isa = PBXBuildFile; fileRef = 3872FA4C2037A07C00CC26BD /* BaseResource.m */; };
 		3872FA502037A10800CC26BD /* Resource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3872FA4F2037A10800CC26BD /* Resource.swift */; };
 		387FB91E203CF04700CE47F9 /* DeserializerSingleSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E00D3B2039104300B45B4C /* DeserializerSingleSpec.swift */; };
 		387FB923203D028D00CE47F9 /* DeserializerSinglePolymorphicSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E00D3A2039104300B45B4C /* DeserializerSinglePolymorphicSpec.swift */; };
@@ -75,6 +73,7 @@
 		38E00D44203911B700B45B4C /* JSONAPIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E00D43203911B700B45B4C /* JSONAPIError.swift */; };
 		38E00D4620391CE500B45B4C /* DeserializerSinglePolymorphic.json in Resources */ = {isa = PBXBuildFile; fileRef = 38E00D4520391CE400B45B4C /* DeserializerSinglePolymorphic.json */; };
 		38EE017B204E2124009A1FCF /* JSONAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38EE017A204E2124009A1FCF /* JSONAPIClient.swift */; };
+		7E5A1C0D2E9F4B2A00C0FFEE /* ResourceRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E5A1C0C2E9F4B2A00C0FFEE /* ResourceRuntime.swift */; };
 		82DE5169D132D9E42F025760 /* Pods_VoxTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECBFD6FCB38B471633DDDBC7 /* Pods_VoxTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -105,8 +104,6 @@
 		3872FA3C20379F8300CC26BD /* VoxTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoxTests.swift; sourceTree = "<group>"; };
 		3872FA3E20379F8300CC26BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3872FA4920379FDD00CC26BD /* Context.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Context.swift; sourceTree = "<group>"; };
-		3872FA4B2037A07C00CC26BD /* BaseResource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BaseResource.h; sourceTree = "<group>"; };
-		3872FA4C2037A07C00CC26BD /* BaseResource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BaseResource.m; sourceTree = "<group>"; };
 		3872FA4F2037A10800CC26BD /* Resource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Resource.swift; sourceTree = "<group>"; };
 		3872FA512037A46700CC26BD /* PropertyAccessorSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertyAccessorSpec.swift; sourceTree = "<group>"; };
 		38965BEF2038B6CB00FDD64A /* NullableValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NullableValue.swift; sourceTree = "<group>"; };
@@ -159,6 +156,7 @@
 		38E00D4820391D3A00B45B4C /* DataSourceSpec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataSourceSpec.swift; sourceTree = "<group>"; };
 		38E00D4B20391E2A00B45B4C /* PerformanceSpec.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PerformanceSpec.swift; sourceTree = "<group>"; };
 		38EE017A204E2124009A1FCF /* JSONAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONAPIClient.swift; sourceTree = "<group>"; };
+		7E5A1C0C2E9F4B2A00C0FFEE /* ResourceRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResourceRuntime.swift; sourceTree = "<group>"; };
 		3E77EEDB367189910274AA0B /* Pods-Vox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Vox.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Vox/Pods-Vox.debug.xcconfig"; sourceTree = "<group>"; };
 		7120350FE796E128CB7D44D2 /* Pods-VoxTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoxTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-VoxTests/Pods-VoxTests.debug.xcconfig"; sourceTree = "<group>"; };
 		A271067609735A860914AC1E /* Pods-VoxTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoxTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-VoxTests/Pods-VoxTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -270,11 +268,10 @@
 		3872FA4820379FD600CC26BD /* Class */ = {
 			isa = PBXGroup;
 			children = (
-				3872FA4B2037A07C00CC26BD /* BaseResource.h */,
-				3872FA4C2037A07C00CC26BD /* BaseResource.m */,
 				3872FA4920379FDD00CC26BD /* Context.swift */,
 				3821D2692039E51D00AE241E /* Context_Query.swift */,
 				3872FA4F2037A10800CC26BD /* Resource.swift */,
+				7E5A1C0C2E9F4B2A00C0FFEE /* ResourceRuntime.swift */,
 				38E00D2820390D9200B45B4C /* JSONAPIDecoder.swift */,
 				38E00D2220390D5B00B45B4C /* Deserializer_Collection.swift */,
 				38E00D2420390D5B00B45B4C /* Deserializer_Single.swift */,
@@ -450,7 +447,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				3872FA3F20379F8300CC26BD /* Vox.h in Headers */,
-				3872FA4D2037A07C00CC26BD /* BaseResource.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -666,7 +662,7 @@
 				38E00D2520390D5B00B45B4C /* Deserializer_Collection.swift in Sources */,
 				38E00D1420390C2D00B45B4C /* Client.swift in Sources */,
 				38E00D2120390C2D00B45B4C /* Updatable.swift in Sources */,
-				3872FA4E2037A07C00CC26BD /* BaseResource.m in Sources */,
+				7E5A1C0D2E9F4B2A00C0FFEE /* ResourceRuntime.swift in Sources */,
 				38E00D1920390C2D00B45B4C /* Fetchable.swift in Sources */,
 				3899556220430F6D007E2DE5 /* Pagination_PageBased.swift in Sources */,
 				3899556020430EDA007E2DE5 /* Pagination.swift in Sources */,
