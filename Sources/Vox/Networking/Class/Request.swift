@@ -80,16 +80,10 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
                 success()
             }
         }, failure: { (error, data) in
-            guard let data = data else {
+            if let data = data, let apiError = JSONAPIDecoder.apiError(in: data) {
+                self.failureBlock?(apiError)
+            } else {
                 self.failureBlock?(error)
-                return
-            }
-            
-            do {
-                _ = try JSONAPIDecoder.decode(data)
-                self.failureBlock?(error)
-            } catch let __error {
-                self.failureBlock?(__error)
             }
         }, userInfo: userInfo)
     }

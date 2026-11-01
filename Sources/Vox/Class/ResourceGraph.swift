@@ -38,12 +38,13 @@ final class ResourceGraph {
         return current
     }
     
-    /// Adds `object` to the graph. When an object with the same key is already part of the
-    /// graph, that object is returned instead.
+    /// Adds `object` to the graph. When the graph contains an object with the same key already,
+    /// the members of `object` it lacks are added to it and the existing object is returned.
     @discardableResult
     func insert(_ object: ResourceObject) -> ResourceObject {
         if let key = object.key {
             if let existingObject = objectsByKey[key] {
+                existingObject.merge(object)
                 return existingObject
             }
             
@@ -64,17 +65,14 @@ final class ResourceGraph {
         }
     }
     
-    /// The live instance of `object`, or a new one when there's none. Returns `nil` when no
-    /// resource class is registered for the object's type.
-    func instance(for object: ResourceObject) -> Resource? {
+    /// The live instance of `object`, or a new one when there's none. Objects of types without a
+    /// registered class are represented by plain `Resource` instances.
+    func instance(for object: ResourceObject) -> Resource {
         if let instance = instances[ObjectIdentifier(object)]?.resource {
             return instance
         }
         
-        guard let resourceClass = ResourceRuntime.resourceClass(for: object.type) else {
-            return nil
-        }
-        
+        let resourceClass = ResourceRuntime.resourceClass(for: object.type) ?? Resource.self
         let instance = resourceClass.init()
         instance.bind(to: object, in: self)
         
@@ -82,7 +80,7 @@ final class ResourceGraph {
     }
     
     func instance(for reference: ResourceReference) -> Resource? {
-        return object(for: reference).flatMap(instance(for:))
+        return object(for: reference).map(instance(for:))
     }
     
     /// Records `instance` as the live instance of `object`.

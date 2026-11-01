@@ -9,7 +9,7 @@ extension Deserializer {
             
             let document = try JSONAPIDecoder.decode(data)
             
-            return Document(data: document.resource(of: ResourceType.self), document: document)
+            return Document(data: try document.resource(of: ResourceType.self), document: document)
         }
     }
 }

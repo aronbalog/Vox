@@ -25,14 +25,14 @@ final class ResourceObject {
         self.relationships = [:]
     }
     
-    /// Parses a resource object of a JSON:API document.
-    init(json: [String: Any]) throws {
-        guard let type = json["type"] as? String, let id = json["id"] as? String else {
-            throw JSONAPIError.serialization
+    /// Parses the resource object at `path` of a JSON:API document.
+    init(json: [String: Any], at path: String) throws {
+        guard let type = json["type"] as? String, !type.isEmpty else {
+            throw JSONAPIError.invalidDocument(reason: "The resource object at \(path) has no type.")
         }
         
         self.type = type
-        self.id = id
+        self.id = resourceIdentifier(json["id"])
         self.attributes = json["attributes"] as? [String: Any] ?? [:]
         self.relationships = (json["relationships"] as? [String: Any] ?? [:]).compactMapValues { relationship in
             (relationship as? [String: Any]).map(RelationshipObject.init(json:))
@@ -43,6 +43,15 @@ final class ResourceObject {
     
     var key: ResourceKey? {
         return id.map { ResourceKey(type: type, id: $0) }
+    }
+    
+    /// Adds the members of `other` this object doesn't have, for documents that contain the same
+    /// resource more than once.
+    func merge(_ other: ResourceObject) {
+        attributes.merge(other.attributes) { current, _ in current }
+        relationships.merge(other.relationships) { current, _ in current }
+        links = links ?? other.links
+        meta = meta ?? other.meta
     }
     
     /// Sets the resource linkage of a relationship. Removing the linkage keeps the relationship's
@@ -105,10 +114,23 @@ enum ResourceReference {
     case object(ObjectIdentifier)
     
     init?(json: [String: Any]) {
-        guard let type = json["type"] as? String, let id = json["id"] as? String else {
+        guard let type = json["type"] as? String, let id = resourceIdentifier(json["id"]) else {
             return nil
         }
         
         self = .identifier(ResourceKey(type: type, id: id), meta: json["meta"] as? [String: Any])
+    }
+}
+
+/// The `id` member of a resource object or resource identifier object. Integers are accepted for
+/// servers that send them instead of strings.
+private func resourceIdentifier(_ value: Any?) -> String? {
+    switch value {
+    case let id as String:
+        return id
+    case let id as Int:
+        return String(id)
+    default:
+        return nil
     }
 }
