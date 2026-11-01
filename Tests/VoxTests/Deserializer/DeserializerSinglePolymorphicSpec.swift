@@ -3,6 +3,8 @@ import Testing
 
 @testable import Vox
 
+#if canImport(ObjectiveC)
+
 fileprivate class Player: Resource {
     override class var resourceType: String {
         return "Players"
@@ -48,3 +50,5 @@ struct DeserializerSinglePolymorphicSpec {
         #expect(weapon.shield === shield)
     }
 }
+
+#endif

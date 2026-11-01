@@ -3,6 +3,8 @@ import Testing
 
 @testable import Vox
 
+#if canImport(ObjectiveC)
+
 fileprivate final class Article1: Resource {
     override class var resourceType: String {
         return "articles1"
@@ -57,3 +59,5 @@ struct DeserializerSingleSpec {
         #expect(article.coauthors?.count == 2)
     }
 }
+
+#endif

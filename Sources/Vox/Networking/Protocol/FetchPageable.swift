@@ -103,44 +103,16 @@ public extension Document where DataType: Collection, DataType.Element: Resource
     }
     
     private func mergeDocument(_ document: Document<[DataType.Element]>) {
-        if let array = document.context.dictionary["data"] as? [Any] {
-            let selfData = self.context.dictionary["data"] as? NSMutableArray
-            
-            let resources = array.compactMap({ (resourceJson) -> Resource? in
-                guard let resourceJson = resourceJson as? NSMutableDictionary else { return nil }
-                let copy = resourceJson.mutableCopy() as! NSMutableDictionary
-                
-                selfData?.add(copy)
-                
-                guard let resource = self.context.mapResource(for: copy) else { return nil }
-                
-                return resource
-            })
-            
-            
-            var collection = data as? [Resource]
-            collection?.append(contentsOf: resources)
-            self.data = collection as? DataType
-            
-            print(collection!.count)
+        ResourceGraph.lock.withLock {
+            _ = ResourceGraph.merge(graph, document.graph)
         }
         
-        if let array = document.context.dictionary["included"] as? NSMutableArray {
-            let selfData = self.context.dictionary["included"] as? NSMutableArray
-            
-            array.forEach({ (resourceJson) in
-                guard let resourceJson = resourceJson as? NSMutableDictionary else { return }
-                let copy = resourceJson.mutableCopy() as! NSMutableDictionary
-                
-                if let selfData = selfData {
-                    selfData.add(copy)
-                    included?.append(copy as! [String : Any])
-                }
-                
-                guard let _ = self.context.mapResource(for: copy) else { return }
-
-            })
-            
+        var collection = data as? [DataType.Element] ?? []
+        collection.append(contentsOf: document.data ?? [])
+        self.data = collection as? DataType
+        
+        if let newIncluded = document.included {
+            included = (included ?? []) + newIncluded
         }
     }
 }

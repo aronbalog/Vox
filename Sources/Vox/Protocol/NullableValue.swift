@@ -1,7 +1,7 @@
 import Foundation
 
 let nullString: String = UUID().uuidString
-let nullNumber: NSNumber = NSNumber(value: INT_MAX)
+let nullNumber: NSNumber = NSNumber(value: Int32.max)
 let nullDictionary: [String: Any] = [.null: NSNull()]
 let nullStringArray: [String] = [.null]
 let nullNumberArray: [NSNumber] = [.null]
@@ -9,6 +9,25 @@ let nullDictionaryArray: [[String: Any]] = [.null]
 
 protocol NullableAware {
     var isNull: Bool { get }
+}
+
+/// Whether `value` is one of the `null` placeholders, which are stored as JSON `null`.
+func isNullValue(_ value: Any) -> Bool {
+    if let value = value as? NullableAware {
+        return value.isNull
+    } else if let value = value as? String {
+        return value.isNull
+    } else if let value = value as? [String] {
+        return value.isNull
+    } else if let value = value as? [String: Any] {
+        return value.isNull
+    } else if let value = value as? [[String: Any]] {
+        return value.isNull
+    } else if let value = value as? [NSNumber] {
+        return value.isNull
+    }
+    
+    return false
 }
 
 extension String: NullableAware {

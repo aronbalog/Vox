@@ -5,7 +5,11 @@ extension Deserializer {
         public init() {}
         
         public func deserialize(data: Data) throws -> Document<ResourceType> {
-            return try JSONAPIDecoder.decode(data: data)
+            ResourceRuntime.register(ResourceType.self)
+            
+            let document = try JSONAPIDecoder.decode(data)
+            
+            return Document(data: document.resource(of: ResourceType.self), document: document)
         }
     }
 }

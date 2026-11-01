@@ -11,35 +11,24 @@ public class Document<DataType> {
     
     public internal(set) var included: [[String: Any]]?
     
-    let context: Context
+    /// The graph of the document's resources. Resources keep it alive on their own, so they work
+    /// after the document is gone.
+    let graph: ResourceGraph
     weak var client: Client?
     
-    init(
-        data: DataType?,
-        meta: [String: Any]?,
-        jsonapi: [String: Any]?,
-        links: [String: Any]?,
-        included: [[String: Any]]?,
-        context: Context
-    ) {
+    init(data: DataType?, document: DecodedDocument) {
         self.data = data
-        self.meta = meta
-        self.jsonapi = jsonapi
-        let links: Links? = {
+        self.meta = document.meta
+        self.jsonapi = document.jsonapi
+        self.links = {
             guard
-                let links = links,
+                let links = document.links,
                 let data = try? JSONSerialization.data(withJSONObject: links, options: [])
                 else { return nil }
             
             return try? JSONDecoder().decode(Links.self, from: data)
         }()
-        self.links = links
-        self.included = included
-        self.context = context
-    }
-    
-    deinit {
-        context.reassign()
+        self.included = document.included
+        self.graph = document.graph
     }
 }
-

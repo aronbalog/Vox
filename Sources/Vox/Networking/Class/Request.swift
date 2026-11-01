@@ -86,7 +86,8 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
             }
             
             do {
-                let _: Document<DataType> = try JSONAPIDecoder.decode(data: data)
+                _ = try JSONAPIDecoder.decode(data)
+                self.failureBlock?(error)
             } catch let __error {
                 self.failureBlock?(__error)
             }

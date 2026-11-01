@@ -3,6 +3,8 @@ import Testing
 
 @testable import Vox
 
+#if canImport(ObjectiveC)
+
 fileprivate class Person: Resource {
     override class var resourceType: String {
         return "Person"
@@ -49,7 +51,7 @@ struct PropertyAccessorSpec {
         person.bestFriend = bestFriend
         person.goodFriends = [bestFriend, anotherFriend]
         
-        let wallet = Wallet(context: person.context)
+        let wallet = Wallet()
         wallet.id = "wallet id"
         let cellphone = Cellphone()
         cellphone.id = "cellphone id"
@@ -96,3 +98,5 @@ struct PropertyAccessorSpec {
         #expect(person.bestFriend === anotherPerson)
     }
 }
+
+#endif

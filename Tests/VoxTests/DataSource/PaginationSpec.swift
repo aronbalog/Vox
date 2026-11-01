@@ -3,6 +3,8 @@ import Testing
 
 @testable import Vox
 
+#if canImport(ObjectiveC)
+
 fileprivate class Article3: Resource {
     override class var resourceType: String {
         return "articles3"
@@ -169,3 +171,5 @@ struct PaginationSpec {
         ])
     }
 }
+
+#endif

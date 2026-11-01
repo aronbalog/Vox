@@ -3,6 +3,8 @@ import XCTest
 
 @testable import Vox
 
+#if canImport(ObjectiveC)
+
 fileprivate class SomeResource: Resource {
     override class var resourceType: String {
         return "SomeResource"
@@ -70,3 +72,5 @@ class PerformanceSpec: XCTestCase {
         }
     }
 }
+
+#endif

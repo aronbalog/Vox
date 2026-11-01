@@ -3,6 +3,8 @@ import Testing
 
 @testable import Vox
 
+#if canImport(ObjectiveC)
+
 fileprivate final class Article: Resource {
     override class var resourceType: String {
         return "articles"
@@ -71,17 +73,16 @@ struct SerializerSingleSpec {
             "data": NSNull()
         ],
         "coauthors": [
-            "data": NSNull()
+            "data": []
         ],
         "fans": [
-            "data": NSNull()
+            "data": []
         ]
     ]
     
     private func makeArticle() -> Article {
         let article = Article()
         article.id = "id"
-        article.type = Article.resourceType
         article["title"] = "title"
         article.descriptionText = .null
         article.keywords = .null
@@ -109,13 +110,11 @@ struct SerializerSingleSpec {
     }
     
     @Test("maps correctly")
-    func mapsCorrectly() throws {
+    func mapsCorrectly() {
         let article = makeArticle()
-        let attributes = try #require(article.attributes)
-        let relationships = try #require(article.relationships)
         
-        #expect(attributes.isEqual(expectedAttributes as NSDictionary))
-        #expect(relationships.isEqual(expectedRelationships as NSDictionary))
+        #expect((article.attributes as NSDictionary).isEqual(expectedAttributes))
+        #expect((article.relationships as NSDictionary).isEqual(expectedRelationships))
     }
     
     @Test("returns document data")
@@ -141,3 +140,5 @@ struct SerializerSingleSpec {
         #expect((documentDictionary as NSDictionary).isEqual(expectedDictionary))
     }
 }
+
+#endif
