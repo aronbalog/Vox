@@ -369,6 +369,11 @@ open class Resource: NSObject {
     
     // MARK: Serialization
     
+    /// The resource object of the resource for a request document.
+    ///
+    /// - Throws: `JSONAPIError.serialization` when an attribute or the meta can't be represented
+    ///   in JSON, when a related resource has neither `id` nor `lid`, or when `requiringID` is
+    ///   set and the resource itself has neither.
     func resourceObjectJSON(requiringID: Bool) throws -> [String: Any] {
         return try ResourceGraph.lock.withLock {
             let (object, graph) = storageLocked()
@@ -378,7 +383,11 @@ open class Resource: NSObject {
             json["lid"] = object.lid
             
             if requiringID, object.id == nil, object.lid == nil {
-                throw JSONAPIError.serialization
+                throw JSONAPIError.serialization(reason: "A resource of type \"\(object.type)\" has neither id nor lid.")
+            }
+            
+            for (name, value) in object.attributes where !JSONSerialization.isValidJSONObject([value]) {
+                throw JSONAPIError.serialization(reason: "The attribute \"\(name)\" of a resource of type \"\(object.type)\" has a value of type \(Swift.type(of: value)), which can't be represented in JSON.")
             }
             
             if !object.attributes.isEmpty {
@@ -391,10 +400,20 @@ open class Resource: NSObject {
                 json["relationships"] = relationships
             }
             
+            if let meta = object.meta {
+                guard JSONSerialization.isValidJSONObject(meta) else {
+                    throw JSONAPIError.serialization(reason: "The meta of a resource of type \"\(object.type)\" can't be represented in JSON.")
+                }
+                
+                json["meta"] = meta
+            }
+            
             return json
         }
     }
     
+    /// The relationships with resource linkage as JSON. Relationships with only links or meta are
+    /// left out.
     private func relationshipsJSON(of object: ResourceObject, in graph: ResourceGraph, skippingInvalid: Bool) throws -> [String: Any] {
         var json: [String: Any] = [:]
         
@@ -404,7 +423,7 @@ open class Resource: NSObject {
             }
             
             do {
-                json[name] = ["data": try linkageJSON(linkage, in: graph)]
+                json[name] = ["data": try linkageJSON(linkage, ofRelationship: name, in: graph)]
             } catch {
                 if !skippingInvalid {
                     throw error
@@ -415,18 +434,18 @@ open class Resource: NSObject {
         return json
     }
     
-    private func linkageJSON(_ linkage: ResourceLinkage, in graph: ResourceGraph) throws -> Any {
+    private func linkageJSON(_ linkage: ResourceLinkage, ofRelationship name: String, in graph: ResourceGraph) throws -> Any {
         switch linkage {
         case .toOne(nil):
             return NSNull()
         case .toOne(let reference?):
-            return try identifierJSON(reference, in: graph)
+            return try identifierJSON(reference, ofRelationship: name, in: graph)
         case .toMany(let references):
-            return try references.map { try identifierJSON($0, in: graph) }
+            return try references.map { try identifierJSON($0, ofRelationship: name, in: graph) }
         }
     }
     
-    private func identifierJSON(_ reference: ResourceReference, in graph: ResourceGraph) throws -> [String: Any] {
+    private func identifierJSON(_ reference: ResourceReference, ofRelationship name: String, in graph: ResourceGraph) throws -> [String: Any] {
         switch reference {
         case .identifier(let key, let meta):
             var json: [String: Any] = ["type": key.type]
@@ -443,7 +462,7 @@ open class Resource: NSObject {
             return json
         case .object:
             guard let object = graph.object(for: reference) else {
-                throw JSONAPIError.serialization
+                preconditionFailure("A relationship refers to a resource object outside of its graph.")
             }
             
             if let id = object.id {
@@ -451,7 +470,7 @@ open class Resource: NSObject {
             } else if let lid = object.lid {
                 return ["type": object.type, "lid": lid]
             } else {
-                throw JSONAPIError.serialization
+                throw JSONAPIError.serialization(reason: "The relationship \"\(name)\" refers to a resource of type \"\(object.type)\" that has neither id nor lid.")
             }
         }
     }

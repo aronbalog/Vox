@@ -1,7 +1,9 @@
 import Foundation
 
+// Placeholders a property can be set to in order to send JSON `null`. Setting a property to `nil`
+// leaves the member out instead.
 let nullString: String = UUID().uuidString
-let nullNumber: NSNumber = NSNumber(value: Int32.max)
+let nullNumber: NSNumber = NSNumber(value: Double.nan)
 let nullDictionary: [String: Any] = [.null: NSNull()]
 let nullStringArray: [String] = [.null]
 let nullNumberArray: [NSNumber] = [.null]
@@ -35,22 +37,25 @@ extension String: NullableAware {
         return self == nullString
     }
     
+    /// A placeholder that's sent as `null`.
     public static var null: String {
         return nullString
     }
 }
 
-public extension Array where Element == String {
+extension Array where Element == String {
     var isNull: Bool {
         return self.first == .null
     }
     
+    /// A placeholder that's sent as `null`.
     public static var null: Array<Element> {
         return nullStringArray
     }
 }
 
-public extension Dictionary where Key == String, Value: Any {
+extension Dictionary where Key == String {
+    /// A placeholder that's sent as `null`.
     public static var null: Dictionary<String, Any> {
         return nullDictionary
     }
@@ -60,7 +65,8 @@ public extension Dictionary where Key == String, Value: Any {
     }
 }
 
-public extension Array where Element == Dictionary<String, Any> {
+extension Array where Element == Dictionary<String, Any> {
+    /// A placeholder that's sent as `null`.
     public static var null: Array<Element> {
         return nullDictionaryArray
     }
@@ -71,16 +77,19 @@ public extension Array where Element == Dictionary<String, Any> {
 }
 
 extension NSNumber: NullableAware {
+    /// Every NaN counts as the placeholder, as NaN can't be represented in JSON.
     var isNull: Bool {
-        return self.isEqual(to: nullNumber)
+        return doubleValue.isNaN
     }
     
+    /// A placeholder that's sent as `null`.
     public static var null: NSNumber {
         return nullNumber
     }
 }
 
-public extension Array where Element == NSNumber {
+extension Array where Element == NSNumber {
+    /// A placeholder that's sent as `null`.
     public static var null: Array<Element> {
         return nullNumberArray
     }
@@ -95,6 +104,7 @@ extension Resource: NullableAware {
         return self.id == .null
     }
     
+    /// A placeholder that empties a to-one relationship: it's sent as `"data": null`.
     public static func null() -> Self {
         let _null = self.init()
         _null.id = .null
@@ -103,11 +113,12 @@ extension Resource: NullableAware {
     }
 }
 
-public extension Array where Element: Resource {
+extension Array where Element: Resource {
     var isNull: Bool {
         return self.first?.id == .null
     }
     
+    /// A placeholder that empties a to-many relationship: it's sent as `"data": []`.
     public static var null: Array<Element> {
         return [.null()]
     }
