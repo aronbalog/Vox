@@ -8,9 +8,14 @@ public protocol FetchPageable {
     func paginate(_ pagination: PaginationStrategy) -> FetchConfigurableType
 }
 
+/// The resources of a document before and after a page was appended to it.
 public struct PaginationData<T>: @unchecked Sendable {
+    /// The resources before the page was appended.
     public let old: [T]
+    /// The resources of the page that were appended. Resources the document contained already
+    /// aren't appended again and aren't part of `new`.
     public let new: [T]
+    /// The resources after the page was appended.
     public let all: [T]
 }
 
@@ -43,22 +48,32 @@ extension Document where DataType: Collection, DataType.Element: Resource {
     }
     
     /// Fetches the next page and appends its resources and included resources to the document.
-    /// Does nothing when the document has no `next` link.
-    public func appendNext(_ completion: (@MainActor (PaginationData<DataType.Element>) -> Void)? = nil, _ failure: (@MainActor (Error) -> Void)? = nil) {
+    ///
+    /// Resources the document contains already, which pages of a changing collection can
+    /// repeat, aren't appended again but take the values of the page. Afterwards `links` and
+    /// `meta` are those of the page, so `next` continues after it.
+    ///
+    /// - Returns: The resources before and after the page was appended, or `nil` when the
+    ///   document has no `next` link or wasn't fetched by a client.
+    @discardableResult
+    public func appendNext() async throws -> PaginationData<DataType.Element>? {
         guard let next = next else {
-            return
+            return nil
         }
         
-        next.result({ document in
-            let oldElements = self.data as? [DataType.Element] ?? []
-            let newElements = document.data ?? []
-            
-            self.mergeDocument(document)
-            
-            let allElements = self.data as? [DataType.Element] ?? []
-            
-            completion?(PaginationData(old: oldElements, new: newElements, all: allElements))
-        }, failure)
+        return append(try await next.result())
+    }
+    
+    /// Fetches the next page, appends it like `appendNext()` and calls `completion` or `failure`
+    /// on the main actor. `completion` receives `nil` when there's no next page.
+    public func appendNext(_ completion: @escaping @MainActor (PaginationData<DataType.Element>?) -> Void, _ failure: (@MainActor (Error) -> Void)? = nil) {
+        Task { @MainActor in
+            do {
+                completion(try await self.appendNext())
+            } catch {
+                failure?(error)
+            }
+        }
     }
     
     /// A request following `link` with the client that fetched the document.
@@ -72,17 +87,67 @@ extension Document where DataType: Collection, DataType.Element: Resource {
         })
     }
     
-    private func mergeDocument(_ document: Document<[DataType.Element]>) {
-        ResourceGraph.lock.withLock {
-            _ = ResourceGraph.merge(graph, document.graph)
+    func append(_ page: Document<[DataType.Element]>) -> PaginationData<DataType.Element> {
+        return ResourceGraph.lock.withLock {
+            let graph = self.graph.current
+            graph.update(with: page.graph)
+            
+            let old = _data.map { Array($0) } ?? []
+            var all = old
+            var new: [DataType.Element] = []
+            var known = Set(old.map { ObjectIdentifier($0) })
+            
+            for resource in page._data ?? [] {
+                let pageObject = resource.storageLocked().object
+                let object = graph.object(matching: pageObject) ?? pageObject
+                
+                guard let instance = graph.instance(for: object) as? DataType.Element, known.insert(ObjectIdentifier(instance)).inserted else {
+                    continue
+                }
+                
+                new.append(instance)
+                all.append(instance)
+            }
+            
+            _data = all as? DataType
+            _included = Document.merging(page._included, into: _included)
+            _links = page._links
+            _meta = page._meta
+            
+            return PaginationData(old: old, new: new, all: all)
+        }
+    }
+    
+    /// `included` with the resource objects of `newer` appended, replacing the objects with the
+    /// same type and `id` or `lid`.
+    private static func merging(_ newer: [[String: Any]]?, into included: [[String: Any]]?) -> [[String: Any]]? {
+        guard let newer = newer else {
+            return included
         }
         
-        var collection = data as? [DataType.Element] ?? []
-        collection.append(contentsOf: document.data ?? [])
-        self.data = collection as? DataType
+        var merged = included ?? []
+        var indices: [ResourceKey: Int] = [:]
         
-        if let newIncluded = document.included {
-            included = (included ?? []) + newIncluded
+        for (index, json) in merged.enumerated() {
+            if let key = ResourceKey(json: json) {
+                indices[key] = index
+            }
         }
+        
+        for json in newer {
+            let key = ResourceKey(json: json)
+            
+            if let key = key, let index = indices[key] {
+                merged[index] = json
+            } else {
+                if let key = key {
+                    indices[key] = merged.count
+                }
+                
+                merged.append(json)
+            }
+        }
+        
+        return merged
     }
 }

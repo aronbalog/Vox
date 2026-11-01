@@ -11,11 +11,17 @@ public final class Document<DataType>: @unchecked Sendable {
         set { ResourceGraph.lock.withLock { _data = newValue } }
     }
     
-    public let meta: [String: Any]?
+    public internal(set) var meta: [String: Any]? {
+        get { return ResourceGraph.lock.withLock { _meta } }
+        set { ResourceGraph.lock.withLock { _meta = newValue } }
+    }
     
     public let jsonapi: [String: Any]?
     
-    public let links: Links?
+    public internal(set) var links: Links? {
+        get { return ResourceGraph.lock.withLock { _links } }
+        set { ResourceGraph.lock.withLock { _links = newValue } }
+    }
     
     /// The included resource objects as JSON.
     public internal(set) var included: [[String: Any]]? {
@@ -33,15 +39,18 @@ public final class Document<DataType>: @unchecked Sendable {
         set { ResourceGraph.lock.withLock { _client = newValue } }
     }
     
-    private var _data: DataType?
-    private var _included: [[String: Any]]?
+    /// Guarded by `ResourceGraph.lock`, like the members below.
+    var _data: DataType?
+    var _meta: [String: Any]?
+    var _links: Links?
+    var _included: [[String: Any]]?
     private var _client: (any Client)?
     
     init(data: DataType?, document: DecodedDocument) {
         self._data = data
-        self.meta = document.meta
+        self._meta = document.meta
         self.jsonapi = document.jsonapi
-        self.links = Links(json: document.links)
+        self._links = Links(json: document.links)
         self._included = document.included
         self.graph = document.graph
     }

@@ -124,15 +124,15 @@ struct PaginationSpec {
     func appendingNextPage() async throws {
         let document = try await fetchFirstPage()
         
-        let page: PaginationData<Article3> = try await withCheckedThrowingContinuation { continuation in
-            document.appendNext({ continuation.resume(returning: $0) }, { continuation.resume(throwing: $0) })
-        }
+        let page = try #require(try await document.appendNext())
         
         #expect(page.new.count == 1)
         #expect(page.old.count == 1)
         #expect(page.all.count == 2)
         #expect(document.data?.count == 2)
-        #expect(document.included?.count == 6)
+        // Both pages include person 123123.
+        #expect(document.included?.count == 5)
+        #expect(document.data?.last?.author === document.data?.first?.author)
         #expect(client.requests.last?.target == .link("http://example.com/articles?page[number]=4&page[size]=1"))
     }
 }

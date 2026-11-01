@@ -9,6 +9,26 @@ struct ResourceKey: Hashable {
     
     let type: String
     let identifier: Identifier
+    
+    /// The key of the resource object `json`, by `id` or else by `lid`.
+    init?(json: [String: Any]) {
+        guard let type = json["type"] as? String else {
+            return nil
+        }
+        
+        if let id = resourceIdentifier(json["id"]) {
+            self.init(type: type, identifier: .id(id))
+        } else if let lid = json["lid"] as? String {
+            self.init(type: type, identifier: .lid(lid))
+        } else {
+            return nil
+        }
+    }
+    
+    init(type: String, identifier: Identifier) {
+        self.type = type
+        self.identifier = identifier
+    }
 }
 
 /// The JSON of one resource object.
@@ -72,6 +92,24 @@ final class ResourceObject {
         relationships.merge(other.relationships) { current, _ in current }
         links = links ?? other.links
         meta = meta ?? other.meta
+    }
+    
+    /// Takes the members of `other`, a later version of the same resource, and keeps the ones
+    /// `other` doesn't have.
+    func update(with other: ResourceObject) {
+        id = other.id ?? id
+        lid = other.lid ?? lid
+        attributes.merge(other.attributes) { _, newer in newer }
+        relationships.merge(other.relationships) { current, newer in
+            var relationship = newer
+            relationship.data = newer.data ?? current.data
+            relationship.links = newer.links ?? current.links
+            relationship.meta = newer.meta ?? current.meta
+            
+            return relationship
+        }
+        links = other.links ?? links
+        meta = other.meta ?? meta
     }
     
     /// Sets the resource linkage of a relationship. Removing the linkage keeps the relationship's

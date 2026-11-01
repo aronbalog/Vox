@@ -127,11 +127,46 @@ final class ResourceGraph {
         return survivor
     }
     
+    /// Moves the objects of `graph`, which holds a later response, into this graph. An object
+    /// with the key of an object in this graph updates that object instead of being added, so
+    /// the resources of this graph keep their identity and show the newer members.
+    func update(with graph: ResourceGraph) {
+        let target = current
+        let graph = graph.current
+        
+        guard target !== graph else {
+            return
+        }
+        
+        for (identifier, object) in graph.objects {
+            if let existingObject = object.keys.lazy.compactMap({ target.objectsByKey[$0] }).first {
+                existingObject.update(with: object)
+                target.index(existingObject)
+            } else {
+                target.objects[identifier] = object
+                target.instances[identifier] = graph.instances[identifier]
+                target.index(object)
+            }
+        }
+        
+        target.finishAbsorbing(graph)
+    }
+    
+    /// The object with any of the keys of `object`, which is `object` itself unless a graph
+    /// update replaced it.
+    func object(matching object: ResourceObject) -> ResourceObject? {
+        return object.keys.lazy.compactMap { self.objectsByKey[$0] }.first
+    }
+    
     private func absorb(_ graph: ResourceGraph) {
         objects.merge(graph.objects) { object, _ in object }
         objectsByKey.merge(graph.objectsByKey) { object, _ in object }
         instances.merge(graph.instances) { instance, _ in instance }
         
+        finishAbsorbing(graph)
+    }
+    
+    private func finishAbsorbing(_ graph: ResourceGraph) {
         graph.objects = [:]
         graph.objectsByKey = [:]
         graph.instances = [:]
