@@ -20,10 +20,7 @@ Pod::Spec.new do |spec|
 
 	spec.subspec 'Alamofire' do |alamofire|
 		alamofire.source_files = 'Sources/VoxAlamofire/**/*.swift'
-		alamofire.pod_target_xcconfig = {
-		  'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'ALAMOFIRE',
-		}
 		alamofire.dependency 'Vox/Core'
-		alamofire.dependency 'Alamofire', '~> 4.7'
+		alamofire.dependency 'Alamofire', '~> 5.9'
 	end
 end

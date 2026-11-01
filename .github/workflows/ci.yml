@@ -30,6 +30,19 @@ jobs:
       - name: Test
         run: swift test --skip-build 2>&1 | xcbeautify --renderer github-actions
 
+  linux:
+    name: Linux (swift test)
+    runs-on: ubuntu-latest
+    container: swift:6.0-jammy
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: swift --version
+      - name: Build
+        run: swift build --build-tests
+      - name: Test
+        run: swift test --skip-build
+
   ios:
     name: iOS Simulator (xcodebuild test)
     runs-on: macos-15
@@ -44,7 +57,7 @@ jobs:
         run: |
           device=$(xcrun simctl list devices available --json \
             | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
-          xcodebuild test -scheme Vox -destination "id=$device" 2>&1 | xcbeautify --renderer github-actions
+          xcodebuild test -scheme Vox-Package -destination "id=$device" 2>&1 | xcbeautify --renderer github-actions
 
   platforms:
     name: ${{ matrix.platform }} (xcodebuild build)
@@ -61,7 +74,7 @@ jobs:
       - name: Install xcbeautify
         run: command -v xcbeautify || brew install xcbeautify
       - name: Build
-        run: xcodebuild build -scheme Vox -destination "generic/platform=${{ matrix.platform }}" 2>&1 | xcbeautify --renderer github-actions
+        run: xcodebuild build -scheme Vox-Package -destination "generic/platform=${{ matrix.platform }}" 2>&1 | xcbeautify --renderer github-actions
 
   cocoapods:
     name: CocoaPods (pod lib lint)
