@@ -10,11 +10,9 @@ extension Int {
     }
 }
 
-private final class BundleToken {}
-
 extension Data {
     init(jsonFileName: String) {
-        let url = Bundle(for: BundleToken.self).url(forResource: jsonFileName, withExtension: "json")!
+        let url = Bundle.module.url(forResource: jsonFileName, withExtension: "json")!
         
         self = try! Data(contentsOf: url)
     }
