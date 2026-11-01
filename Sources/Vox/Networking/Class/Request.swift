@@ -8,7 +8,7 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
     private var client: Client
     public var userInfo: [String: Any] = [:]
     
-    fileprivate var queryItems: [URLQueryItem] = []
+    private var customQueryItems: [URLQueryItem] = []
     
     var resource: ResourceType?
     
@@ -28,16 +28,22 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
         try execute()
     }
     
+    /// Adds query items, which are sent after the ones the request builds itself.
     public func queryItems(_ queryItems: [URLQueryItem]) -> Self {
-        self.queryItems.append(contentsOf: queryItems)
+        customQueryItems.append(contentsOf: queryItems)
         
         return self
+    }
+    
+    /// The query items of the request.
+    func makeQueryItems() -> [URLQueryItem] {
+        return customQueryItems
     }
     
     func execute() throws {
         let parameters: [String: Any]? = try resource?.documentDictionary()
         
-        client.executeRequest(path: path, method: httpMethod, queryItems: queryItems, bodyParameters: parameters, success: { (response, data) in
+        client.executeRequest(path: path, method: httpMethod, queryItems: makeQueryItems(), bodyParameters: parameters, success: { (response, data) in
             if let success = self.successBlock as? DataSource<ResourceType>.ResourceSuccessBlock {
                 guard let data = data else {
                     fatalError("Unhandled exception")
@@ -89,82 +95,78 @@ public class Request<ResourceType: Resource, SuccessCallbackType>: DataSourceRes
     }
 }
 
+/// A request for a resource or a collection, with the query parameters of JSON:API.
+///
+/// The parameters are sent in a fixed order: sparse fieldsets sorted by type, the filter,
+/// `include`, `sort`, the pagination, and query items added with `queryItems(_:)`.
 public class FetchRequest<ResourceType: Resource, SuccessCallbackType>: Request<ResourceType, SuccessCallbackType>, FetchConfigurable {
-    public internal(set) var pagination: PaginationStrategy? {
-        didSet {
-            guard let queryItems = self.pagination?.paginationURLQueryItems() else { return }
-            
-            self.queryItems.append(contentsOf: queryItems)
-        }
-    }
+    public internal(set) var pagination: PaginationStrategy?
     
-    public internal(set) var filter: FilterStrategy? {
-        didSet {
-            guard let queryItems = self.filter?.filterURLQueryItems() else { return }
-            
-            self.queryItems.append(contentsOf: queryItems)
-        }
-    }
+    public internal(set) var filter: FilterStrategy?
     
-    public internal(set) var sort: [Sort] = [] {
-        didSet {
-            let value = self.sort.map { element in
-                return element.value
-            }.joined(separator: ",")
-            let queryItem = URLQueryItem(name: "sort", value: value)
-            queryItems.append(queryItem)
-        }
-    }
+    public internal(set) var sort: [Sort] = []
     
-    public internal(set) var fields: Fields? {
-        didSet {
-            var dictionary: [String: String] = [:]
-            fields?.forEach({ (field) in
-                dictionary[field.key] = field.value.joined(separator: ",")
-            })
-            let _queryItems = dictionary.map { (field) -> URLQueryItem in
-                let name = "fields[\(field.key)]"
-                return URLQueryItem(name: name, value: field.value)
-            }
-            queryItems.append(contentsOf: _queryItems)
-        }
-    }
-    public internal(set) var include: [String] = [] {
-        didSet {
-            let value = include.joined(separator: ",")
-            let queryItem = URLQueryItem(name: "include", value: value)
-            queryItems.append(queryItem)
-        }
-    }
+    public internal(set) var fields: Fields?
     
+    public internal(set) var include: [String] = []
+    
+    /// Replaces the sort fields.
     public func sort(_ sort: [Sort]) -> FetchRequest<ResourceType, SuccessCallbackType> {
         self.sort = sort
         
         return self
     }
     
+    /// Sets the sparse fieldsets of the given types. An empty field list requests no fields of
+    /// that type.
     public func fields(_ fields: Fields) -> FetchRequest<ResourceType, SuccessCallbackType> {
-        self.fields = fields
+        self.fields = (self.fields ?? [:]).merging(fields) { _, new in new }
         
         return self
     }
     
+    /// Adds relationship paths to include, leaving out the ones included already.
     public func include(_ include: [String]) -> FetchRequest<ResourceType, SuccessCallbackType> {
-        self.include.append(contentsOf: include)
+        for path in include where !self.include.contains(path) {
+            self.include.append(path)
+        }
         
         return self
     }
     
+    /// Replaces the filter.
     public func filter(_ filter: FilterStrategy) -> FetchRequest<ResourceType, SuccessCallbackType> {
         self.filter = filter
         
         return self
     }
     
-    
+    /// Replaces the pagination.
     public func paginate(_ pagination: PaginationStrategy) -> FetchRequest<ResourceType, SuccessCallbackType> {
         self.pagination = pagination
         
         return self
+    }
+    
+    override func makeQueryItems() -> [URLQueryItem] {
+        var queryItems: [URLQueryItem] = []
+        
+        for (type, fieldNames) in (fields ?? [:]).sorted(by: { $0.key < $1.key }) {
+            queryItems.append(URLQueryItem(name: "fields[\(type)]", value: fieldNames.joined(separator: ",")))
+        }
+        
+        queryItems += filter?.filterURLQueryItems() ?? []
+        
+        if !include.isEmpty {
+            queryItems.append(URLQueryItem(name: "include", value: include.joined(separator: ",")))
+        }
+        
+        if !sort.isEmpty {
+            queryItems.append(URLQueryItem(name: "sort", value: sort.map(\.value).joined(separator: ",")))
+        }
+        
+        queryItems += pagination?.paginationURLQueryItems() ?? []
+        
+        return queryItems + super.makeQueryItems()
     }
 }

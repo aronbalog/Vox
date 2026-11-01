@@ -1,25 +1,8 @@
 import Foundation
 
 extension Pagination {
-    public class OffsetBased: PaginationStrategy {
-        public func paginationURLQueryItems() -> [URLQueryItem] {
-            var items: [URLQueryItem] = []
-            
-            if let offset = offset {
-                let name = "\(key)[offset]"
-                let item = URLQueryItem(name: name, value: String(offset))
-                items.append(item)
-            }
-            
-            if let limit = limit {
-                let name = "\(key)[limit]"
-                let item = URLQueryItem(name: name, value: String(limit))
-                items.append(item)
-            }
-            
-            return items
-        }
-        
+    /// Sends `page[offset]` and `page[limit]`.
+    public struct OffsetBased: PaginationStrategy {
         public let key: String
         public let offset: Int?
         public let limit: Int?
@@ -29,6 +12,19 @@ extension Pagination {
             self.offset = offset
             self.limit = limit
         }
+        
+        public func paginationURLQueryItems() -> [URLQueryItem] {
+            var items: [URLQueryItem] = []
+            
+            if let offset = offset {
+                items.append(URLQueryItem(name: "\(key)[offset]", value: String(offset)))
+            }
+            
+            if let limit = limit {
+                items.append(URLQueryItem(name: "\(key)[limit]", value: String(limit)))
+            }
+            
+            return items
+        }
     }
 }
-

@@ -1,24 +1,21 @@
 import Foundation
 
-public enum Sort {
-    public static func ascending(_ value: String) -> Sort {
-        return Sort._ascending(value: value)
+/// A sort field of a collection request.
+public struct Sort: Equatable {
+    public let field: String
+    public let isDescending: Bool
+    
+    public static func ascending(_ field: String) -> Sort {
+        return Sort(field: field, isDescending: false)
     }
     
-    public static func descending(_ value: String) -> Sort {
-        return Sort._descending(value: value)
+    public static func descending(_ field: String) -> Sort {
+        return Sort(field: field, isDescending: true)
     }
     
-    case _ascending(value: String)
-    case _descending(value: String)
-    
+    /// The field as it appears in the `sort` query parameter.
     var value: String {
-        switch self {
-        case ._ascending(let value):
-            return value
-        case ._descending(let value):
-            return "-" + value
-        }
+        return isDescending ? "-" + field : field
     }
 }
 
@@ -29,4 +26,3 @@ public protocol FetchSortable {
     
     func sort(_ sort: [Sort]) -> FetchConfigurableType
 }
-

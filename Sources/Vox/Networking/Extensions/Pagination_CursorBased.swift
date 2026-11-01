@@ -1,14 +1,8 @@
 import Foundation
 
 extension Pagination {
-    public class CursorBased: PaginationStrategy {
-        public func paginationURLQueryItems() -> [URLQueryItem] {
-            let name = "\(key)[cursor]"
-            let item = URLQueryItem(name: name, value: cursor)
-            
-            return [item]
-        }
-        
+    /// Sends `page[cursor]`.
+    public struct CursorBased: PaginationStrategy {
         public let key: String
         public let cursor: String
         
@@ -16,7 +10,9 @@ extension Pagination {
             self.key = key
             self.cursor = cursor
         }
+        
+        public func paginationURLQueryItems() -> [URLQueryItem] {
+            return [URLQueryItem(name: "\(key)[cursor]", value: cursor)]
+        }
     }
 }
-
-
