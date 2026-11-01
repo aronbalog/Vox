@@ -21,7 +21,7 @@ public extension Document where DataType: Collection, DataType.Element: Resource
     
     public var first: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
         guard let client = client else { fatalError("Client not available") }
-        guard let first = self.links?.first else { return nil }
+        guard let first = self.links?.first?.url else { return nil }
         
         let dataSource = DataSource<DataType.Element>(strategy: .path(first.path), client: client)
         
@@ -30,7 +30,7 @@ public extension Document where DataType: Collection, DataType.Element: Resource
     
     public var next: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
         guard let client = client else { fatalError("Client not available") }
-        guard let next = self.links?.next else { return nil }
+        guard let next = self.links?.next?.url else { return nil }
         
         let dataSource = DataSource<DataType.Element>(strategy: .path(next.path), client: client)
         
@@ -39,7 +39,7 @@ public extension Document where DataType: Collection, DataType.Element: Resource
     
     public var previous: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
         guard let client = client else { fatalError("Client not available") }
-        guard let prev = self.links?.prev else { return nil }
+        guard let prev = self.links?.prev?.url else { return nil }
         
         let dataSource = DataSource<DataType.Element>(strategy: .path(prev.path), client: client)
         
@@ -48,7 +48,7 @@ public extension Document where DataType: Collection, DataType.Element: Resource
     
     public var last: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
         guard let client = client else { fatalError("Client not available") }
-        guard let last = self.links?.last else { return nil }
+        guard let last = self.links?.last?.url else { return nil }
         
         let dataSource = DataSource<DataType.Element>(strategy: .path(last.path), client: client)
         
@@ -57,7 +57,7 @@ public extension Document where DataType: Collection, DataType.Element: Resource
     
     public var reload: FetchRequest<DataType.Element, ResourceCollectionSuccessBlock>? {
         guard let client = client else { fatalError("Client not available") }
-        guard let _self = self.links?._self else { return nil }
+        guard let _self = self.links?.selfLink?.url else { return nil }
         
         let dataSource = DataSource<DataType.Element>(strategy: .path(_self.path), client: client)
         
@@ -65,7 +65,7 @@ public extension Document where DataType: Collection, DataType.Element: Resource
     }
     
     public func appendNext(_ completion: ((PaginationData<DataType.Element>) -> Void)? = nil, _ failure: ((Error?) -> Void)? = nil) {
-        guard let next = self.links?.next else {
+        guard let next = self.links?.next?.url else {
             return
         }
         

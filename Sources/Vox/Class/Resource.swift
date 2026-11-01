@@ -62,9 +62,27 @@ open class Resource: NSObject {
         set {
             ResourceGraph.lock.withLock {
                 let (object, graph) = storageLocked()
-                let oldKey = object.key
+                let oldKeys = object.keys
                 object.id = newValue
-                graph.updateKey(of: object, replacing: oldKey)
+                graph.updateKeys(of: object, replacing: oldKeys)
+            }
+        }
+    }
+    
+    /// A local identifier for a resource that has no `id` yet, which other resources in the same
+    /// request document can refer to it by.
+    public var lid: String? {
+        get {
+            return ResourceGraph.lock.withLock {
+                storageLocked().object.lid
+            }
+        }
+        set {
+            ResourceGraph.lock.withLock {
+                let (object, graph) = storageLocked()
+                let oldKeys = object.keys
+                object.lid = newValue
+                graph.updateKeys(of: object, replacing: oldKeys)
             }
         }
     }
@@ -101,6 +119,31 @@ open class Resource: NSObject {
             let (object, graph) = storageLocked()
             
             return (try? relationshipsJSON(of: object, in: graph, skippingInvalid: true)) ?? [:]
+        }
+    }
+    
+    /// The links of the resource, as received.
+    public var links: Links? {
+        return ResourceGraph.lock.withLock {
+            Links(json: storageLocked().object.links)
+        }
+    }
+    
+    /// The links and meta of a relationship, as received.
+    ///
+    /// - Parameter name: The name of the relationship property, or the name of the relationship
+    ///   when no property is declared for it.
+    public func relationship(named name: String) -> Relationship? {
+        let key = classMetadata.properties[name]?.key ?? name
+        
+        return ResourceGraph.lock.withLock {
+            storageLocked().object.relationships[key].map { relationship in
+                Relationship(
+                    links: Links(json: relationship.links),
+                    meta: relationship.meta,
+                    hasData: relationship.data != nil
+                )
+            }
         }
     }
     
@@ -170,6 +213,8 @@ open class Resource: NSObject {
         switch name {
         case "id":
             return id
+        case "lid":
+            return lid
         case "type":
             return type
         default:
@@ -191,6 +236,9 @@ open class Resource: NSObject {
         switch name {
         case "id":
             id = value as? String
+            return
+        case "lid":
+            lid = value as? String
             return
         case "type":
             return
@@ -326,10 +374,10 @@ open class Resource: NSObject {
             let (object, graph) = storageLocked()
             
             var json: [String: Any] = ["type": object.type]
+            json["id"] = object.id
+            json["lid"] = object.lid
             
-            if let id = object.id {
-                json["id"] = id
-            } else if requiringID {
+            if requiringID, object.id == nil, object.lid == nil {
                 throw JSONAPIError.serialization
             }
             
@@ -381,16 +429,30 @@ open class Resource: NSObject {
     private func identifierJSON(_ reference: ResourceReference, in graph: ResourceGraph) throws -> [String: Any] {
         switch reference {
         case .identifier(let key, let meta):
-            var json: [String: Any] = ["type": key.type, "id": key.id]
+            var json: [String: Any] = ["type": key.type]
+            
+            switch key.identifier {
+            case .id(let id):
+                json["id"] = id
+            case .lid(let lid):
+                json["lid"] = lid
+            }
+            
             json["meta"] = meta
             
             return json
         case .object:
-            guard let object = graph.object(for: reference), let id = object.id else {
+            guard let object = graph.object(for: reference) else {
                 throw JSONAPIError.serialization
             }
             
-            return ["type": object.type, "id": id]
+            if let id = object.id {
+                return ["type": object.type, "id": id]
+            } else if let lid = object.lid {
+                return ["type": object.type, "lid": lid]
+            } else {
+                throw JSONAPIError.serialization
+            }
         }
     }
     

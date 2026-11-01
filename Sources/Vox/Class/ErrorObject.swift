@@ -19,7 +19,8 @@ final public class ErrorObject {
     }
     
     public let id: String?
-    public let links: [String: Any]?
+    /// The `about` and `type` links of the error.
+    public let links: Links?
     /// The HTTP status code as a string.
     public let status: String?
     public let code: String?
@@ -30,7 +31,7 @@ final public class ErrorObject {
     
     init(dictionary: [String: Any]) {
         id = ErrorObject.string(dictionary["id"])
-        links = dictionary["links"] as? [String: Any]
+        links = Links(json: dictionary["links"])
         status = ErrorObject.string(dictionary["status"])
         code = ErrorObject.string(dictionary["code"])
         title = dictionary["title"] as? String

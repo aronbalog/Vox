@@ -42,18 +42,26 @@ final class ResourceGraph {
     /// the members of `object` it lacks are added to it and the existing object is returned.
     @discardableResult
     func insert(_ object: ResourceObject) -> ResourceObject {
-        if let key = object.key {
-            if let existingObject = objectsByKey[key] {
-                existingObject.merge(object)
-                return existingObject
-            }
+        let keys = object.keys
+        
+        if let existingObject = keys.lazy.compactMap({ self.objectsByKey[$0] }).first {
+            existingObject.merge(object)
+            index(existingObject)
             
-            objectsByKey[key] = object
+            return existingObject
         }
         
         objects[ObjectIdentifier(object)] = object
+        index(object)
         
         return object
+    }
+    
+    /// Makes the keys of `object` refer to it, unless they refer to another object already.
+    private func index(_ object: ResourceObject) {
+        for key in object.keys where objectsByKey[key] == nil {
+            objectsByKey[key] = object
+        }
     }
     
     func object(for reference: ResourceReference) -> ResourceObject? {
@@ -88,20 +96,18 @@ final class ResourceGraph {
         instances[ObjectIdentifier(object)] = WeakResource(resource: instance)
     }
     
-    /// Updates the key of `object` after its `id` changed.
-    func updateKey(of object: ResourceObject, replacing oldKey: ResourceKey?) {
-        if let oldKey = oldKey, objectsByKey[oldKey] === object {
-            objectsByKey[oldKey] = nil
+    /// Updates the keys of `object` after its `id` or `lid` changed.
+    func updateKeys(of object: ResourceObject, replacing oldKeys: [ResourceKey]) {
+        for key in oldKeys where objectsByKey[key] === object {
+            objectsByKey[key] = nil
         }
         
-        if let key = object.key, objectsByKey[key] == nil {
-            objectsByKey[key] = object
-        }
+        index(object)
     }
     
-    /// Makes resource identifiers with the key of `object` resolve to it.
+    /// Makes resource identifiers with the keys of `object` resolve to it.
     func prefer(_ object: ResourceObject) {
-        if let key = object.key {
+        for key in object.keys {
             objectsByKey[key] = object
         }
     }
@@ -169,9 +175,7 @@ final class ResourceGraph {
         instances = instances.filter { $0.value.resource != nil }
         
         for object in objects.values {
-            if let key = object.key, objectsByKey[key] == nil {
-                objectsByKey[key] = object
-            }
+            index(object)
         }
         
         collectionThreshold = max(ResourceGraph.minimumCollectionThreshold, objects.count * 2)

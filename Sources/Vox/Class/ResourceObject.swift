@@ -1,9 +1,14 @@
 import Foundation
 
-/// Identifies a resource object within a graph by its `type` and `id`.
+/// Identifies a resource object within a graph by its `type` and its `id` or local `lid`.
 struct ResourceKey: Hashable {
+    enum Identifier: Hashable {
+        case id(String)
+        case lid(String)
+    }
+    
     let type: String
-    let id: String
+    let identifier: Identifier
 }
 
 /// The JSON of one resource object.
@@ -13,14 +18,15 @@ struct ResourceKey: Hashable {
 final class ResourceObject {
     let type: String
     var id: String?
+    /// The local identifier of a resource that has no `id` yet.
+    var lid: String?
     var attributes: [String: Any]
     var relationships: [String: RelationshipObject]
     var links: [String: Any]?
     var meta: [String: Any]?
     
-    init(type: String, id: String? = nil) {
+    init(type: String) {
         self.type = type
-        self.id = id
         self.attributes = [:]
         self.relationships = [:]
     }
@@ -33,6 +39,7 @@ final class ResourceObject {
         
         self.type = type
         self.id = resourceIdentifier(json["id"])
+        self.lid = json["lid"] as? String
         self.attributes = json["attributes"] as? [String: Any] ?? [:]
         self.relationships = (json["relationships"] as? [String: Any] ?? [:]).compactMapValues { relationship in
             (relationship as? [String: Any]).map(RelationshipObject.init(json:))
@@ -41,13 +48,26 @@ final class ResourceObject {
         self.meta = json["meta"] as? [String: Any]
     }
     
-    var key: ResourceKey? {
-        return id.map { ResourceKey(type: type, id: $0) }
+    /// The keys resource identifiers can refer to the object by.
+    var keys: [ResourceKey] {
+        var keys: [ResourceKey] = []
+        
+        if let id = id {
+            keys.append(ResourceKey(type: type, identifier: .id(id)))
+        }
+        
+        if let lid = lid {
+            keys.append(ResourceKey(type: type, identifier: .lid(lid)))
+        }
+        
+        return keys
     }
     
     /// Adds the members of `other` this object doesn't have, for documents that contain the same
     /// resource more than once.
     func merge(_ other: ResourceObject) {
+        id = id ?? other.id
+        lid = lid ?? other.lid
         attributes.merge(other.attributes) { current, _ in current }
         relationships.merge(other.relationships) { current, _ in current }
         links = links ?? other.links
@@ -114,11 +134,21 @@ enum ResourceReference {
     case object(ObjectIdentifier)
     
     init?(json: [String: Any]) {
-        guard let type = json["type"] as? String, let id = resourceIdentifier(json["id"]) else {
+        guard let type = json["type"] as? String else {
             return nil
         }
         
-        self = .identifier(ResourceKey(type: type, id: id), meta: json["meta"] as? [String: Any])
+        let identifier: ResourceKey.Identifier
+        
+        if let id = resourceIdentifier(json["id"]) {
+            identifier = .id(id)
+        } else if let lid = json["lid"] as? String {
+            identifier = .lid(lid)
+        } else {
+            return nil
+        }
+        
+        self = .identifier(ResourceKey(type: type, identifier: identifier), meta: json["meta"] as? [String: Any])
     }
 }
 

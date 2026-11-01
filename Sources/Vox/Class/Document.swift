@@ -20,14 +20,7 @@ public class Document<DataType> {
         self.data = data
         self.meta = document.meta
         self.jsonapi = document.jsonapi
-        self.links = {
-            guard
-                let links = document.links,
-                let data = try? JSONSerialization.data(withJSONObject: links, options: [])
-                else { return nil }
-            
-            return try? JSONDecoder().decode(Links.self, from: data)
-        }()
+        self.links = Links(json: document.links)
         self.included = document.included
         self.graph = document.graph
     }
