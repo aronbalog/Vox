@@ -96,7 +96,8 @@ enum ResourceRuntime {
         }
     }
     
-    /// `value` if it's an instance of `type`, with JSON strings converted for `URL` properties.
+    /// `value` if it's an instance of `type`, with JSON strings converted for `URL` and `Date`
+    /// properties.
     static func cast(_ value: Any, to type: Any.Type) -> Any? {
         if type == Any.self || type == AnyObject.self {
             return value
@@ -104,6 +105,10 @@ enum ResourceRuntime {
         
         if type == URL.self {
             return (value as? String).flatMap(URL.init(string:))
+        }
+        
+        if type == Date.self {
+            return (value as? String).flatMap(ISO8601DateCoding.date(from:))
         }
         
         return isInstance(value, of: type) ? value : nil

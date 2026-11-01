@@ -17,7 +17,7 @@ import Foundation
 ///
 /// Properties typed as a `Resource` subclass are to-one relationships, properties typed as an
 /// array of a `Resource` subclass are to-many relationships, and all other properties are
-/// attributes.
+/// attributes. `Date` attributes are ISO 8601 strings in JSON, and `URL` attributes are strings.
 ///
 /// Access to the JSON of resources is synchronized, so resources can be read and written from any
 /// thread. A subclass without mutable state of its own can be declared `@unchecked Sendable` to
@@ -351,6 +351,10 @@ open class Resource: NSObject {
         
         if let url = value as? URL {
             return url.absoluteString
+        }
+        
+        if let date = value as? Date {
+            return ISO8601DateCoding.string(from: date)
         }
         
         return value
