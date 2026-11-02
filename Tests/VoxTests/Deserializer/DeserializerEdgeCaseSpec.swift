@@ -197,6 +197,56 @@ struct DeserializerEdgeCaseSpec {
         #expect((planet["moons"] as? [Moon])?.isEmpty == true)
     }
     
+    @Test("a resource repeated by its lid takes the id of the repetition and keeps its own linkage")
+    func duplicatesByLocalIdentifier() throws {
+        let document = try single("""
+        {
+            "data": {
+                "type": "edge-planets",
+                "lid": "home",
+                "relationships": { "moons": { "data": [{ "type": "edge-moons", "id": "moon" }] } }
+            },
+            "included": [
+                {
+                    "type": "edge-planets",
+                    "id": "earth",
+                    "lid": "home",
+                    "relationships": { "moons": { "data": [] } }
+                },
+                { "type": "edge-moons", "id": "moon" }
+            ]
+        }
+        """)
+        let planet = try #require(document.data)
+        
+        #expect(planet.id == "earth")
+        #expect(planet.lid == "home")
+        #expect((planet["moons"] as? [Moon])?.map(\.id) == ["moon"])
+    }
+    
+    @Test("empty to-one linkage is kept, and resource identifiers without type, id or lid are ignored")
+    func incompleteLinkage() throws {
+        let document = try single("""
+        {
+            "data": {
+                "type": "edge-planets",
+                "id": "earth",
+                "relationships": {
+                    "star": { "data": null },
+                    "moons": { "data": [{ "id": "moon" }, { "type": "edge-moons" }, { "type": "edge-moons", "id": "luna" }] }
+                }
+            },
+            "included": [{ "type": "edge-moons", "id": "luna" }]
+        }
+        """)
+        let planet = try #require(document.data)
+        
+        #expect(planet["star"] == nil)
+        #expect(planet.relationship(named: "star")?.hasData == true)
+        #expect((planet.relationships["star"] as? [String: Any])?["data"] is NSNull)
+        #expect((planet["moons"] as? [Moon])?.map(\.id) == ["luna"])
+    }
+    
     @Test("errors take precedence over data")
     func errorsAndData() throws {
         let json = #"{ "data": null, "errors": [{ "status": 422, "code": 7, "source": { "header": "Authorization" } }, "garbage"] }"#

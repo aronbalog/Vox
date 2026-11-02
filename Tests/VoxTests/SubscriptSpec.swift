@@ -50,6 +50,41 @@ struct SubscriptSpec {
         #expect(attributes?["label"] == nil)
     }
     
+    @Test("members without a property hold related resources, arrays of them and null")
+    func undeclaredMembers() throws {
+        let album = Album()
+        let band = Band()
+        band.id = "b1"
+        let producer = Band()
+        producer.id = "b2"
+        
+        album["musicians"] = [band, producer]
+        album["producer"] = producer
+        album["genres"] = [String]()
+        
+        #expect((album["musicians"] as? [Resource])?.map(\.id) == ["b1", "b2"])
+        #expect(album["producer"] as? Band === producer)
+        #expect(album.attributes["genres"] as? [String] == [])
+        #expect(album["unknown"] == nil)
+        
+        album["musicians"] = [Band]()
+        album["guests"] = [Band].null
+        album["producer"] = Band.null()
+        album["label"] = String.null
+        
+        #expect((album["musicians"] as? [Resource])?.isEmpty == true)
+        #expect((album["guests"] as? [Resource])?.isEmpty == true)
+        #expect(album["producer"] == nil)
+        #expect(album["label"] == nil)
+        
+        let data = try #require(try album.documentDictionary()["data"] as? [String: Any])
+        let relationships = try #require(data["relationships"] as? [String: Any])
+        #expect(((relationships["musicians"] as? [String: Any])?["data"] as? [Any])?.isEmpty == true)
+        #expect(((relationships["guests"] as? [String: Any])?["data"] as? [Any])?.isEmpty == true)
+        #expect((relationships["producer"] as? [String: Any])?["data"] is NSNull)
+        #expect((data["attributes"] as? [String: Any])?["label"] is NSNull)
+    }
+    
     @Test("id and lid can be set, type is read-only")
     func identity() {
         let album = Album()
@@ -60,6 +95,8 @@ struct SubscriptSpec {
         
         #expect(album.id == "a1")
         #expect(album.lid == "local")
+        #expect(album["id"] as? String == "a1")
+        #expect(album["lid"] as? String == "local")
         #expect(album["type"] as? String == "subscript-albums")
     }
 }

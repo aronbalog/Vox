@@ -12,6 +12,8 @@ fileprivate final class Track: Resource {
     var plays: NSNumber?
     var tags: [String]?
     var credits: [String: Any]?
+    var ratings: [NSNumber]?
+    var sections: [[String: Any]]?
     var artist: Artist?
     var remixes: [Track]?
 }
@@ -46,6 +48,8 @@ struct SerializationSpec {
         track["plays"] = NSNumber.null
         track["tags"] = [String].null
         track["credits"] = [String: Any].null
+        track["ratings"] = [NSNumber].null
+        track["sections"] = [[String: Any]].null
         track["artist"] = Artist.null()
         track["remixes"] = [Track].null
         track["subtitle"] = "set"
@@ -55,7 +59,7 @@ struct SerializationSpec {
         let attributes = try #require(data["attributes"] as? [String: Any])
         let relationships = try #require(data["relationships"] as? [String: Any])
         
-        #expect(Set(attributes.keys) == ["title", "plays", "tags", "credits"])
+        #expect(Set(attributes.keys) == ["title", "plays", "tags", "credits", "ratings", "sections"])
         #expect(attributes.values.allSatisfy { $0 is NSNull })
         #expect((relationships["artist"] as? [String: Any])?["data"] is NSNull)
         #expect(((relationships["remixes"] as? [String: Any])?["data"] as? [Any])?.isEmpty == true)
@@ -76,6 +80,7 @@ struct SerializationSpec {
         track.id = "1"
         track.meta = ["revision": 2]
         
+        #expect(track.meta?["revision"] as? Int == 2)
         #expect((try data(of: track)["meta"] as? [String: Any])?["revision"] as? Int == 2)
     }
     
@@ -95,6 +100,9 @@ struct SerializationSpec {
             let track = Track()
             track.meta = ["value": Data()]
             _ = try track.documentData()
+        }
+        expectSerializationError("document can't be represented") {
+            _ = try JSONAPIEncoder.data(of: ["data": Data()])
         }
     }
     

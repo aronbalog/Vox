@@ -26,6 +26,16 @@ fileprivate final class Book: Resource, @unchecked Sendable {
     var related: [Book]?
 }
 
+fileprivate final class Shelf: Resource, @unchecked Sendable {
+    override class var resourceType: String {
+        "storage-shelves"
+    }
+    
+    var label: Any?
+    var section: String = ""
+    lazy var summary = "Shelf"
+}
+
 fileprivate let bookDocument = Data("""
 {
     "data": {
@@ -43,6 +53,9 @@ fileprivate let bookDocument = Data("""
             },
             "related": {
                 "data": [{ "type": "storage-books", "id": "b2", "meta": { "order": 1 } }]
+            },
+            "series": {
+                "links": { "related": "/books/b1/series" }
             }
         }
     },
@@ -165,6 +178,34 @@ struct ResourceStorageSpec {
         #expect(book["author"] as? Author === author)
         #expect((author["books"] as? [Book])?.first === book)
         #expect((book["related"] as? [Book])?.first?.id == "b2")
+        #expect(book.relationship(named: "series")?.links?.related?.href == "/books/b1/series")
+    }
+    
+    @Test("updating a graph with itself keeps its objects")
+    func selfUpdate() throws {
+        let book = try decodeBook()
+        
+        ResourceGraph.lock.withLock {
+            let graph = book.storageLocked().graph
+            let objectCount = graph.objects.count
+            
+            graph.update(with: graph)
+            
+            #expect(graph.objects.count == objectCount)
+        }
+        
+        #expect((book["author"] as? Author)?["name"] as? String == "Frank")
+    }
+    
+    @Test("properties of type Any take any value, and lazy properties aren't members")
+    func propertyKinds() {
+        let shelf = Shelf()
+        shelf["label"] = 7
+        shelf["section"] = "B"
+        
+        #expect(shelf["label"] as? Int == 7)
+        #expect(shelf["section"] as? String == "B")
+        #expect(Set(shelf.classMetadata.properties.keys) == ["label", "section"])
     }
     
     @Test("a resource from another document can be assigned")
@@ -281,6 +322,9 @@ struct ResourceStorageSpec {
         #expect(data.count == 2)
         #expect(data[0]["id"] as? String == "1")
         #expect((data[1]["relationships"] as? [String: Any])?["author"] != nil)
+        
+        let json = try JSONSerialization.jsonObject(with: try [first, second].documentData()) as? [String: Any]
+        #expect((json?["data"] as? [[String: Any]])?.count == 2)
         
         #expect(throws: JSONAPIError.self) {
             try [Book()].documentDictionary()

@@ -98,6 +98,28 @@ struct LinksSpec {
         #expect(next.describedby?.href == "https://example.com/schema")
     }
     
+    @Test("links are available by name, and link objects without href are left out")
+    func namedLinks() throws {
+        let json = #"""
+        {
+            "data": null,
+            "links": {
+                "describedby": "https://example.com/schema",
+                "alternate": { "href": "/posts.html", "rel": "alternate", "type": "text/html" },
+                "broken": { "meta": { "reason": "no href" } }
+            }
+        }
+        """#
+        let links = try #require(try Deserializer.Single<Post>().deserialize(data: Data(json.utf8)).links)
+        
+        #expect(links.all.count == 2)
+        #expect(links.describedby?.href == "https://example.com/schema")
+        #expect(links["alternate"]?.href == "/posts.html")
+        #expect(links["alternate"]?.rel == "alternate")
+        #expect(links["alternate"]?.type == "text/html")
+        #expect(links["broken"] == nil)
+    }
+    
     @Test("resource links are decoded")
     func resourceLinks() throws {
         let post = try #require(try decodePosts().data?.first)
@@ -174,6 +196,7 @@ struct LinksSpec {
         let comment = try #require((post["comments"] as? [Comment])?.first)
         #expect(comment["body"] as? String == "Hi")
         #expect(comment["post"] as? Post === post)
+        #expect((post.relationships["comments"] as? [String: Any])?["data"] as? [[String: String]] == [["type": "links-comments", "lid": "comment"]])
     }
     
     @Test("resources without id are referenced by lid")
