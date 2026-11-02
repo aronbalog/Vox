@@ -50,6 +50,38 @@ fileprivate let secondPage = #"""
 
 fileprivate let lastPage = #"{ "data": [{ "type": "paging-stories", "id": "s4" }] }"#
 
+/// A story that's repeated by its `lid` on `draftUpdatePage`.
+fileprivate let draftPage = #"""
+{
+    "data": [{
+        "type": "paging-stories",
+        "id": "s1",
+        "lid": "draft",
+        "relationships": {
+            "writer": {
+                "data": { "type": "paging-writers", "id": "w1" },
+                "links": { "related": "https://example.com/stories/s1/writer" }
+            },
+            "editor": { "meta": { "assigned": false } }
+        }
+    }],
+    "links": { "next": "https://example.com/stories?page[number]=2" }
+}
+"""#
+
+fileprivate let draftUpdatePage = #"""
+{
+    "data": [{
+        "type": "paging-stories",
+        "lid": "draft",
+        "relationships": {
+            "writer": { "meta": { "rank": 1 } },
+            "editor": { "links": { "related": "https://example.com/stories/s1/editor" } }
+        }
+    }]
+}
+"""#
+
 fileprivate func response(_ json: String, statusCode: Int = 200) -> Result<ClientResponse, any Error> {
     .success(ClientResponse(statusCode: statusCode, data: Data(json.utf8)))
 }
@@ -94,6 +126,71 @@ struct PageAppendingSpec {
         let included = try #require(document.included)
         #expect(included.count == 1)
         #expect((included.first?["attributes"] as? [String: Any])?["name"] as? String == "Ann B.")
+    }
+    
+    @Test("resources without id or lid are appended, and new included resources are added")
+    func resourcesWithoutIdentifiers() async throws {
+        let client = RecordingClient(responses: [
+            response(#"{ "data": [{ "type": "paging-stories", "id": "s1" }], "links": { "next": "https://example.com/stories?page[number]=2" } }"#),
+            response(#"""
+            {
+                "data": [{
+                    "type": "paging-stories",
+                    "attributes": { "title": "Untitled" },
+                    "relationships": { "writer": { "data": { "type": "paging-writers", "id": "w2" } } }
+                }],
+                "included": [{ "type": "paging-writers", "id": "w2", "attributes": { "name": "Bo" } }]
+            }
+            """#)
+        ])
+        let document = try await fetchFirstPage(from: client)
+        
+        let page = try #require(try await document.appendNext())
+        
+        let story = try #require(page.new.first)
+        #expect(page.new.count == 1)
+        #expect(story.id == nil)
+        #expect(story["title"] as? String == "Untitled")
+        #expect((story["writer"] as? Writer)?["name"] as? String == "Bo")
+        #expect(document.data?.count == 2)
+        #expect(document.included?.compactMap { $0["id"] as? String } == ["w2"])
+    }
+    
+    @Test("resources repeated by lid keep their id, and their relationships keep what the page leaves out")
+    func partialUpdates() async throws {
+        let client = RecordingClient(responses: [response(draftPage), response(draftUpdatePage)])
+        let document = try await fetchFirstPage(from: client)
+        let story = try #require(document.data?.first)
+        
+        let page = try #require(try await document.appendNext())
+        
+        let writer = try #require(story.relationship(named: "writer"))
+        let editor = try #require(story.relationship(named: "editor"))
+        let writerLinkage = (story.relationships["writer"] as? [String: Any])?["data"] as? [String: Any]
+        #expect(page.new.isEmpty)
+        #expect(story.id == "s1")
+        #expect(writerLinkage?["id"] as? String == "w1")
+        #expect(writer.links?.related?.href == "https://example.com/stories/s1/writer")
+        #expect(writer.meta?["rank"] as? Int == 1)
+        #expect(!editor.hasData)
+        #expect(editor.links?.related?.href == "https://example.com/stories/s1/editor")
+        #expect(editor.meta?["assigned"] as? Bool == false)
+    }
+    
+    @Test("documents and pages without primary data take the links and meta of the page")
+    func withoutPrimaryData() async throws {
+        let client = RecordingClient(responses: [
+            response(#"{ "meta": { "total": 0 }, "links": { "next": "https://example.com/stories?page[number]=2" } }"#),
+            response(#"{ "meta": { "total": 1 } }"#)
+        ])
+        let document = try await fetchFirstPage(from: client)
+        
+        let page = try #require(try await document.appendNext())
+        
+        #expect(page.all.isEmpty)
+        #expect(document.data?.isEmpty == true)
+        #expect(document.meta?["total"] as? Int == 1)
+        #expect(document.links == nil)
     }
     
     @Test("links and meta are those of the appended page, so the next page follows it")
@@ -157,5 +254,22 @@ struct PageAppendingSpec {
         }
         
         #expect(receivedNil)
+    }
+    
+    @Test("the callback variant passes errors to the failure callback on the main actor")
+    func callbackFailure() async throws {
+        let client = RecordingClient(responses: [response(firstPage), response("", statusCode: 503)])
+        let document = try await fetchFirstPage(from: client)
+        
+        let error: (any Error)? = await withCheckedContinuation { continuation in
+            document.appendNext({ _ in
+                continuation.resume(returning: nil)
+            }, { error in
+                #expect(isOnMainQueue())
+                continuation.resume(returning: error)
+            })
+        }
+        
+        #expect(error is JSONAPIError)
     }
 }

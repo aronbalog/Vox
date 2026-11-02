@@ -221,10 +221,28 @@ struct RelationshipRequestSpec {
             Issue.record("Expected JSONAPIError.serialization")
         } catch JSONAPIError.serialization(let reason) {
             #expect(reason.contains("\"author\" has no related link"))
-            #expect(client.requests.isEmpty)
         } catch {
             Issue.record("Unexpected error \(error)")
         }
+        
+        do {
+            _ = try await dataSource.fetchRelationship("author", of: post(id: nil), as: Person.self).result()
+            Issue.record("Expected JSONAPIError.serialization")
+        } catch JSONAPIError.serialization(let reason) {
+            #expect(reason.contains("\"author\" has no self link"))
+        } catch {
+            Issue.record("Unexpected error \(error)")
+        }
+        
+        #expect(client.requests.isEmpty)
+    }
+    
+    @Test("the default router paths of relationships have an empty id for resources without one")
+    func routedPathsWithoutID() {
+        let router = ResourceRouter()
+        
+        #expect(router.related("tags", of: post(id: nil)) == "routed/relationship-posts//tags")
+        #expect(router.relationship("tags", of: post(id: nil)) == "routed/relationship-posts//relationships/tags")
     }
     
     @Test("to-one relationships are set and emptied")

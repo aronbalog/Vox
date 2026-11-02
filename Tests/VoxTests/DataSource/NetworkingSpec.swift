@@ -123,6 +123,40 @@ struct NetworkingSpec {
         #expect(userInfo["tag"] as? String == "delete")
     }
     
+    @Test("headers and user info added again replace the earlier values")
+    func replacedHeadersAndUserInfo() async throws {
+        let client = RecordingClient()
+        
+        try await dataSource(client).delete(id: "1")
+            .headers(["Authorization": "Bearer old"])
+            .headers(["Authorization": "Bearer new"])
+            .userInfo(["retry": 1])
+            .userInfo(["retry": 2])
+            .result()
+        
+        let request = try #require(client.requests.first)
+        #expect(request.headers["Authorization"] == "Bearer new")
+        #expect(request.userInfo["retry"] as? Int == 2)
+    }
+    
+    @Test("the headers and user info of fetch requests can be read and changed")
+    func fetchRequestHeadersAndUserInfo() async throws {
+        let client = RecordingClient(json: gadgetJSON)
+        var request = dataSource(client).fetch(id: "1").userInfo(["tag": "fetch"])
+        request.headers["Authorization"] = "Bearer token"
+        request.userInfo["retry"] = 2
+        
+        #expect(request.headers == ["Authorization": "Bearer token"])
+        #expect(request.userInfo["tag"] as? String == "fetch")
+        
+        _ = try await request.result()
+        
+        let sent = try #require(client.requests.first)
+        #expect(sent.headers["Authorization"] == "Bearer token")
+        #expect(sent.userInfo["retry"] as? Int == 2)
+        #expect(sent.userInfo["tag"] as? String == "fetch")
+    }
+    
     @Test("created and updated resources are nil when the response has no content")
     func noContent() async throws {
         let client = RecordingClient(response: ClientResponse(statusCode: 204, data: Data()))
@@ -239,6 +273,40 @@ struct NetworkingSpec {
         
         #expect(error is TransportError)
     }
+    
+    @Test("failures of requests with an output are passed to the failure callback on the main actor")
+    func outputFailureCallback() async {
+        let client = RecordingClient(error: TransportError())
+        let request = dataSource(client).fetch(id: "1")
+        
+        let error: (any Error)? = await withCheckedContinuation { continuation in
+            request.result({ _ in
+                continuation.resume(returning: nil)
+            }, { error in
+                #expect(isOnMainQueue())
+                continuation.resume(returning: error)
+            })
+        }
+        
+        #expect(error is TransportError)
+    }
+    
+    @Test("requests without an output call the success callback on the main actor")
+    func successCallbackWithoutOutput() async {
+        let client = RecordingClient()
+        let request = dataSource(client).delete(id: "1")
+        
+        let succeeded: Bool = await withCheckedContinuation { continuation in
+            request.result({
+                #expect(isOnMainQueue())
+                continuation.resume(returning: true)
+            }, { _ in
+                continuation.resume(returning: false)
+            })
+        }
+        
+        #expect(succeeded)
+    }
 }
 
 @Suite("Client request URLs")
@@ -318,6 +386,26 @@ struct PageLinkSpec {
         #expect(client.requests.last?.method == "GET")
         #expect(document.previous == nil)
         #expect(document.first == nil)
+    }
+    
+    @Test("the last and the current page are requested at their links")
+    func lastAndReload() async throws {
+        let client = RecordingClient(json: #"""
+        {
+            "data": [{ "type": "networking-gadgets", "id": "1" }],
+            "links": { "self": "https://example.com/gadgets?page[number]=2", "last": "https://example.com/gadgets?page[number]=9" }
+        }
+        """#)
+        let document = try await DataSource<Gadget>(strategy: .path("gadgets"), client: client).fetch().result()
+        
+        _ = try await #require(document.last).result()
+        _ = try await #require(document.reload).result()
+        
+        #expect(client.requests.map(\.target) == [
+            .path("gadgets"),
+            .link("https://example.com/gadgets?page[number]=9"),
+            .link("https://example.com/gadgets?page[number]=2")
+        ])
     }
     
     @Test("documents decoded without a client have no page requests")
