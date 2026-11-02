@@ -1,14 +1,13 @@
 # Migrating from Vox 1.x to 2.0
 
-Vox 2.0 requires Swift 6 and is built around `async`/`await`. Resource definitions keep working as they are. Most changes affect clients, the way requests are sent, and code that reads links or handles errors.
+Vox 2.0 requires Swift 6.1 and is built around `async`/`await`. Resource definitions keep working as they are. Most changes affect clients, the way requests are sent, and code that reads links or handles errors.
 
 ## Requirements and installation
 
-- Vox 2.0 requires Swift 6, which comes with Xcode 16 and later. Vox builds in the Swift 6 language mode, and apps can still use the Swift 5 mode.
+- Vox 2.0 requires Swift 6.1, which comes with Xcode 16.3 and later. Vox builds in the Swift 6 language mode, and apps can still use the Swift 5 mode.
 - The minimum deployment target is iOS 13, which was iOS 8. Vox also supports macOS 10.15, tvOS 13, watchOS 6 and Linux.
-- Vox is a Swift package with the products `Vox` and `VoxAlamofire`. The CocoaPods subspecs are still `Vox` and `Vox/Alamofire`.
-- The Alamofire client requires Alamofire 5.9 or later, instead of Alamofire 4.7.
-- The sources moved from `Vox/Core` and `Vox/Plugins/Alamofire` to `Sources/Vox` and `Sources/VoxAlamofire`. Vox no longer contains Objective-C code, an umbrella header or an Xcode project.
+- Vox is a Swift package with the product `Vox`. The CocoaPods pod is `Vox`, without subspecs: the `Vox/Alamofire` subspec is removed, and Vox no longer depends on Alamofire.
+- The sources moved from `Vox/Core` to `Sources/Vox`. Vox no longer contains Objective-C code, an umbrella header or an Xcode project.
 
 ## Resources
 
@@ -151,15 +150,17 @@ struct MyClient: Client {
 
 Many apps don't need a client of their own anymore: `URLSessionClient` sends requests with a `URLSession`, and its adapter can add authentication.
 
-`JSONAPIClient.Alamofire(baseURL:)` still creates the Alamofire client, which is now the struct `AlamofireClient`. It takes an Alamofire `Session` and a `RequestInterceptor`. With the Swift Package Manager, it's in the `VoxAlamofire` module:
+The Alamofire client, `JSONAPIClient.Alamofire`, is removed. Use `URLSessionClient` instead:
 
 ```swift
-import VoxAlamofire
+// 1.x
+let client = JSONAPIClient.Alamofire(baseURL: baseURL)
 
-let client = AlamofireClient(baseURL: baseURL, session: session, interceptor: interceptor)
+// 2.0
+let client = URLSessionClient(baseURL: baseURL)
 ```
 
-The Alamofire client used to reject responses without the JSON:API content type, so error responses and responses without content never reached Vox. It now returns every response.
+Apps that need Alamofire's features, such as interceptors, can implement `Client` with an Alamofire `Session`, as in the client above.
 
 ## Requests
 

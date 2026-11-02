@@ -3,6 +3,7 @@
 Vox is a Swift implementation of [JSON:API](https://jsonapi.org) 1.1 for iOS, macOS, tvOS, watchOS and Linux. Resources are classes whose properties read and write the JSON of their document, and data sources send JSON:API requests with `async`/`await` or callbacks.
 
 [![CI](https://github.com/aronbalog/Vox/actions/workflows/ci.yml/badge.svg)](https://github.com/aronbalog/Vox/actions/workflows/ci.yml)
+[![Coverage](https://aronbalog.github.io/Vox/badges/coverage.svg)](https://github.com/aronbalog/Vox/actions/workflows/ci.yml)
 [![CocoaPods](https://img.shields.io/cocoapods/v/Vox.svg)](https://cocoapods.org/pods/Vox)
 [![Platforms](https://img.shields.io/cocoapods/p/Vox.svg)](https://cocoapods.org/pods/Vox)
 
@@ -38,12 +39,12 @@ Upgrading from 1.x? Read the [migration guide](MIGRATION.md). Changes are listed
 - Requests with `async`/`await`, or with callbacks on the main actor.
 - Sparse fieldsets, includes, sorting, filtering, and page-, offset- and cursor-based pagination.
 - Relationship endpoints: fetching related resources and linkage, and replacing, adding and removing members.
-- A `URLSession` client, an Alamofire 5 client, or a client of your own.
+- A `URLSession` client, or a client of your own.
 - The Swift 6 language mode with complete data-race checking.
 
 ## Requirements
 
-- Swift 6, which comes with Xcode 16 and later
+- Swift 6.1, which comes with Xcode 16.3 and later
 - iOS 13, macOS 10.15, tvOS 13, watchOS 6 or Linux
 
 ## Installation
@@ -56,13 +57,11 @@ Add the package to the dependencies in `Package.swift`:
 .package(url: "https://github.com/aronbalog/Vox.git", from: "2.0.0")
 ```
 
-and its products to your target:
+and the `Vox` product to your target:
 
 ```swift
 .target(name: "App", dependencies: [
-    .product(name: "Vox", package: "Vox"),
-    // Only for the Alamofire client:
-    .product(name: "VoxAlamofire", package: "Vox")
+    .product(name: "Vox", package: "Vox")
 ])
 ```
 
@@ -72,12 +71,7 @@ In Xcode, choose File > Add Package Dependencies and enter the URL of the reposi
 
 ```ruby
 pod 'Vox', '~> 2.0'
-
-# With the Alamofire client:
-pod 'Vox/Alamofire', '~> 2.0'
 ```
-
-With CocoaPods, the Alamofire client is part of the `Vox` module. With the Swift Package Manager, it's in the `VoxAlamofire` module.
 
 ## Defining resources
 
@@ -293,19 +287,15 @@ In received documents, resource identifiers with a `lid` resolve to the resource
 
 ### Clients
 
-A client sends the requests of data sources. Vox comes with two:
+A client sends the requests of data sources. Vox comes with one, which sends requests with a `URLSession`, the shared one by default:
 
 ```swift
 let baseURL = URL(string: "https://example.com/api/")!
 
-// Sends requests with a URLSession, the shared one by default.
 let client = URLSessionClient(baseURL: baseURL)
-
-// Sends requests with an Alamofire 5 Session, through an optional interceptor.
-let client = AlamofireClient(baseURL: baseURL, interceptor: interceptor)
 ```
 
-`JSONAPIClient.URLSession` and `JSONAPIClient.Alamofire` refer to the same clients. The paths of data sources are appended to the base URL, and the links of documents are resolved against it. Cancelling the task that awaits a request cancels the request.
+`JSONAPIClient.URLSession` refers to the same client. The paths of data sources are appended to the base URL, and the links of documents are resolved against it. Cancelling the task that awaits a request cancels the request.
 
 `URLSessionClient` takes an adapter, which can change requests before they're sent:
 
@@ -577,8 +567,8 @@ final class Article: Resource, @unchecked Sendable {
 
 Vox builds on Linux, with both clients. Without the Objective-C runtime, two things work differently:
 
-- Properties aren't backed by the JSON. Declare them as plain stored properties, which tell Vox the types of the members, and read and write the members with the subscript: `article["title"] as? String`, `article["author"] = person`.
-- Classes aren't found by their resource type. The classes of data sources and deserializers are registered when they're used, and the classes of related and included resources need to be registered before documents with them are decoded:
+- `@objc dynamic` properties can't be backed by the JSON. Declare those properties with `@Member` instead. `@Member` reads and writes the JSON on every platform: `article.title = "Dune"`. A plain stored property still only declares the member's type, and is read and written with the subscript: `article["title"] as? String`.
+- Classes aren't found by scanning the process. A class is registered when its first instance is created, and when it is the resource type of a data source or a deserializer. The classes of related and included resources still need to be registered before documents containing them are decoded, unless an instance of the class was created first:
 
 ```swift
 Person.register()
@@ -606,3 +596,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 ## License
 
 Vox is available under the MIT license. See [LICENSE.md](LICENSE.md).
+	

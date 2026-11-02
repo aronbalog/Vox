@@ -120,6 +120,44 @@ enum ResourceRuntime {
     
     /// `value` if it's an instance of `type`, with JSON strings converted for `URL` and `Date`
     /// properties.
+    /// The names of `@Member` properties by the key paths of their storage.
+    private static let memberNames = Locked<[AnyKeyPath: String]>([:])
+    
+    /// The name of the `@Member` property whose storage, at `keyPath`, holds `token`.
+    ///
+    /// Key paths don't describe the names of their properties on every platform, so the name is
+    /// the label of the stored property that holds `token`, `_title` for `title`.
+    static func propertyName(of keyPath: AnyKeyPath, token: MemberToken, in resource: Resource) -> String {
+        if let name = memberNames.withLock({ $0[keyPath] }) {
+            return name
+        }
+        
+        let children = sequence(first: Mirror(reflecting: resource), next: \.superclassMirror).flatMap(\.children)
+        let storage = children.first { ($0.value as? any MemberStorage)?.token === token }!
+        let name = String(storage.label!.dropFirst())
+        
+        memberNames.withLock { $0[keyPath] = name }
+        
+        return name
+    }
+    
+    /// The JSON value of a `@Member`, cast to `Value`, or `fallback` when it is missing or has
+    /// another type. Optional members are cast to the wrapped type, so a date string becomes a
+    /// `Date?`.
+    static func memberValue<Value>(_ raw: Any?, fallback: Value) -> Value {
+        guard let raw else {
+            return fallback
+        }
+        
+        if let value = raw as? Value {
+            return value
+        }
+        
+        let type = (Value.self as? any OptionalType.Type)?.wrappedType ?? Value.self
+        
+        return cast(raw, to: type) as? Value ?? fallback
+    }
+    
     static func cast(_ value: Any, to type: Any.Type) -> Any? {
         if type == Any.self || type == AnyObject.self {
             return value
@@ -157,8 +195,16 @@ enum ResourceRuntime {
             #endif
             
             for child in classMirror.children {
-                guard let name = child.label, !name.hasPrefix("$") else {
+                guard var name = child.label, !name.hasPrefix("$") else {
                     continue
+                }
+                
+                var valueType = Swift.type(of: child.value)
+                
+                // The storage of `@Member var title` is `_title`.
+                if let memberType = valueType as? any MemberStorage.Type {
+                    name.removeFirst()
+                    valueType = memberType.valueType
                 }
                 
                 #if canImport(ObjectiveC)
@@ -171,7 +217,7 @@ enum ResourceRuntime {
                 properties[name] = ResourceProperty(
                     name: name,
                     key: codingKeys[name] ?? name,
-                    kind: ResourceProperty.Kind(Swift.type(of: child.value))
+                    kind: ResourceProperty.Kind(valueType)
                 )
             }
             
@@ -182,10 +228,12 @@ enum ResourceRuntime {
                         installAccessors(for: property, on: resourceClass)
                     }
                 }
-                
-                register(resourceClass)
             }
             #endif
+            
+            // The Objective-C runtime can also find classes that have never been instantiated.
+            // Everywhere else, creating an instance is what registers the class.
+            register(resourceClass)
             
             mirror = classMirror.superclassMirror
         }
@@ -199,6 +247,14 @@ enum ResourceRuntime {
         guard resourceClass != Resource.self else {
             return nil
         }
+        
+        #if canImport(ObjectiveC)
+        // A subclass created with the Objective-C runtime has no Swift metadata, so its
+        // `resourceType` is reported as `Resource`. The class name is its type.
+        if String(describing: resourceClass) == "Resource" {
+            return NSStringFromClass(resourceClass)
+        }
+        #endif
         
         let type = resourceClass.resourceType
         
@@ -245,7 +301,7 @@ enum ResourceRuntime {
     }
     
     private static func isStrictSubclassOfResource(_ candidate: AnyClass) -> Bool {
-        var superclass = class_getSuperclass(candidate)
+        var superclass: AnyClass? = class_getSuperclass(candidate)
         
         while let current = superclass {
             if current == Resource.self {

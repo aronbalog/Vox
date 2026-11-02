@@ -4,11 +4,11 @@ The notable changes of each release. Vox follows [Semantic Versioning](https://s
 
 ## 2.0.0 (unreleased)
 
-A major release, which requires Swift 6. The [migration guide](MIGRATION.md) describes the breaking changes.
+A major release, which requires Swift 6.1. The [migration guide](MIGRATION.md) describes the breaking changes.
 
 ### Added
 
-- Swift Package Manager support, with the products `Vox` and `VoxAlamofire`.
+- Swift Package Manager support, with the product `Vox`.
 - Support for macOS 10.15, tvOS 13, watchOS 6 and Linux.
 - The Swift 6 language mode, with complete data-race checking. Clients, data sources, requests and documents are `Sendable`.
 - `async` variants of `result()` and `appendNext()`.
@@ -32,7 +32,6 @@ A major release, which requires Swift 6. The [migration guide](MIGRATION.md) des
 - Requests are immutable structs. Their modifiers return copies.
 - Callbacks are called on the main actor, and the callback variant of `result` no longer throws.
 - Responses outside 200–299 throw, and `create` and `update` return `nil` for responses without content.
-- The Alamofire client requires Alamofire 5. It sends requests through a `Session` and an optional `RequestInterceptor`, and it's named `AlamofireClient`.
 - Resources keep their JSON in a graph. Relationships work after their document is released, cyclic relationships don't leak, a resource object has at most one live instance, and resources can be assigned across documents.
 - Property kinds come from the declared types of properties, instead of their values.
 - `attributes` and `relationships` return non-optional dictionaries, and `type` is read-only.
@@ -43,7 +42,7 @@ A major release, which requires Swift 6. The [migration guide](MIGRATION.md) des
 - Requests for the collection leave `<id>` out of paths, and `create` always sends resources to the collection.
 - `update` requires the resource to have an `id`.
 - Invalid documents throw `JSONAPIError.invalidDocument(reason:)` with a description of the problem. Primary data of an unexpected shape or class throws.
-- Deserialization and serialization are declared `throws(JSONAPIError)`, and `makeURLRequest(for:)` of the clients `throws(URLError)`.
+- Deserialization and serialization are declared `throws(JSONAPIError)`, and `makeURLRequest(for:)` of `URLSessionClient` `throws(URLError)`.
 - Resources of types without a class decode as plain `Resource` instances.
 - `Sort` is a struct, and the `Pagination` strategies are structs.
 - The minimum deployment target is iOS 13.
@@ -56,7 +55,6 @@ A major release, which requires Swift 6. The [migration guide](MIGRATION.md) des
 - One link object, a `null` link or an unencoded bracket in a link made a document's `links` `nil`.
 - The `jsonapi` member was always `nil`.
 - Responses without content crashed, and some failed requests never called the failure block.
-- The Alamofire client rejected error responses and responses without content, and dropped repeated query items.
 - Values that can't be represented in JSON crashed with an Objective-C exception.
 - An attribute with the value 2147483647 was sent as `null`.
 - An empty array assigned to an attribute became a relationship, an empty to-many relationship was sent as `null`, setting a relationship to `nil` didn't remove it, and linkage with meta crashed.
@@ -70,6 +68,7 @@ A major release, which requires Swift 6. The [migration guide](MIGRATION.md) des
 
 ### Removed
 
+- The Alamofire client, `JSONAPIClient.Alamofire`, the `Vox/Alamofire` subspec and the dependency on Alamofire. `URLSessionClient` sends requests instead.
 - `Context` and `Resource.init(context:)`.
 - The callback-based `Client` requirement, `ClientSuccessBlock` and `ClientFailureBlock`.
 - `Links._self`, which is now `selfLink`.

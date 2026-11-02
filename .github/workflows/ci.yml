@@ -33,7 +33,7 @@ jobs:
   linux:
     name: Linux (swift test)
     runs-on: ubuntu-latest
-    container: swift:6.0-jammy
+    container: swift:6.1-jammy
     steps:
       - uses: actions/checkout@v4
       - name: Toolchain
@@ -51,9 +51,41 @@ jobs:
             -instr-profile="$bin/codecov/default.profdata" \
             -ignore-filename-regex='/(Tests|\.build)/')
           echo "$report"
+          # The coverage summary format of Istanbul, which the badge job reads. Regions stand in
+          # for statements, and percentages are rounded down.
+          mkdir -p coverage
+          echo "$report" | awk '
+            function total(count, missed,   pct) {
+              pct = count ? int((count - missed) * 10000 / count) / 100 : 100
+              return sprintf("{\"total\":%d,\"covered\":%d,\"skipped\":0,\"pct\":%s}", count, count - missed, pct)
+            }
+            $1 == "TOTAL" {
+              printf "{\"total\":{\"lines\":%s,\"statements\":%s,\"functions\":%s,\"branches\":%s}}\n", total($8, $9), total($2, $3), total($5, $6), total($11, $12)
+            }' > coverage/coverage-summary.json
+          cat coverage/coverage-summary.json
           echo "$report" | awk '
             $1 == "TOTAL" { found = 1; missed = $3 + $6 + $9 }
             END { if (!found || missed) { print "::error::Some library code is not covered by the tests."; exit 1 } }'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage/coverage-summary.json
+
+  coverage-badge:
+    name: Coverage badge
+    needs: linux
+    # Publishes badges/coverage.svg to the gh-pages branch, for pushes to the default branch only.
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage
+      - uses: we-cli/coverage-badge-action@8a0b6ee05f6dd0f294089cbe7a848452a2b43eef
 
   ios:
     name: iOS Simulator (xcodebuild test)

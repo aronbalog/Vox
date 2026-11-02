@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(ObjectiveC)
+import ObjectiveC
+#endif
 import Testing
 
 @testable import Vox
@@ -40,6 +43,12 @@ fileprivate final class RegistrationDarkNebula: RegistrationNebula, @unchecked S
 fileprivate final class Quasar: Resource, @unchecked Sendable {
     override class var resourceType: String {
         "registration-quasars"
+    }
+}
+
+fileprivate final class CoveragePrepared: Resource, @unchecked Sendable {
+    override class var resourceType: String {
+        "coverage-prepared"
     }
 }
 
@@ -114,4 +123,35 @@ struct RegistrationSpec {
         #expect(registeredClass == Quasar.self || registeredClass == Blazar.self)
         #expect(ResourceRuntime.resourceClass(for: "registration-quasars") == registeredClass)
     }
+    
+    @Test("creating an instance registers the class")
+    func creatingRegisters() {
+        _ = CoveragePrepared()
+        
+        #expect(ResourceRuntime.resourceClass(for: "coverage-prepared") == CoveragePrepared.self)
+    }
+    
+    #if canImport(ObjectiveC)
+    @Test("a class created after the last scan is found, and another miss does not scan again")
+    func scanLoadedClasses() {
+        let misses = ResourceGraph.lock.withLock {
+            [
+                ResourceRuntime.resourceClass(for: "coverage-absent-one"),
+                ResourceRuntime.resourceClass(for: "coverage-absent-one"),
+                ResourceRuntime.resourceClass(for: "coverage-absent-two")
+            ]
+        }
+        
+        #expect(misses.allSatisfy { $0 == nil })
+        
+        let found = ResourceGraph.lock.withLock { () -> Resource.Type? in
+            let allocated: AnyClass = objc_allocateClassPair(Resource.self, "VoxCoverageDynamicResource", 0)!
+            objc_registerClassPair(allocated)
+            
+            return ResourceRuntime.resourceClass(for: "VoxCoverageDynamicResource")
+        }
+        
+        #expect(found == NSClassFromString("VoxCoverageDynamicResource") as? Resource.Type)
+    }
+    #endif
 }

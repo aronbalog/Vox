@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(ObjectiveC)
+import ObjectiveC
+#endif
 import Testing
 
 @testable import Vox
@@ -29,6 +32,18 @@ fileprivate class Wallet: Resource {
     override class var resourceType: String {
         "Wallet"
     }
+}
+
+/// `level` is a primitive, so it keeps its own storage. `serial` is read-only, so only its getter
+/// is replaced.
+fileprivate final class CoverageGauge: Resource {
+    override class var resourceType: String {
+        "coverage-gauges"
+    }
+    
+    @objc var level: Int = 0
+    @objc let serial: String? = "fixed"
+    @objc dynamic var name: String?
 }
 
 @Suite("Resource property accessors")
@@ -96,6 +111,49 @@ struct PropertyAccessorSpec {
         person.bestFriend = anotherPerson
         
         #expect(person.bestFriend === anotherPerson)
+    }
+    
+    @Test("key-value coding reads and writes properties and other members")
+    func keyValueCoding() {
+        let attributeName = strdup("T")!
+        let attributeValue = strdup("@\"NSString\"")!
+        let getterName = strdup("G")!
+        let getterValue = strdup("coverageLabel")!
+        let setterName = strdup("S")!
+        let setterValue = strdup("updateCoverageLabel:")!
+        defer {
+            free(attributeName)
+            free(attributeValue)
+            free(getterName)
+            free(getterValue)
+            free(setterName)
+            free(setterValue)
+        }
+        var attributes = [
+            objc_property_attribute_t(name: attributeName, value: attributeValue),
+            objc_property_attribute_t(name: getterName, value: getterValue),
+            objc_property_attribute_t(name: setterName, value: setterValue)
+        ]
+        _ = class_addProperty(CoverageGauge.self, "coverageAlias", &attributes, UInt32(attributes.count))
+        
+        let gauge = CoverageGauge()
+        
+        gauge.setValue("Ada", forKey: "name")
+        #expect(gauge.value(forKey: "name") as? String == "Ada")
+        #expect(gauge.name == "Ada")
+        
+        #expect(gauge.value(forProperty: "missing") == nil)
+        gauge.setValue("ignored", forProperty: "missing")
+        #expect(gauge.name == "Ada")
+        
+        gauge.setValue(NSNumber(value: 7), forKey: "level")
+        #expect(gauge.level == 7)
+        #expect((gauge.value(forKey: "level") as? NSNumber)?.intValue == 7)
+        
+        gauge.setValue("extra", forKey: "coverageExtra")
+        #expect(gauge.value(forKey: "coverageExtra") as? String == "extra")
+        
+        _ = gauge.serial
     }
 }
 

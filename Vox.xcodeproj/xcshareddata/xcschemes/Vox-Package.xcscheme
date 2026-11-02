@@ -20,20 +20,6 @@
                ReferencedContainer = "container:Vox.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "BB0000000000000000000002"
-               BuildableName = "VoxAlamofire.framework"
-               BlueprintName = "VoxAlamofire"
-               ReferencedContainer = "container:Vox.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -49,16 +35,6 @@
                BlueprintIdentifier = "BB0000000000000000000003"
                BuildableName = "VoxTests.xctest"
                BlueprintName = "VoxTests"
-               ReferencedContainer = "container:Vox.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "BB0000000000000000000004"
-               BuildableName = "VoxAlamofireTests.xctest"
-               BlueprintName = "VoxAlamofireTests"
                ReferencedContainer = "container:Vox.xcodeproj">
             </BuildableReference>
          </TestableReference>

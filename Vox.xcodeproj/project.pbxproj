@@ -7,17 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		28D61D41838AB4D720255AE8 /* Pods_Vox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E98EA7638BCF64A70694E3DC /* Pods_Vox.framework */; };
 		DD0000000000000000000001 /* Vox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* Vox.framework */; };
-		DD0000000000000000000002 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 220000000000000000000002 /* Alamofire */; };
 		DD0000000000000000000003 /* Vox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* Vox.framework */; };
-		DD0000000000000000000004 /* VoxAlamofire.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000002 /* VoxAlamofire.framework */; };
-		DD0000000000000000000005 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 220000000000000000000002 /* Alamofire */; };
-		DD0000000000000000000006 /* Vox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* Vox.framework */; };
-		DD0000000000000000000007 /* VoxAlamofire.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000002 /* VoxAlamofire.framework */; };
-		DD0000000000000000000008 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 220000000000000000000002 /* Alamofire */; };
 		DD0000000000000000000011 /* Vox.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000001 /* Vox.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		DD0000000000000000000012 /* VoxAlamofire.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000002 /* VoxAlamofire.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DD0000000000000000000021 /* Article.json in Resources */ = {isa = PBXBuildFile; fileRef = 330000000000000000000001 /* Article.json */; };
 		DD0000000000000000000022 /* Articles.json in Resources */ = {isa = PBXBuildFile; fileRef = 330000000000000000000002 /* Articles.json */; };
 		DD0000000000000000000023 /* DeserializerSinglePolymorphic.json in Resources */ = {isa = PBXBuildFile; fileRef = 330000000000000000000003 /* DeserializerSinglePolymorphic.json */; };
@@ -25,32 +17,10 @@
 		DD0000000000000000000025 /* ErrorsWithSource.json in Resources */ = {isa = PBXBuildFile; fileRef = 330000000000000000000005 /* ErrorsWithSource.json */; };
 		DD0000000000000000000026 /* Pagination1.json in Resources */ = {isa = PBXBuildFile; fileRef = 330000000000000000000006 /* Pagination1.json */; };
 		DD0000000000000000000027 /* Pagination2.json in Resources */ = {isa = PBXBuildFile; fileRef = 330000000000000000000007 /* Pagination2.json */; };
-		E2B966494C842F2A81B57E32 /* Pods_VoxTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 76BAB9C3D09F3E0BD92FB983 /* Pods_VoxTests.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		FF0000000000000000000001 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA0000000000000000000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BB0000000000000000000001;
-			remoteInfo = Vox;
-		};
 		FF0000000000000000000003 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA0000000000000000000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BB0000000000000000000001;
-			remoteInfo = Vox;
-		};
-		FF0000000000000000000005 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA0000000000000000000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BB0000000000000000000002;
-			remoteInfo = VoxAlamofire;
-		};
-		FF0000000000000000000007 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AA0000000000000000000001 /* Project object */;
 			proxyType = 1;
@@ -71,20 +41,6 @@
 			remoteGlobalIDString = BB0000000000000000000001;
 			remoteInfo = Vox;
 		};
-		FF000000000000000000000D /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA0000000000000000000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BB0000000000000000000005;
-			remoteInfo = VoxHost;
-		};
-		FF000000000000000000000F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA0000000000000000000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BB0000000000000000000005;
-			remoteInfo = VoxHost;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -95,7 +51,6 @@
 			dstSubfolderSpec = 10;
 			files = (
 				DD0000000000000000000011 /* Vox.framework in Embed Frameworks */,
-				DD0000000000000000000012 /* VoxAlamofire.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -110,17 +65,9 @@
 		330000000000000000000005 /* ErrorsWithSource.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ErrorsWithSource.json; sourceTree = "<group>"; };
 		330000000000000000000006 /* Pagination1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Pagination1.json; sourceTree = "<group>"; };
 		330000000000000000000007 /* Pagination2.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Pagination2.json; sourceTree = "<group>"; };
-		52A64026B5C23294B1F18051 /* Pods-VoxTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoxTests.debug.xcconfig"; path = "Target Support Files/Pods-VoxTests/Pods-VoxTests.debug.xcconfig"; sourceTree = "<group>"; };
-		74076D4E21EF55CA00A13EFD /* Pods-VoxTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoxTests.release.xcconfig"; path = "Target Support Files/Pods-VoxTests/Pods-VoxTests.release.xcconfig"; sourceTree = "<group>"; };
-		76BAB9C3D09F3E0BD92FB983 /* Pods_VoxTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VoxTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		907E808533D90DD449D3DCFC /* Pods-Vox.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Vox.debug.xcconfig"; path = "Target Support Files/Pods-Vox/Pods-Vox.debug.xcconfig"; sourceTree = "<group>"; };
 		CC0000000000000000000001 /* Vox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Vox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		CC0000000000000000000002 /* VoxAlamofire.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = VoxAlamofire.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC0000000000000000000003 /* VoxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		CC0000000000000000000004 /* VoxAlamofireTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoxAlamofireTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CC0000000000000000000005 /* VoxHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoxHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E98EA7638BCF64A70694E3DC /* Pods_Vox.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Vox.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		FB0927D8FC7594412C46BF41 /* Pods-Vox.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Vox.release.xcconfig"; path = "Target Support Files/Pods-Vox/Pods-Vox.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -144,14 +91,11 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 			);
-			path = Vox;
-			sourceTree = "<group>";
-		};
-		AA0000000000000000000012 /* VoxAlamofire */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
+			explicitFileTypes = {
+			};
+			explicitFolders = (
 			);
-			path = VoxAlamofire;
+			path = Vox;
 			sourceTree = "<group>";
 		};
 		AA0000000000000000000013 /* VoxTests */ = {
@@ -159,19 +103,20 @@
 			exceptions = (
 				AA0000000000000000000016 /* Exceptions for "VoxTests" folder in "VoxTests" target */,
 			);
-			path = VoxTests;
-			sourceTree = "<group>";
-		};
-		AA0000000000000000000014 /* VoxAlamofireTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
+			explicitFileTypes = {
+			};
+			explicitFolders = (
 			);
-			path = VoxAlamofireTests;
+			path = VoxTests;
 			sourceTree = "<group>";
 		};
 		AA0000000000000000000015 /* VoxHost */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
 			);
 			path = VoxHost;
 			sourceTree = "<group>";
@@ -183,16 +128,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				28D61D41838AB4D720255AE8 /* Pods_Vox.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		EE0000000000000000000012 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				DD0000000000000000000001 /* Vox.framework in Frameworks */,
-				DD0000000000000000000002 /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -201,17 +136,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				DD0000000000000000000003 /* Vox.framework in Frameworks */,
-				E2B966494C842F2A81B57E32 /* Pods_VoxTests.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		EE0000000000000000000032 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				DD0000000000000000000004 /* VoxAlamofire.framework in Frameworks */,
-				DD0000000000000000000005 /* Alamofire in Frameworks */,
-				DD0000000000000000000006 /* Vox.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -219,35 +143,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DD0000000000000000000007 /* VoxAlamofire.framework in Frameworks */,
-				DD0000000000000000000008 /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		03622F05A1E7BCBAF44F4F50 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				907E808533D90DD449D3DCFC /* Pods-Vox.debug.xcconfig */,
-				FB0927D8FC7594412C46BF41 /* Pods-Vox.release.xcconfig */,
-				52A64026B5C23294B1F18051 /* Pods-VoxTests.debug.xcconfig */,
-				74076D4E21EF55CA00A13EFD /* Pods-VoxTests.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		312AD4421950ABEB66CE7484 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				E98EA7638BCF64A70694E3DC /* Pods_Vox.framework */,
-				76BAB9C3D09F3E0BD92FB983 /* Pods_VoxTests.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		440000000000000000000001 /* Fixtures */ = {
 			isa = PBXGroup;
 			children = (
@@ -270,8 +171,6 @@
 				AA0000000000000000000022 /* Tests */,
 				AA0000000000000000000023 /* Xcode */,
 				AA0000000000000000000006 /* Products */,
-				03622F05A1E7BCBAF44F4F50 /* Pods */,
-				312AD4421950ABEB66CE7484 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -279,9 +178,7 @@
 			isa = PBXGroup;
 			children = (
 				CC0000000000000000000001 /* Vox.framework */,
-				CC0000000000000000000002 /* VoxAlamofire.framework */,
 				CC0000000000000000000003 /* VoxTests.xctest */,
-				CC0000000000000000000004 /* VoxAlamofireTests.xctest */,
 				CC0000000000000000000005 /* VoxHost.app */,
 			);
 			name = Products;
@@ -291,7 +188,6 @@
 			isa = PBXGroup;
 			children = (
 				AA0000000000000000000011 /* Vox */,
-				AA0000000000000000000012 /* VoxAlamofire */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -300,7 +196,6 @@
 			isa = PBXGroup;
 			children = (
 				AA0000000000000000000013 /* VoxTests */,
-				AA0000000000000000000014 /* VoxAlamofireTests */,
 				440000000000000000000001 /* Fixtures */,
 			);
 			path = Tests;
@@ -321,7 +216,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 110000000000000000000001 /* Build configuration list for PBXNativeTarget "Vox" */;
 			buildPhases = (
-				247B333494DFCDF59437C1F9 /* [CP] Check Pods Manifest.lock */,
 				EE0000000000000000000001 /* Sources */,
 				EE0000000000000000000002 /* Frameworks */,
 				EE0000000000000000000003 /* Resources */,
@@ -338,35 +232,10 @@
 			productReference = CC0000000000000000000001 /* Vox.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		BB0000000000000000000002 /* VoxAlamofire */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 110000000000000000000011 /* Build configuration list for PBXNativeTarget "VoxAlamofire" */;
-			buildPhases = (
-				EE0000000000000000000011 /* Sources */,
-				EE0000000000000000000012 /* Frameworks */,
-				EE0000000000000000000013 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				FF0000000000000000000002 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				AA0000000000000000000012 /* VoxAlamofire */,
-			);
-			name = VoxAlamofire;
-			packageProductDependencies = (
-				220000000000000000000002 /* Alamofire */,
-			);
-			productName = VoxAlamofire;
-			productReference = CC0000000000000000000002 /* VoxAlamofire.framework */;
-			productType = "com.apple.product-type.framework";
-		};
 		BB0000000000000000000003 /* VoxTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 110000000000000000000021 /* Build configuration list for PBXNativeTarget "VoxTests" */;
 			buildPhases = (
-				57271A5C4A24B28CCC0E8332 /* [CP] Check Pods Manifest.lock */,
 				EE0000000000000000000021 /* Sources */,
 				EE0000000000000000000022 /* Frameworks */,
 				EE0000000000000000000023 /* Resources */,
@@ -385,32 +254,6 @@
 			productReference = CC0000000000000000000003 /* VoxTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		BB0000000000000000000004 /* VoxAlamofireTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 110000000000000000000031 /* Build configuration list for PBXNativeTarget "VoxAlamofireTests" */;
-			buildPhases = (
-				EE0000000000000000000031 /* Sources */,
-				EE0000000000000000000032 /* Frameworks */,
-				EE0000000000000000000033 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				FF0000000000000000000006 /* PBXTargetDependency */,
-				FF0000000000000000000008 /* PBXTargetDependency */,
-				FF000000000000000000000C /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				AA0000000000000000000014 /* VoxAlamofireTests */,
-			);
-			name = VoxAlamofireTests;
-			packageProductDependencies = (
-				220000000000000000000002 /* Alamofire */,
-			);
-			productName = VoxAlamofireTests;
-			productReference = CC0000000000000000000004 /* VoxAlamofireTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 		BB0000000000000000000005 /* VoxHost */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 110000000000000000000041 /* Build configuration list for PBXNativeTarget "VoxHost" */;
@@ -424,14 +267,12 @@
 			);
 			dependencies = (
 				FF000000000000000000000E /* PBXTargetDependency */,
-				FF0000000000000000000010 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				AA0000000000000000000015 /* VoxHost */,
 			);
 			name = VoxHost;
 			packageProductDependencies = (
-				220000000000000000000002 /* Alamofire */,
 			);
 			productName = VoxHost;
 			productReference = CC0000000000000000000005 /* VoxHost.app */;
@@ -450,13 +291,7 @@
 					BB0000000000000000000001 = {
 						CreatedOnToolsVersion = 16.0;
 					};
-					BB0000000000000000000002 = {
-						CreatedOnToolsVersion = 16.0;
-					};
 					BB0000000000000000000003 = {
-						CreatedOnToolsVersion = 16.0;
-					};
-					BB0000000000000000000004 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 					BB0000000000000000000005 = {
@@ -474,16 +309,13 @@
 			);
 			mainGroup = AA0000000000000000000005;
 			packageReferences = (
-				220000000000000000000001 /* XCRemoteSwiftPackageReference "Alamofire" */,
 			);
 			productRefGroup = AA0000000000000000000006 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				BB0000000000000000000001 /* Vox */,
-				BB0000000000000000000002 /* VoxAlamofire */,
 				BB0000000000000000000003 /* VoxTests */,
-				BB0000000000000000000004 /* VoxAlamofireTests */,
 				BB0000000000000000000005 /* VoxHost */,
 			);
 		};
@@ -491,13 +323,6 @@
 
 /* Begin PBXResourcesBuildPhase section */
 		EE0000000000000000000003 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		EE0000000000000000000013 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -518,13 +343,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		EE0000000000000000000033 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		EE0000000000000000000043 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -534,53 +352,6 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		247B333494DFCDF59437C1F9 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Vox-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		57271A5C4A24B28CCC0E8332 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-VoxTests-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
 		EE0000000000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -589,21 +360,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		EE0000000000000000000011 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		EE0000000000000000000021 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		EE0000000000000000000031 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -620,52 +377,26 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		FF0000000000000000000002 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BB0000000000000000000001 /* Vox */;
-			targetProxy = FF0000000000000000000001 /* PBXContainerItemProxy */;
-		};
 		FF0000000000000000000004 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BB0000000000000000000001 /* Vox */;
 			targetProxy = FF0000000000000000000003 /* PBXContainerItemProxy */;
-		};
-		FF0000000000000000000006 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BB0000000000000000000002 /* VoxAlamofire */;
-			targetProxy = FF0000000000000000000005 /* PBXContainerItemProxy */;
-		};
-		FF0000000000000000000008 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BB0000000000000000000001 /* Vox */;
-			targetProxy = FF0000000000000000000007 /* PBXContainerItemProxy */;
 		};
 		FF000000000000000000000A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BB0000000000000000000005 /* VoxHost */;
 			targetProxy = FF0000000000000000000009 /* PBXContainerItemProxy */;
 		};
-		FF000000000000000000000C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BB0000000000000000000005 /* VoxHost */;
-			targetProxy = FF000000000000000000000D /* PBXContainerItemProxy */;
-		};
 		FF000000000000000000000E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BB0000000000000000000001 /* Vox */;
 			targetProxy = FF000000000000000000000B /* PBXContainerItemProxy */;
-		};
-		FF0000000000000000000010 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BB0000000000000000000002 /* VoxAlamofire */;
-			targetProxy = FF000000000000000000000F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		110000000000000000000002 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 907E808533D90DD449D3DCFC /* Pods-Vox.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_IDENTITY = "-";
@@ -693,7 +424,6 @@
 		};
 		110000000000000000000003 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FB0927D8FC7594412C46BF41 /* Pods-Vox.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_IDENTITY = "-";
@@ -719,65 +449,8 @@
 			};
 			name = Release;
 		};
-		110000000000000000000012 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GENERATE_INFOPLIST_FILE = YES;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MARKETING_VERSION = 2.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.aronbalog.VoxAlamofire;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx appletvos appletvsimulator watchos watchsimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) SWIFT_PACKAGE";
-			};
-			name = Debug;
-		};
-		110000000000000000000013 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GENERATE_INFOPLIST_FILE = YES;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MARKETING_VERSION = 2.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.aronbalog.VoxAlamofire;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx appletvos appletvsimulator watchos watchsimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) SWIFT_PACKAGE";
-			};
-			name = Release;
-		};
 		110000000000000000000022 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 52A64026B5C23294B1F18051 /* Pods-VoxTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGNING_REQUIRED = NO;
@@ -803,7 +476,6 @@
 		};
 		110000000000000000000023 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 74076D4E21EF55CA00A13EFD /* Pods-VoxTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGNING_REQUIRED = NO;
@@ -819,56 +491,6 @@
 				);
 				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aronbalog.VoxTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoxHost.app/VoxHost";
-			};
-			name = Release;
-		};
-		110000000000000000000032 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-					"@loader_path/../Frameworks",
-				);
-				MARKETING_VERSION = 2.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.aronbalog.VoxAlamofireTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoxHost.app/VoxHost";
-			};
-			name = Debug;
-		};
-		110000000000000000000033 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_IDENTITY = "-";
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-					"@loader_path/../Frameworks",
-				);
-				MARKETING_VERSION = 2.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.aronbalog.VoxAlamofireTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -990,29 +612,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		110000000000000000000011 /* Build configuration list for PBXNativeTarget "VoxAlamofire" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				110000000000000000000012 /* Debug */,
-				110000000000000000000013 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		110000000000000000000021 /* Build configuration list for PBXNativeTarget "VoxTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				110000000000000000000022 /* Debug */,
 				110000000000000000000023 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		110000000000000000000031 /* Build configuration list for PBXNativeTarget "VoxAlamofireTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				110000000000000000000032 /* Debug */,
-				110000000000000000000033 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1037,24 +641,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		220000000000000000000001 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.9.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		220000000000000000000002 /* Alamofire */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 220000000000000000000001 /* XCRemoteSwiftPackageReference "Alamofire" */;
-			productName = Alamofire;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AA0000000000000000000001 /* Project object */;
 }

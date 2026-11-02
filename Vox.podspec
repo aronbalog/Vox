@@ -7,20 +7,10 @@ Pod::Spec.new do |spec|
 	spec.homepage        = 'https://github.com/aronbalog/Vox'
 	spec.source          = { :git => 'https://github.com/aronbalog/Vox.git', :tag => spec.version }
 	spec.swift_versions  = ['6.0']
-	spec.default_subspec = 'Core'
+	spec.source_files    = 'Sources/Vox/**/*.swift'
 
 	spec.ios.deployment_target     = '13.0'
 	spec.osx.deployment_target     = '10.15'
 	spec.tvos.deployment_target    = '13.0'
 	spec.watchos.deployment_target = '6.0'
-
-	spec.subspec 'Core' do |core|
-		core.source_files = 'Sources/Vox/**/*.swift'
-	end
-
-	spec.subspec 'Alamofire' do |alamofire|
-		alamofire.source_files = 'Sources/VoxAlamofire/**/*.swift'
-		alamofire.dependency 'Vox/Core'
-		alamofire.dependency 'Alamofire', '~> 5.9'
-	end
 end

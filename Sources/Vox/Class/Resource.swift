@@ -1,5 +1,10 @@
 import Foundation
 
+// CocoaPods and Xcode projects don't read the tools version of Package.swift.
+#if !compiler(>=6.1)
+#error("Vox requires Swift 6.1 or later, which comes with Xcode 16.3 and later.")
+#endif
+
 /// A JSON:API resource.
 ///
 /// Subclasses declare their JSON:API type in `resourceType`, and their attributes and
@@ -414,7 +419,8 @@ open class Resource: NSObject {
             
             var json: [String: Any] = ["type": object.type]
             json["id"] = object.id
-            json["lid"] = object.lid
+            // JSON:API allows `lid` only in place of a missing `id`.
+            json["lid"] = object.id == nil ? object.lid : nil
             
             if requiringID, object.id == nil, object.lid == nil {
                 throw JSONAPIError.serialization(reason: "A resource of type \"\(object.type)\" has neither id nor lid.")
@@ -434,6 +440,13 @@ open class Resource: NSObject {
             
             if !relationships.isEmpty {
                 json["relationships"] = relationships
+            }
+            
+            // Attributes and relationships share one namespace with `type` and `id`.
+            var fieldNames: Set<String> = ["type", "id"]
+            
+            for name in Array(object.attributes.keys) + Array(relationships.keys) where !fieldNames.insert(name).inserted {
+                throw JSONAPIError.serialization(reason: "The field \"\(name)\" of a resource of type \"\(object.type)\" is named type or id, or is both an attribute and a relationship.")
             }
             
             if let meta = object.meta {
@@ -563,9 +576,9 @@ extension Resource {
     /// Setting a value works like setting the property: `nil` leaves the member out, and the
     /// `null` placeholders send JSON `null`. `id` and `lid` can be set, and `type` is read-only.
     ///
-    /// On platforms without the Objective-C runtime, the stored properties of resource classes
-    /// aren't backed by the JSON. They declare the attributes and relationships, which are read
-    /// and written with the subscript.
+    /// Stored properties aren't backed by the JSON. `@Member` properties are, on every platform.
+    /// Other stored properties declare the attributes and relationships, which are read and
+    /// written with the subscript.
     public subscript(key: String) -> Any? {
         get {
             value(forMember: key)
