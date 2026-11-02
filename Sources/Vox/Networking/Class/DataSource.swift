@@ -34,12 +34,12 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
         self.client = client
     }
     
-    /// A `POST` request with the resource. The document is `nil` when the server responds without
-    /// content.
+    /// A `POST` request with the resource, to the path of the collection even when the resource
+    /// has a client-generated id. The document is `nil` when the server responds without content.
     public func create(_ resource: ResourceType) -> Request<ResourceType, Document<ResourceType>?> {
         let path = self.path { router in router.create(resource: resource) }
         
-        return Request(client: client, method: "POST", target: .path(replacingPlaceholders(in: path, id: resource.id, type: resource.type)), body: { try resource.documentData(requiringID: false) }) { response, client in
+        return Request(client: client, method: "POST", target: .path(replacingPlaceholders(in: path, id: nil, type: resource.type)), body: { try resource.documentData(requiringID: false) }) { response, client in
             try ResponseDecoding.optionalResource(response, client: client)
         }
     }
@@ -233,13 +233,15 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
         }
     }
     
+    /// `path` with the placeholders replaced. Without an id, as for the collection, `<id>` is left
+    /// out together with the slash before it.
     private func replacingPlaceholders(in path: String, id: String?, type: String) -> String {
-        var path = path
+        let path = path.replacingOccurrences(of: "<type>", with: type)
         
         if let id = id {
-            path = path.replacingOccurrences(of: "<id>", with: id)
+            return path.replacingOccurrences(of: "<id>", with: id)
         }
         
-        return path.replacingOccurrences(of: "<type>", with: type)
+        return path.replacingOccurrences(of: "/<id>", with: "").replacingOccurrences(of: "<id>", with: "")
     }
 }

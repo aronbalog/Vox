@@ -327,4 +327,26 @@ struct DataSourceWithPathSpec {
         
         #expect(client.requests.map(\.target) == [.path("path/mock-resource")])
     }
+    
+    @Test("one path serves the collection and its resources")
+    func collectionAndResourcePaths() async throws {
+        let client = RecordingClient(response: ClientResponse(statusCode: 204, data: Data()))
+        let sut = DataSource<MockResource>(strategy: .path("api/<type>/<id>"), client: client)
+        let resource = MockResource()
+        resource.id = "mock"
+        
+        _ = try? await sut.fetch().result()
+        _ = try? await sut.fetch(id: "mock").result()
+        _ = try await sut.create(resource).result()
+        _ = try await sut.update(resource).result()
+        try await sut.delete(id: "mock").result()
+        
+        #expect(client.requests.map(\.target) == [
+            .path("api/mock-resource"),
+            .path("api/mock-resource/mock"),
+            .path("api/mock-resource"),
+            .path("api/mock-resource/mock"),
+            .path("api/mock-resource/mock")
+        ])
+    }
 }
