@@ -199,6 +199,7 @@ struct DataSourceWithRouterSpec {
         let router = MockRouter()
         let sut = DataSource<MockResource>(strategy: .router(router), client: client)
         let resource = MockResource()
+        resource.id = "mock"
         
         _ = try await sut.update(resource).result()
         

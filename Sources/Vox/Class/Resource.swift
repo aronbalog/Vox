@@ -134,7 +134,7 @@ open class Resource: NSObject {
     /// - Parameter name: The name of the relationship property, or the name of the relationship
     ///   when no property is declared for it.
     public func relationship(named name: String) -> Relationship? {
-        let key = classMetadata.properties[name]?.key ?? name
+        let key = memberName(forProperty: name)
         
         return ResourceGraph.lock.withLock {
             storageLocked().object.relationships[key].map { relationship in
@@ -153,6 +153,33 @@ open class Resource: NSObject {
     
     public func documentData() throws -> Data {
         return try JSONSerialization.data(withJSONObject: documentDictionary(), options: [])
+    }
+    
+    /// The request document of the resource, which must have an `id` or `lid` when
+    /// `requiringID` is set.
+    func documentData(requiringID: Bool) throws -> Data {
+        return try JSONSerialization.data(withJSONObject: ["data": try resourceObjectJSON(requiringID: requiringID)], options: [])
+    }
+    
+    /// The resource identifier object of the resource, for relationship requests.
+    func identifierJSON() throws -> [String: Any] {
+        return try ResourceGraph.lock.withLock {
+            let object = storageLocked().object
+            
+            if let id = object.id {
+                return ["type": object.type, "id": id]
+            } else if let lid = object.lid {
+                return ["type": object.type, "lid": lid]
+            } else {
+                throw JSONAPIError.serialization(reason: "A resource of type \"\(object.type)\" has neither id nor lid, so a relationship can't refer to it.")
+            }
+        }
+    }
+    
+    /// The JSON member name of the property `name`, which is `name` itself unless `codingKeys`
+    /// maps it or there's no such property.
+    func memberName(forProperty name: String) -> String {
+        return classMetadata.properties[name]?.key ?? name
     }
     
     // MARK: Storage

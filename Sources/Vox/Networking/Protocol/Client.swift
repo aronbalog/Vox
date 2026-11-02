@@ -15,7 +15,7 @@ public protocol Client: Sendable {
 /// An HTTP request built by a data source.
 public struct ClientRequest: Sendable {
     /// Where a request goes.
-    public enum Target: Sendable, Equatable {
+    public enum Target: Sendable, Hashable {
         /// A path, which is appended to the client's base URL.
         case path(String)
         /// A link from a document, which is resolved against the client's base URL like a link

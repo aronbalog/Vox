@@ -96,6 +96,20 @@ struct NetworkingSpec {
         }
     }
     
+    @Test("updated resources must have an id")
+    func updateWithoutID() async {
+        let client = RecordingClient()
+        
+        do {
+            _ = try await dataSource(client).update(gadget(id: nil)).result()
+            Issue.record("Expected JSONAPIError.serialization")
+        } catch JSONAPIError.serialization {
+            #expect(client.requests.isEmpty)
+        } catch {
+            Issue.record("Unexpected error \(error)")
+        }
+    }
+    
     @Test("user info is passed to the client")
     func userInfo() async throws {
         let client = RecordingClient()

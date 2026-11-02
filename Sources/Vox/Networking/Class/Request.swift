@@ -8,9 +8,10 @@ let jsonAPIMediaType = "application/vnd.api+json"
 public struct Request<ResourceType: Resource, Output: Sendable>: DataSourceResultable, QueryItemsCustomizable, @unchecked Sendable {
     let client: any Client
     let method: String
-    let target: ClientRequest.Target
-    /// The resource sent as the request document.
-    let resource: ResourceType?
+    /// The target, or the error that prevents sending the request.
+    let target: Result<ClientRequest.Target, Error>
+    /// Creates the request document when the request is sent.
+    let body: (() throws -> Data)?
     let decode: @Sendable (ClientResponse, any Client) throws -> Output
     
     private(set) var customQueryItems: [URLQueryItem] = []
@@ -21,12 +22,16 @@ public struct Request<ResourceType: Resource, Output: Sendable>: DataSourceResul
     /// Values passed to the client with the request.
     public var userInfo: [String: any Sendable] = [:]
     
-    init(client: any Client, method: String, target: ClientRequest.Target, resource: ResourceType? = nil, decode: @escaping @Sendable (ClientResponse, any Client) throws -> Output) {
+    init(client: any Client, method: String, target: Result<ClientRequest.Target, Error>, body: (() throws -> Data)? = nil, decode: @escaping @Sendable (ClientResponse, any Client) throws -> Output) {
         self.client = client
         self.method = method
         self.target = target
-        self.resource = resource
+        self.body = body
         self.decode = decode
+    }
+    
+    init(client: any Client, method: String, target: ClientRequest.Target, body: (() throws -> Data)? = nil, decode: @escaping @Sendable (ClientResponse, any Client) throws -> Output) {
+        self.init(client: client, method: method, target: .success(target), body: body, decode: decode)
     }
     
     /// Adds query items, which are sent after the ones the request builds itself.
@@ -59,15 +64,16 @@ public struct Request<ResourceType: Resource, Output: Sendable>: DataSourceResul
     /// - Throws: `JSONAPIError.API` for responses with error objects,
     ///   `JSONAPIError.unacceptableStatusCode` for other responses with a status code outside
     ///   200–299, `JSONAPIError.invalidDocument` for responses that aren't the expected document,
-    ///   `JSONAPIError.serialization` when the resource can't be sent, and the errors of the
-    ///   client.
+    ///   `JSONAPIError.serialization` when the request document can't be created or the URL of
+    ///   a relationship can't be determined, and the errors of the client.
     public func result() async throws -> Output {
         return try await perform(queryItems: customQueryItems)
     }
     
     func perform(queryItems: [URLQueryItem]) async throws -> Output {
+        let target = try self.target.get()
         var headers = ["Accept": jsonAPIMediaType]
-        let body = try resource.map { try $0.documentData() }
+        let body = try self.body?()
         
         if body != nil {
             headers["Content-Type"] = jsonAPIMediaType
