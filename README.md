@@ -5,7 +5,7 @@ Vox is a Swift implementation of [JSON:API](https://jsonapi.org) 1.1 for iOS, ma
 [![CI](https://github.com/aronbalog/Vox/actions/workflows/ci.yml/badge.svg)](https://github.com/aronbalog/Vox/actions/workflows/ci.yml)
 [![Coverage](https://aronbalog.github.io/Vox/badges/coverage.svg)](https://github.com/aronbalog/Vox/actions/workflows/ci.yml)
 [![CocoaPods](https://img.shields.io/cocoapods/v/Vox.svg)](https://cocoapods.org/pods/Vox)
-[![Platforms](https://img.shields.io/cocoapods/p/Vox.svg)](https://cocoapods.org/pods/Vox)
+[![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS%20%7C%20watchOS%20%7C%20Linux-blue.svg)](https://github.com/aronbalog/Vox)
 
 Upgrading from 1.x? Read the [migration guide](MIGRATION.md). Changes are listed in the [changelog](CHANGELOG.md).
 
