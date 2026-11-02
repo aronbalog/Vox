@@ -16,15 +16,16 @@ A major release, which requires Swift 6.1. The [migration guide](MIGRATION.md) d
 - Relationship endpoints: `fetchRelated(_:of:as:)`, `fetchRelationship(_:of:as:)`, `updateRelationship(_:of:to:)`, `addToRelationship(_:of:_:)` and `removeFromRelationship(_:of:_:)`, and the router requirements `relationship(_:of:)` and `related(_:of:)`, with default implementations.
 - Link objects. `Link` has the `href`, `rel`, `title`, `type`, `hreflang`, `describedby` and `meta` of a link, and `Links` has accessors for the pagination, `related`, `describedby`, `about` and `type` links.
 - The links of resources, `Resource.links`, and the links and meta of relationships, `Resource.relationship(named:)`.
-- Local identifiers (`lid`) of JSON:API 1.1.
+- Local identifiers (`lid`) of JSON:API 1.1. A resource sends its `lid` only when it has no `id`.
 - `Date` and `URL` attributes.
 - `Filter`, which sends `filter[field]=value` parameters.
 - The JSON:API `Accept` and `Content-Type` headers, and `headers(_:)` for custom headers.
 - `JSONAPIError.invalidDocument(reason:)`, `JSONAPIError.unacceptableStatusCode(_:body:)`, and the reason of `JSONAPIError.serialization`.
-- `Resource.register()` and the public member subscript, for platforms without the Objective-C runtime.
+- The `@Member` property wrapper, which backs a property with the JSON on every platform, including Linux. A member that's missing or has another type reads as the property's initial value, or as `nil`.
+- `Resource.register()` and the public member subscript, for platforms without the Objective-C runtime. There, creating the first instance of a class also registers it.
 - The `meta` of resources is serialized.
 - `ErrorObject.Source.header`.
-- Continuous integration with GitHub Actions on macOS, Linux, iOS, tvOS and watchOS, CocoaPods linting, and a coverage check on Linux that fails unless the tests cover all of the library code.
+- Continuous integration with GitHub Actions on macOS, Linux, iOS, tvOS and watchOS, CocoaPods linting, and a coverage check on Linux that fails unless the tests cover all of the library code. Pushes to the default branch publish the coverage badge.
 
 ### Changed
 
@@ -42,6 +43,7 @@ A major release, which requires Swift 6.1. The [migration guide](MIGRATION.md) d
 - Requests for the collection leave `<id>` out of paths, and `create` always sends resources to the collection.
 - `update` requires the resource to have an `id`.
 - Invalid documents throw `JSONAPIError.invalidDocument(reason:)` with a description of the problem. Primary data of an unexpected shape or class throws.
+- Serializing a resource throws `JSONAPIError.serialization` when an attribute or relationship is named `type` or `id`, or when an attribute and a relationship have the same name, which JSON:API doesn't allow.
 - Deserialization and serialization are declared `throws(JSONAPIError)`, and `makeURLRequest(for:)` of `URLSessionClient` `throws(URLError)`.
 - Resources of types without a class decode as plain `Resource` instances.
 - `Sort` is a struct, and the `Pagination` strategies are structs.
@@ -68,13 +70,14 @@ A major release, which requires Swift 6.1. The [migration guide](MIGRATION.md) d
 
 ### Removed
 
-- The Alamofire client, `JSONAPIClient.Alamofire`, the `Vox/Alamofire` subspec and the dependency on Alamofire. `URLSessionClient` sends requests instead.
+- The Alamofire client, `JSONAPIClient.Alamofire`, and the dependency on Alamofire. `URLSessionClient` sends requests instead.
+- The CocoaPods subspecs `Vox/Core` and `Vox/Alamofire`. Depend on the `Vox` pod instead.
 - `Context` and `Resource.init(context:)`.
 - The callback-based `Client` requirement, `ClientSuccessBlock` and `ClientFailureBlock`.
 - `Links._self`, which is now `selfLink`.
 - The underscored cases of `Sort`.
 - `DataSource.DocumentType`.
-- The Objective-C sources, the umbrella header, the Xcode project and the playground.
+- The Objective-C sources, the umbrella header and the playground.
 
 ## 1.2.3 and earlier
 
