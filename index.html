@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vox · JSON:API for Swift</title>
+<meta name="description" content="Vox is a Swift implementation of JSON:API 1.1 for iOS, macOS, tvOS, watchOS and Linux. Learn how JSON:API documents, requests and errors work, and how Vox maps them to Swift.">
+<meta name="theme-color" content="#07080f">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://aronbalog.github.io/Vox/">
+<meta property="og:title" content="Vox · JSON:API for Swift">
+<meta property="og:description" content="A Swift implementation of JSON:API 1.1 for iOS, macOS, tvOS, watchOS and Linux, with async/await and the Swift 6 language mode.">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+<script>document.documentElement.classList.add('js')</script>
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="backdrop" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grid-lines"></div>
+</div>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top"><img src="assets/logo.svg" alt="" width="30" height="30"><span>Vox</span></a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#jsonapi">JSON:API</a>
+      <a href="#documents">Documents</a>
+      <a href="#resources">Resources</a>
+      <a href="#fetching">Fetching</a>
+      <a href="#writing">Writing</a>
+      <a href="#relationships">Relationships</a>
+      <a href="#errors">Errors</a>
+      <a href="#install">Install</a>
+    </nav>
+    <a class="btn btn-ghost btn-sm" href="https://github.com/aronbalog/Vox">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+      GitHub
+    </a>
+  </div>
+</header>
+
+<main id="main">
+<span id="top"></span>
+
+<section class="hero">
+  <div class="hero-copy reveal">
+    <a class="pill" href="https://jsonapi.org/format/"><span class="pill-dot"></span>JSON:API 1.1 · Swift 6 · Vox 2.0</a>
+    <h1>JSON:API,<br><span class="gradient-text">fluent in Swift.</span></h1>
+    <p class="lead">Vox is a Swift implementation of <a href="https://jsonapi.org">JSON:API</a> 1.1 for iOS, macOS, tvOS, watchOS and Linux. Resources are classes whose properties read and write the JSON of their document, and data sources send JSON:API requests with <code>async</code>/<code>await</code>.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#install">Get started</a>
+      <a class="btn btn-ghost" href="#jsonapi">What is JSON:API?</a>
+    </div>
+    <div class="badges">
+      <a href="https://github.com/aronbalog/Vox/actions/workflows/ci.yml"><img src="https://github.com/aronbalog/Vox/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+      <a href="https://github.com/aronbalog/Vox/actions/workflows/ci.yml"><img src="badges/coverage.svg" alt="Test coverage"></a>
+      <a href="https://cocoapods.org/pods/Vox"><img src="https://img.shields.io/cocoapods/v/Vox.svg" alt="CocoaPods version"></a>
+      <a href="https://cocoapods.org/pods/Vox"><img src="https://img.shields.io/cocoapods/p/Vox.svg" alt="Platforms"></a>
+    </div>
+  </div>
+
+  <div class="hero-visual reveal">
+    <div class="window glow">
+      <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span class="window-title">Articles.swift</span></div>
+      <pre><code class="lang-swift">let api = URL(string: "https://example.com/")!
+let articles = DataSource&lt;Article&gt;(
+    strategy: .path("articles/&lt;id&gt;"),
+    client: URLSessionClient(baseURL: api)
+)
+
+let document = try await articles
+    .fetch()
+    .include(["author"])
+    .sort([.descending("publishedAt")])
+    .result()
+
+for article in document.data ?? [] {
+    print(article.title ?? "", article.author?.firstName ?? "")
+}</code></pre>
+    </div>
+    <div class="flow" aria-hidden="true"><span>sends</span></div>
+    <div class="window">
+      <div class="window-bar"><span class="window-title">Request</span></div>
+      <pre><code class="lang-http">GET /articles?include=author&amp;sort=-publishedAt HTTP/1.1
+Accept: application/vnd.api+json</code></pre>
+    </div>
+  </div>
+</section>
+
+<section id="jsonapi" class="section">
+  <div class="section-head reveal">
+    <span class="eyebrow">The specification</span>
+    <h2>A specification for building APIs in JSON</h2>
+    <p>If you’ve ever argued with your team about the way your JSON responses should be formatted, JSON:API can help you stop the bikeshedding and focus on what matters: your application.</p>
+    <p>JSON:API describes how a client should request that resources be fetched or modified, and how a server should respond to those requests.</p>
+  </div>
+
+  <div class="cards cards-4">
+    <article class="card reveal">
+      <div class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+      <h3>Fewer requests, less data</h3>
+      <p>JSON:API is designed to minimize both the number of requests and the amount of data sent between clients and servers, without compromising readability, flexibility, or discoverability.</p>
+    </article>
+    <article class="card reveal">
+      <div class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></div>
+      <h3>Shared conventions</h3>
+      <p>By following shared conventions, you can increase productivity, and take advantage of generalized tooling and best practices, on the server and in every client.</p>
+    </article>
+    <article class="card reveal">
+      <div class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></div>
+      <h3>Built for caching</h3>
+      <p>Clients built around JSON:API can take advantage of its features around efficiently caching responses, sometimes eliminating network requests entirely.</p>
+    </article>
+    <article class="card reveal">
+      <div class="card-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h12l-3-3"/><path d="M17 17H5l3 3"/></svg></div>
+      <h3>Reads and writes</h3>
+      <p>JSON:API covers creating, updating and deleting resources and their relationships as well, not just responses, down to the status codes.</p>
+    </article>
+  </div>
+
+  <div class="spot media-type reveal">
+    <div>
+      <span class="eyebrow">Media type</span>
+      <h3>Registered with the IANA</h3>
+      <p>JSON:API documents are exchanged with their own media type. Its only parameters are <code>ext</code> and <code>profile</code>, which list the URIs of the extensions and profiles a document uses: extensions add to the specification, and profiles share a particular usage of it.</p>
+    </div>
+    <button class="media-type-value" type="button" data-copy="application/vnd.api+json">application/vnd.api+json <span>Copy</span></button>
+    <p class="vox-note">Vox sends <code>Accept: application/vnd.api+json</code> with every request, and the same <code>Content-Type</code> with every body. Headers set on a request replace them, for example to ask for an extension.</p>
+  </div>
+</section>
+
+<section id="documents" class="section">
+  <div class="section-head reveal">
+    <span class="eyebrow">Anatomy of a document</span>
+    <h2>One response, the whole object graph</h2>
+    <p>Here’s a response from a blog that implements JSON:API. It holds the first in a collection of articles, links to the next pages, and the article’s author and comments, so the client needs a single request. Pick a part to see what the specification says about it, and how Vox reads it.</p>
+  </div>
+
+  <div class="explorer reveal" id="explorer">
+    <div class="segmented" role="tablist" aria-label="Parts of the document">
+      <button type="button" role="tab" id="tab-toplevel" aria-controls="part-toplevel" aria-selected="true">Top level</button>
+      <button type="button" role="tab" id="tab-data" aria-controls="part-data" aria-selected="false" tabindex="-1">Primary data</button>
+      <button type="button" role="tab" id="tab-identity" aria-controls="part-identity" aria-selected="false" tabindex="-1">Type and id</button>
+      <button type="button" role="tab" id="tab-attributes" aria-controls="part-attributes" aria-selected="false" tabindex="-1">Attributes</button>
+      <button type="button" role="tab" id="tab-relationships" aria-controls="part-relationships" aria-selected="false" tabindex="-1">Relationships</button>
+      <button type="button" role="tab" id="tab-links" aria-controls="part-links" aria-selected="false" tabindex="-1">Links</button>
+      <button type="button" role="tab" id="tab-included" aria-controls="part-included" aria-selected="false" tabindex="-1">Included</button>
+    </div>
+
+    <div class="explorer-body">
+      <div class="window">
+        <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span class="window-title">GET /articles · 200 OK</span></div>
+        <pre class="json-lines" id="explorer-json"><code class="lang-json">{
+  "links": {
+    "self": "http://example.com/articles",
+    "next": "http://example.com/articles?page[offset]=2",
+    "last": "http://example.com/articles?page[offset]=10"
+  },
+  "data": [{
+    "type": "articles",
+    "id": "1",
+    "attributes": {
+      "title": "JSON:API paints my bikeshed!"
+    },
+    "relationships": {
+      "author": {
+        "links": {
+          "self": "http://example.com/articles/1/relationships/author",
+          "related": "http://example.com/articles/1/author"
+        },
+        "data": { "type": "people", "id": "9" }
+      },
+      "comments": {
+        "links": {
+          "self": "http://example.com/articles/1/relationships/comments",
+          "related": "http://example.com/articles/1/comments"
+        },
+        "data": [
+          { "type": "comments", "id": "5" },
+          { "type": "comments", "id": "12" }
+        ]
+      }
+    },
+    "links": {
+      "self": "http://example.com/articles/1"
+    }
+  }],
+  "included": [{
+    "type": "people",
+    "id": "9",
+    "attributes": {
+      "firstName": "Dan",
+      "lastName": "Gebhardt",
+      "twitter": "dgeb"
+    },
+    "links": {
+      "self": "http://example.com/people/9"
+    }
+  }, {
+    "type": "comments",
+    "id": "5",
+    "attributes": {
+      "body": "First!"
+    },
+    "relationships": {
+      "author": {
+        "data": { "type": "people", "id": "2" }
+      }
+    },
+    "links": {
+      "self": "http://example.com/comments/5"
+    }
+  }, {
+    "type": "comments",
+    "id": "12",
+    "attributes": {
+      "body": "I like XML better"
+    },
+    "relationships": {
+      "author": {
+        "data": { "type": "people", "id": "9" }
+      }
+    },
+    "links": {
+      "self": "http://example.com/comments/12"
+    }
+  }]
+}</code></pre>
+      </div>
+
+      <div class="explorer-panel">
+        <div role="tabpanel" id="part-toplevel" aria-labelledby="tab-toplevel" data-lines="1-2,6-7,35-36,75-76">
+          <div class="spot part-card">
+            <h3>Top level</h3>
+            <p>A JSON object is at the root of every document. It contains at least one of <code>data</code>, the primary data, <code>errors</code>, an array of error objects, or <code>meta</code>, non-standard meta-information. <code>data</code> and <code>errors</code> never appear together.</p>
+            <p>A document can also have <code>jsonapi</code>, which describes the server’s implementation, <code>links</code> for the document as a whole, and <code>included</code>, the related resources.</p>
+          </div>
+          <div class="window">
+            <div class="window-bar"><span class="window-title">Vox</span></div>
+            <pre><code class="lang-swift">let document = try Deserializer.Collection&lt;Article&gt;()
+    .deserialize(data: data)
+
+document.data     // [Article]?
+document.links    // Links?
+document.meta     // [String: Any]?
+document.jsonapi  // [String: Any]?
+document.included // [[String: Any]]?</code></pre>
+          </div>
+        </div>
+
+        <div role="tabpanel" id="part-data" aria-labelledby="tab-data" data-lines="7-35" hidden>
+          <div class="spot part-card">
+            <h3>Primary data</h3>
+            <p>The primary data represents the resource or the collection that the request targets. For a single resource, it’s a resource object, a resource identifier object or <code>null</code>.</p>
+            <p>A collection is always an array, even when it holds one resource or none.</p>
+          </div>
+          <div class="window">
+            <div class="window-bar"><span class="window-title">Vox</span></div>
+            <pre><code class="lang-swift">// "data": [ ... ]
+let collection = try Deserializer.Collection&lt;Article&gt;()
+    .deserialize(data: data)
+collection.data // [Article]?
+
+// "data": { ... } or "data": null
+let single = try Deserializer.Single&lt;Article&gt;()
+    .deserialize(data: data)
+single.data     // Article?</code></pre>
+          </div>
+        </div>
+
+        <div role="tabpanel" id="part-identity" aria-labelledby="tab-identity" data-lines="8-9,19,27-28,37-38,48-49,55,62-63,69" hidden>
+          <div class="spot part-card">
+            <h3>Type and id</h3>
+            <p>Every resource object has a <code>type</code> and an <code>id</code>, and within an API, the pair identifies a single, unique resource. Both are strings. Resource identifier objects, the linkage of relationships, carry the same pair.</p>
+            <p>Only a resource that’s created on the client can leave out its <code>id</code>. It can carry a local <code>lid</code> instead.</p>
+          </div>
+          <div class="window">
+            <div class="window-bar"><span class="window-title">Vox</span></div>
+            <pre><code class="lang-swift">article.type // "articles", the resourceType of Article
+article.id   // "1"
+
+// people/9 wrote the article and comment 12,
+// and it has a single instance:
+article.author === article.comments?[1].author // true</code></pre>
+          </div>
+        </div>
+
+        <div role="tabpanel" id="part-attributes" aria-labelledby="tab-attributes" data-lines="10-12,39-43,50-52,64-66" hidden>
+          <div class="spot part-card">
+            <h3>Attributes</h3>
+            <p>The <code>attributes</code> object holds the resource’s data, as any JSON value, including objects and arrays. Keys that refer to other resources, such as <code>author_id</code>, belong in relationships instead.</p>
+            <p>Attributes and relationships are the fields of a resource. They share one namespace with <code>type</code> and <code>id</code>, so no field is named <code>type</code> or <code>id</code>, and an attribute and a relationship never have the same name.</p>
+          </div>
+          <div class="window">
+            <div class="window-bar"><span class="window-title">Vox</span></div>
+            <pre><code class="lang-swift">article.title      // "JSON:API paints my bikeshed!"
+article.attributes // ["title": "JSON:API paints my bikeshed!"]
+
+article.title = "JSON:API paints my Swift bikeshed!"</code></pre>
+          </div>
+        </div>
+
+        <div role="tabpanel" id="part-relationships" aria-labelledby="tab-relationships" data-lines="13-31,53-57,67-71" hidden>
+          <div class="spot part-card">
+            <h3>Relationships</h3>
+            <p>A relationship object describes a to-one or a to-many relationship. Its <code>links</code> can have a <code>self</code> link, for the relationship itself, and a <code>related</code> link, for the related resources.</p>
+            <p>Its <code>data</code> is the resource linkage: <code>null</code> or <code>[]</code> when the relationship is empty, and resource identifier objects otherwise.</p>
+          </div>
+          <div class="window">
+            <div class="window-bar"><span class="window-title">Vox</span></div>
+            <pre><code class="lang-swift">article.author?.firstName // "Dan", from included
+article.comments?.count   // 2
+
+let author = article.relationship(named: "author")
+author?.links?.related?.url // .../articles/1/author
+author?.hasData             // true</code></pre>
+          </div>
+        </div>
+
+        <div role="tabpanel" id="part-links" aria-labelledby="tab-links" data-lines="2-6,15-18,22-25,32-34,44-46,58-60,72-74" hidden>
+          <div class="spot part-card">
+            <h3>Links</h3>
+            <p>Links appear at the top level, in resource objects and in relationship objects. A link is a URL string, or a link object with an <code>href</code> and other members, such as <code>meta</code>.</p>
+            <p>At the top level, <code>self</code> refreshes the document, and <code>first</code>, <code>last</code>, <code>prev</code> and <code>next</code> page through the collection.</p>
+          </div>
+          <div class="window">
+            <div class="window-bar"><span class="window-title">Vox</span></div>
+            <pre><code class="lang-swift">document.links?.next?.href   // ".../articles?page[offset]=2"
+article.links?.selfLink?.url // http://example.com/articles/1
+
+// Documents fetched by a data source follow them:
+let nextPage = try await page.next?.result()</code></pre>
+          </div>
+        </div>
+
+        <div role="tabpanel" id="part-included" aria-labelledby="tab-included" data-lines="36-75" hidden>
+          <div class="spot part-card">
+            <h3>Included resources</h3>
+            <p>A compound document carries related resources in a top-level <code>included</code> array, so the client gets the article, its author and its comments with one request.</p>
+            <p>Every included resource is reached through a chain of relationships from the primary data, which is called full linkage. Clients ask for related resources with the <code>include</code> parameter.</p>
+          </div>
+          <div class="window">
+            <div class="window-bar"><span class="window-title">Vox</span></div>
+            <pre><code class="lang-swift">// GET /articles?include=author,comments
+let page = try await articles
+    .fetch()
+    .include(["author", "comments"])
+    .result()
+
+// Relationships resolve from included when they're read
+page.data?.first?.author?.twitter // "dgeb"</code></pre>
+          </div>
+        </div>
+        <p class="hint">Click a line of the document to see the part it belongs to.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="resources" class="section">
+  <div class="section-head reveal">
+    <span class="eyebrow">Resources</span>
+    <h2>Classes that are views of JSON</h2>
+    <p>A resource is a subclass of <code>Resource</code>. The class declares the JSON:API type, and its properties declare the attributes and relationships. The properties don’t store values: they read and write the resource’s JSON, so a resource is a typed view of its resource object.</p>
+  </div>
+
+  <div class="resources">
+    <div class="reveal">
+      <div class="segmented" role="tablist" aria-label="Property declarations">
+        <button type="button" role="tab" id="tab-objc" aria-controls="panel-objc" aria-selected="true">@objc dynamic</button>
+        <button type="button" role="tab" id="tab-member" aria-controls="panel-member" aria-selected="false" tabindex="-1">@Member</button>
+      </div>
+      <div role="tabpanel" id="panel-objc" aria-labelledby="tab-objc" class="window">
+        <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span class="window-title">Resources.swift · Apple platforms</span></div>
+        <pre><code class="lang-swift">import Vox
+
+final class Article: Resource {
+    override class var resourceType: String { "articles" }
+
+    @objc dynamic var title: String?
+    @objc dynamic var publishedAt: Date?
+    @objc dynamic var viewCount: NSNumber?
+    @objc dynamic var author: Person?
+    @objc dynamic var comments: [Comment]?
+}
+
+final class Person: Resource {
+    override class var resourceType: String { "people" }
+
+    @objc dynamic var firstName: String?
+    @objc dynamic var lastName: String?
+    @objc dynamic var twitter: String?
+}
+
+final class Comment: Resource {
+    override class var resourceType: String { "comments" }
+
+    @objc dynamic var body: String?
+    @objc dynamic var author: Person?
+}</code></pre>
+      </div>
+      <div role="tabpanel" id="panel-member" aria-labelledby="tab-member" class="window" hidden>
+        <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span class="window-title">Resources.swift · every platform, including Linux</span></div>
+        <pre><code class="lang-swift">import Vox
+
+final class Article: Resource {
+    override class var resourceType: String { "articles" }
+
+    @Member var title: String?
+    @Member var publishedAt: Date?
+    @Member var viewCount: Int = 0
+    @Member var author: Person?
+    @Member var comments: [Comment]?
+}
+
+final class Person: Resource {
+    override class var resourceType: String { "people" }
+
+    @Member var firstName: String?
+    @Member var lastName: String?
+    @Member var twitter: String?
+}
+
+final class Comment: Resource {
+    override class var resourceType: String { "comments" }
+
+    @Member var body: String?
+    @Member var author: Person?
+}</code></pre>
+      </div>
+    </div>
+
+    <ol class="rules reveal">
+      <li><span class="num">01</span><div><b>The type is the class</b><code>resourceType</code> is the JSON:API type. A class that doesn’t override it uses the name of the class.</div></li>
+      <li><span class="num">02</span><div><b>Relationships by declaration</b>A property typed as a <code>Resource</code> subclass is a to-one relationship, and an array of them is a to-many relationship. Declared as <code>Resource</code>, a relationship holds any type.</div></li>
+      <li><span class="num">03</span><div><b>Everything else is an attribute</b>Strings, numbers, Booleans, dates as ISO 8601 strings, URLs, and arrays and dictionaries of JSON values.</div></li>
+      <li><span class="num">04</span><div><b>Every platform</b><code>@objc dynamic</code> properties use the Objective-C runtime. <code>@Member</code> properties work on Linux too, with Swift types such as <code>Int</code> and an initial value.</div></li>
+      <li><span class="num">05</span><div><b>Your names, their members</b>Members named differently than their property are mapped with <code>codingKeys</code>.</div></li>
+    </ol>
+  </div>
+</section>
+
+<section id="fetching" class="section">
+  <div class="section-head reveal">
+    <span class="eyebrow">Fetching data</span>
+    <h2>Ask for exactly what you need</h2>
+    <p>JSON:API reserves query parameters for related resources, sparse fieldsets, sorting, pagination and filtering. Build a request, and see the URL that Vox sends for it.</p>
+  </div>
+
+  <div class="playground reveal" id="playground">
+    <form class="spot pg-controls" autocomplete="off" onsubmit="return false">
+      <fieldset>
+        <legend>Endpoint</legend>
+        <div class="chips" data-control="target">
+          <button type="button" class="chip" data-value="collection" aria-pressed="true">/articles</button>
+          <button type="button" class="chip" data-value="single" aria-pressed="false">/articles/1</button>
+        </div>
+      </fieldset>
+
+      <fieldset data-family="include">
+        <legend>include <span>Inclusion of related resources</span></legend>
+        <div class="chips" data-control="include">
+          <button type="button" class="chip" data-value="author">author</button>
+          <button type="button" class="chip" data-value="comments">comments</button>
+          <button type="button" class="chip" data-value="comments.author">comments.author</button>
+        </div>
+      </fieldset>
+
+      <fieldset data-family="fields">
+        <legend>fields <span>Sparse fieldsets</span></legend>
+        <div class="field-row">
+          <code>articles</code>
+          <div class="chips" data-control="fields" data-type="articles">
+            <button type="button" class="chip" data-value="title">title</button>
+            <button type="button" class="chip" data-value="publishedAt">publishedAt</button>
+            <button type="button" class="chip" data-value="author">author</button>
+            <button type="button" class="chip" data-value="comments">comments</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <code>people</code>
+          <div class="chips" data-control="fields" data-type="people">
+            <button type="button" class="chip" data-value="firstName">firstName</button>
+            <button type="button" class="chip" data-value="lastName">lastName</button>
+            <button type="button" class="chip" data-value="twitter">twitter</button>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset data-family="sort" data-collection>
+        <legend>sort <span>Click again for descending</span></legend>
+        <div class="chips" data-control="sort">
+          <button type="button" class="chip" data-value="publishedAt">publishedAt</button>
+          <button type="button" class="chip" data-value="title">title</button>
+          <button type="button" class="chip" data-value="author.lastName">author.lastName</button>
+        </div>
+      </fieldset>
+
+      <fieldset data-family="filter" data-collection>
+        <legend>filter <span>Filtering</span></legend>
+        <div class="inline-inputs">
+          filter[<input class="input input-md" id="filter-key" value="keyword" aria-label="Filter field" spellcheck="false">]=<input class="input input-md" id="filter-value" value="swift" aria-label="Filter value" spellcheck="false">
+        </div>
+      </fieldset>
+
+      <fieldset data-family="page" data-collection>
+        <legend>page <span>Pagination</span></legend>
+        <div class="inline-inputs">
+          <select class="input" id="page-strategy" aria-label="Pagination strategy">
+            <option value="none">None</option>
+            <option value="page" selected>Page-based</option>
+            <option value="offset">Offset-based</option>
+            <option value="cursor">Cursor-based</option>
+          </select>
+          <span data-strategy="page">number <input class="input input-sm" id="page-number" value="1" inputmode="numeric" aria-label="Page number"> size <input class="input input-sm" id="page-size" value="20" inputmode="numeric" aria-label="Page size"></span>
+          <span data-strategy="offset" hidden>offset <input class="input input-sm" id="page-offset" value="40" inputmode="numeric" aria-label="Offset"> limit <input class="input input-sm" id="page-limit" value="20" inputmode="numeric" aria-label="Limit"></span>
+          <span data-strategy="cursor" hidden>cursor <input class="input input-md" id="page-cursor" value="eyJpZCI6NDJ9" aria-label="Cursor" spellcheck="false"></span>
+        </div>
+      </fieldset>
+
+      <label class="switch"><input type="checkbox" id="encode"> Percent-encode the query, as Vox sends it</label>
+    </form>
+
+    <div class="pg-output">
+      <div class="window glow">
+        <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span class="window-title">HTTP request</span></div>
+        <pre class="pg-http"><code id="pg-http"></code></pre>
+      </div>
+      <div class="legend-row" aria-hidden="true">
+        <span style="--c: var(--c-fields)"><i></i>fields</span>
+        <span style="--c: var(--c-filter)"><i></i>filter</span>
+        <span style="--c: var(--c-include)"><i></i>include</span>
+        <span style="--c: var(--c-sort)"><i></i>sort</span>
+        <span style="--c: var(--c-page)"><i></i>page</span>
+      </div>
+      <div class="window">
+        <div class="window-bar"><span class="window-title">Swift</span></div>
+        <pre><code id="pg-swift" class="lang-swift"></code></pre>
+      </div>
+      <p class="hint">Vox sends the parameters in a fixed order: sparse fieldsets sorted by type, the filter, <code>include</code>, <code>sort</code> and the pagination. The same request always has the same URL.</p>
+    </div>
+  </div>
+
+  <div class="cards concepts cards-4">
+    <article class="card reveal" style="--c: var(--c-include)">
+      <span class="tag">include</span>
+      <h3>Inclusion of related resources</h3>
+      <p>A comma-separated list of relationship paths, such as <code>comments.author</code>. The response is then a compound document with an <code>included</code> member, even when it’s empty.</p>
+      <p class="vox-note"><span><code>include</code> adds paths, leaving out the ones included already.</span></p>
+    </article>
+    <article class="card reveal" style="--c: var(--c-fields)">
+      <span class="tag">fields[TYPE]</span>
+      <h3>Sparse fieldsets</h3>
+      <p>Limits the fields of each type in the response to a comma-separated list. An empty value asks for no fields of the type.</p>
+      <p class="vox-note"><span><code>fields</code> merges the fieldsets of each type.</span></p>
+    </article>
+    <article class="card reveal" style="--c: var(--c-sort)">
+      <span class="tag">sort</span>
+      <h3>Sorting</h3>
+      <p>Comma-separated sort fields, applied in order. Each is ascending unless it starts with a minus. Dotted fields such as <code>author.lastName</code> sort by related attributes.</p>
+      <p class="vox-note"><span><code>.ascending("title")</code> and <code>.descending("publishedAt")</code>.</span></p>
+    </article>
+    <article class="card reveal" style="--c: var(--c-filter)">
+      <span class="tag">filter · page</span>
+      <h3>Filtering and pagination</h3>
+      <p>The <code>filter</code> and <code>page</code> families are reserved for them, whatever strategy the server uses: <code>page[number]</code>, <code>page[offset]</code> or <code>page[cursor]</code>.</p>
+      <p class="vox-note"><span><code>Filter</code>, and page-, offset- and cursor-based <code>Pagination</code>.</span></p>
+    </article>
+  </div>
+
+  <div class="pagination">
+    <div class="spot card reveal">
+      <span class="eyebrow">Pagination links</span>
+      <h3>Pages that know their neighbors</h3>
+      <p>Pagination links go in the links object of the collection they page. A link that isn’t available is left out or <code>null</code>.</p>
+      <div class="page-links">
+        <div><code>first</code><small>.first</small></div>
+        <div><code>prev</code><small>.previous</small></div>
+        <div><code>next</code><small>.next</small></div>
+        <div><code>last</code><small>.last</small></div>
+      </div>
+    </div>
+    <div class="window reveal">
+      <div class="window-bar"><span class="window-title">Vox</span></div>
+      <pre><code class="lang-swift">let page = try await articles
+    .fetch()
+    .paginate(Pagination.PageBased(number: 1, size: 20))
+    .result()
+
+// Follows links.next, or is nil without it
+let nextPage = try await page.next?.result()
+
+// Or grow one document, page by page
+if let pagination = try await page.appendNext() {
+    pagination.new // the resources that were appended
+    pagination.all // the document's data now
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<section id="writing" class="section">
+  <div class="section-head reveal">
+    <span class="eyebrow">Creating, updating and deleting</span>
+    <h2>Writes are documents too</h2>
+    <p>Requests that change resources send a document with the JSON:API media type. A request completely succeeds or fails, in a single transaction: there are no partial updates.</p>
+  </div>
+
+  <div class="reveal" id="writes">
+    <div class="segmented" role="tablist" aria-label="Write requests">
+      <button type="button" role="tab" id="tab-create" aria-controls="panel-create" aria-selected="true">Create</button>
+      <button type="button" role="tab" id="tab-update" aria-controls="panel-update" aria-selected="false" tabindex="-1">Update</button>
+      <button type="button" role="tab" id="tab-delete" aria-controls="panel-delete" aria-selected="false" tabindex="-1">Delete</button>
+    </div>
+
+    <div role="tabpanel" id="panel-create" aria-labelledby="tab-create">
+      <p class="panel-text">A resource is created with a <code>POST</code> to its collection. The resource object needs a <code>type</code>, and the server usually assigns the <code>id</code>. Relationships in the request set the linkage of the new resource.</p>
+      <div class="split">
+        <div class="window">
+          <div class="window-bar"><span class="window-title">HTTP request</span></div>
+          <pre><code class="lang-http">POST /articles HTTP/1.1
+Content-Type: application/vnd.api+json
+Accept: application/vnd.api+json
+
+{
+  "data": {
+    "type": "articles",
+    "attributes": {
+      "title": "Hello, world"
+    },
+    "relationships": {
+      "author": {
+        "data": { "type": "people", "id": "9" }
+      }
+    }
+  }
+}</code></pre>
+        </div>
+        <div class="window">
+          <div class="window-bar"><span class="window-title">Swift</span></div>
+          <pre><code class="lang-swift">let draft = Article()
+draft.title = "Hello, world"
+draft.author = dan // a Person whose id is "9"
+
+// POST articles
+let created = try await articles.create(draft).result()
+created?.data?.id // the id the server assigned</code></pre>
+        </div>
+      </div>
+      <div class="status-grid">
+        <div class="status"><b>201</b><div><strong>Created</strong><span>The server changed the resource, for example by assigning an <code>id</code>, and returns it.</span></div></div>
+        <div class="status info"><b>202</b><div><strong>Accepted</strong><span>The request is accepted, but its processing isn’t complete yet.</span></div></div>
+        <div class="status"><b>204</b><div><strong>No Content</strong><span>The resource was created as it was sent. <em>Vox returns <code>nil</code>.</em></span></div></div>
+        <div class="status err"><b>403</b><div><strong>Forbidden</strong><span>The request is unsupported, for example because of a client-generated <code>id</code>.</span></div></div>
+        <div class="status err"><b>404</b><div><strong>Not Found</strong><span>A related resource doesn’t exist.</span></div></div>
+        <div class="status err"><b>409</b><div><strong>Conflict</strong><span>The client-generated <code>id</code> exists already, or the <code>type</code> isn’t part of the collection.</span></div></div>
+      </div>
+    </div>
+
+    <div role="tabpanel" id="panel-update" aria-labelledby="tab-update" hidden>
+      <p class="panel-text">A resource is updated with a <code>PATCH</code> to its URL. The resource object needs a <code>type</code> and an <code>id</code>. Attributes and relationships that the request leaves out keep their current values, and the ones it has replace them.</p>
+      <div class="split">
+        <div class="window">
+          <div class="window-bar"><span class="window-title">HTTP request</span></div>
+          <pre><code class="lang-http">PATCH /articles/1 HTTP/1.1
+Content-Type: application/vnd.api+json
+Accept: application/vnd.api+json
+
+{
+  "data": {
+    "type": "articles",
+    "id": "1",
+    "attributes": {
+      "title": "Hello, JSON:API"
+    }
+  }
+}</code></pre>
+        </div>
+        <div class="window">
+          <div class="window-bar"><span class="window-title">Swift</span></div>
+          <pre><code class="lang-swift">// A new instance with the id sends only what changes
+let changes = Article()
+changes.id = "1"
+changes.title = "Hello, JSON:API"
+
+// PATCH articles/1
+let updated = try await articles.update(changes).result()</code></pre>
+        </div>
+      </div>
+      <div class="status-grid">
+        <div class="status"><b>200</b><div><strong>OK</strong><span>The server returns the updated resource, which it may have changed further, such as its <code>updatedAt</code>.</span></div></div>
+        <div class="status info"><b>202</b><div><strong>Accepted</strong><span>The update is accepted, but its processing isn’t complete yet.</span></div></div>
+        <div class="status"><b>204</b><div><strong>No Content</strong><span>The resource was updated exactly as requested. <em>Vox returns <code>nil</code>.</em></span></div></div>
+        <div class="status err"><b>403</b><div><strong>Forbidden</strong><span>The update is unsupported.</span></div></div>
+        <div class="status err"><b>404</b><div><strong>Not Found</strong><span>The resource, or a related resource, doesn’t exist.</span></div></div>
+        <div class="status err"><b>409</b><div><strong>Conflict</strong><span>The <code>type</code> or <code>id</code> doesn’t match the endpoint, or the update violates a constraint.</span></div></div>
+      </div>
+    </div>
+
+    <div role="tabpanel" id="panel-delete" aria-labelledby="tab-delete" hidden>
+      <p class="panel-text">A resource is deleted with a <code>DELETE</code> to its URL, which has no request document.</p>
+      <div class="split">
+        <div class="window">
+          <div class="window-bar"><span class="window-title">HTTP request</span></div>
+          <pre><code class="lang-http">DELETE /articles/1 HTTP/1.1
+Accept: application/vnd.api+json</code></pre>
+        </div>
+        <div class="window">
+          <div class="window-bar"><span class="window-title">Swift</span></div>
+          <pre><code class="lang-swift">// DELETE articles/1
+try await articles.delete(id: "1").result()</code></pre>
+        </div>
+      </div>
+      <div class="status-grid">
+        <div class="status"><b>200</b><div><strong>OK</strong><span>The resource is deleted, and the document has no primary data, but can have <code>meta</code>.</span></div></div>
+        <div class="status info"><b>202</b><div><strong>Accepted</strong><span>The deletion is accepted, but its processing isn’t complete yet.</span></div></div>
+        <div class="status"><b>204</b><div><strong>No Content</strong><span>The resource is deleted, and there’s no document.</span></div></div>
+        <div class="status err"><b>404</b><div><strong>Not Found</strong><span>The resource doesn’t exist.</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cards cards-2 callouts">
+    <article class="card reveal">
+      <h3>Local identifiers <span class="new">NEW IN 1.1</span></h3>
+      <p>A resource created on the client can carry a <code>lid</code>, so that other resources in the same request document can refer to it before the server assigns an <code>id</code>. Once it has an <code>id</code>, Vox sends the <code>id</code> instead.</p>
+      <pre><code class="lang-swift">let author = Person()
+author.lid = "new-author"
+article.author = author
+// "author": { "data": { "type": "people", "lid": "new-author" } }</code></pre>
+    </article>
+    <article class="card reveal">
+      <h3>Client-generated ids</h3>
+      <p>A server can accept an <code>id</code> that the client generated, which must be universally unique, such as a UUID. A server that doesn’t accept it responds with <code>403 Forbidden</code>.</p>
+      <pre><code class="lang-swift">let draft = Article()
+draft.id = UUID().uuidString.lowercased()
+
+// Still POST articles, with the id in the document
+try await articles.create(draft).result()</code></pre>
+    </article>
+  </div>
+</section>
+
+<section id="relationships" class="section">
+  <div class="section-head reveal">
+    <span class="eyebrow">Relationships</span>
+    <h2>Change the links, not the resources</h2>
+    <p>A relationship object can link to two endpoints. The related resource link returns the related resources themselves. The relationship link returns their linkage, and lets the client change the relationship directly: removing an author through it disconnects the person from the article, without deleting the person.</p>
+  </div>
+
+  <div class="cards cards-2 link-kinds">
+    <article class="card reveal">
+      <span class="tag" style="--c: var(--c-filter)">related</span>
+      <h3>Related resource link</h3>
+      <p><code>/articles/1/author</code> returns the person as primary data. It stays valid when the relationship is empty, and doesn’t change when the relationship does.</p>
+    </article>
+    <article class="card reveal">
+      <span class="tag" style="--c: var(--c-include)">self</span>
+      <h3>Relationship link</h3>
+      <p><code>/articles/1/relationships/author</code> returns <code>{ "type": "people", "id": "9" }</code>. It accepts <code>PATCH</code>, and for to-many relationships, <code>POST</code> and <code>DELETE</code>.</p>
+    </article>
+  </div>
+
+  <div class="endpoints">
+    <div class="spot endpoint reveal"><span class="method m-get">GET</span><div class="path">/articles/1/author<small>The related person</small></div><pre><code class="lang-swift">articles.fetchRelated("author", of: article, as: Person.self)</code></pre></div>
+    <div class="spot endpoint reveal"><span class="method m-get">GET</span><div class="path">/articles/1/comments<small>The related comments, which can be sorted, filtered and paginated</small></div><pre><code class="lang-swift">articles.fetchRelated("comments", of: article, as: [Comment].self)</code></pre></div>
+    <div class="spot endpoint reveal"><span class="method m-get">GET</span><div class="path">/articles/1/relationships/tags<small>The linkage of the tags</small></div><pre><code class="lang-swift">articles.fetchRelationship("tags", of: article, as: [Tag].self)</code></pre></div>
+    <div class="spot endpoint reveal"><span class="method m-patch">PATCH</span><div class="path">/articles/1/relationships/author<small>Replaces the author, or removes it with <code>nil</code></small></div><pre><code class="lang-swift">articles.updateRelationship("author", of: article, to: person)</code></pre></div>
+    <div class="spot endpoint reveal"><span class="method m-patch">PATCH</span><div class="path">/articles/1/relationships/tags<small>Replaces every tag</small></div><pre><code class="lang-swift">articles.updateRelationship("tags", of: article, to: [swift, ios])</code></pre></div>
+    <div class="spot endpoint reveal"><span class="method m-post">POST</span><div class="path">/articles/1/relationships/tags<small>Adds the tags that aren’t there yet</small></div><pre><code class="lang-swift">articles.addToRelationship("tags", of: article, [concurrency])</code></pre></div>
+    <div class="spot endpoint reveal"><span class="method m-delete">DELETE</span><div class="path">/articles/1/relationships/tags<small>Removes the tags it lists</small></div><pre><code class="lang-swift">articles.removeFromRelationship("tags", of: article, [ios])</code></pre></div>
+  </div>
+  <p class="hint reveal">Each of these is a request, sent with <code>try await request.result()</code>. Vox follows the relationship’s <code>related</code> and <code>self</code> links, and without links, appends <code>/author</code> or <code>/relationships/author</code> to the path of the resource.</p>
+</section>
+
+<section id="errors" class="section">
+  <div class="section-head reveal">
+    <span class="eyebrow">Errors</span>
+    <h2>Problems, described</h2>
+    <p>A server that can’t process a request can respond with error objects in a top-level <code>errors</code> array. It can stop at the first problem, or report several at once, such as one for each invalid attribute.</p>
+  </div>
+
+  <div class="errors">
+    <div class="stack">
+      <div class="window reveal">
+        <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span class="window-title">HTTP/1.1 422 Unprocessable Entity</span></div>
+        <pre><code class="lang-json">{
+  "errors": [{
+    "status": "422",
+    "source": { "pointer": "/data/attributes/firstName" },
+    "title": "Invalid Attribute",
+    "detail": "First name must contain at least two characters."
+  }]
+}</code></pre>
+      </div>
+      <div class="spot card reveal">
+        <h3>Error objects</h3>
+        <p>An error object has at least one of these members.</p>
+        <dl class="members">
+          <dt>id</dt><dd>A unique identifier for this occurrence of the problem.</dd>
+          <dt>links</dt><dd><code>about</code>, with details of this occurrence, and <code>type</code>, which identifies the kind of error.</dd>
+          <dt>status</dt><dd>The HTTP status code, as a string.</dd>
+          <dt>code</dt><dd>An application-specific error code, as a string.</dd>
+          <dt>title</dt><dd>A short summary that doesn’t change between occurrences.</dd>
+          <dt>detail</dt><dd>An explanation of this occurrence.</dd>
+          <dt>source</dt><dd>A JSON Pointer to the value in the request that caused it, or the <code>parameter</code> or <code>header</code>.</dd>
+          <dt>meta</dt><dd>Non-standard meta-information.</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="window reveal">
+        <div class="window-bar"><span class="window-title">Swift</span></div>
+        <pre><code class="lang-swift">do {
+    let document = try await people.update(changes).result()
+} catch JSONAPIError.API(let errors) {
+    for error in errors {
+        print(error.status ?? "", error.title ?? "")
+        print(error.source?.pointer ?? "")
+    }
+} catch JSONAPIError.unacceptableStatusCode(let statusCode, _) {
+    print("Status code", statusCode)
+}</code></pre>
+      </div>
+      <div class="spot card reveal">
+        <h3>What Vox throws</h3>
+        <div class="error-table">
+          <div class="error-row"><code>JSONAPIError.API(errors)</code><span>The server responded with error objects.</span></div>
+          <div class="error-row"><code>JSONAPIError.unacceptableStatusCode</code><span>The status code is outside 200–299, and the response has no error objects.</span></div>
+          <div class="error-row"><code>JSONAPIError.invalidDocument(reason:)</code><span>The response isn’t the expected document. The reason names the problem.</span></div>
+          <div class="error-row"><code>JSONAPIError.serialization(reason:)</code><span>The request document or URL couldn’t be built, so nothing was sent.</span></div>
+          <div class="error-row"><code>URLError</code><span>And the other errors of the client, when the request itself failed.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="history" class="section">
+  <div class="section-head reveal">
+    <span class="eyebrow">Milestones</span>
+    <h2>Over a decade of shared conventions</h2>
+    <p>New versions of JSON:API are always backwards compatible: the specification never removes, it only adds.</p>
+  </div>
+  <ol class="timeline reveal">
+    <li class="milestone"><time datetime="2013-05-03">2013-05-03</time><h3>First draft</h3><p>The initial release of the draft specification.</p></li>
+    <li class="milestone"><time datetime="2013-07-21">2013-07-21</time><h3>Media type</h3><p>The registration of <code>application/vnd.api+json</code> with the IANA is completed.</p></li>
+    <li class="milestone"><time datetime="2015-05-29">2015-05-29</time><h3>JSON:API 1.0</h3><p>The first final version of the specification.</p></li>
+    <li class="milestone"><time datetime="2022-09-30">2022-09-30</time><h3>JSON:API 1.1</h3><p>Extensions and profiles, local identifiers, and richer link objects.</p></li>
+    <li class="milestone now"><time>Now</time><h3>Vox 2.0</h3><p>JSON:API 1.1 for Swift 6, with <code>async</code>/<code>await</code>, on Apple platforms and Linux.</p></li>
+  </ol>
+</section>
+
+<section id="install" class="section">
+  <div class="section-head reveal">
+    <span class="eyebrow">Get started</span>
+    <h2>Add Vox to your app</h2>
+    <p>Vox 2.0 requires Swift 6.1, which comes with Xcode 16.3 and later. It builds in the Swift 6 language mode with complete data-race checking, and its clients, data sources, requests and documents are <code>Sendable</code>.</p>
+  </div>
+
+  <div class="install">
+    <div class="reveal">
+      <div class="segmented" role="tablist" aria-label="Installation">
+        <button type="button" role="tab" id="tab-spm" aria-controls="panel-spm" aria-selected="true">Swift Package Manager</button>
+        <button type="button" role="tab" id="tab-pods" aria-controls="panel-pods" aria-selected="false" tabindex="-1">CocoaPods</button>
+        <button type="button" role="tab" id="tab-xcode" aria-controls="panel-xcode" aria-selected="false" tabindex="-1">Xcode</button>
+      </div>
+      <div role="tabpanel" id="panel-spm" aria-labelledby="tab-spm" class="window glow">
+        <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span class="window-title">Package.swift</span></div>
+        <pre><code class="lang-swift">dependencies: [
+    .package(
+        url: "https://github.com/aronbalog/Vox.git",
+        .upToNextMinor(from: "2.0.0")
+    )
+],
+targets: [
+    .target(name: "App", dependencies: [
+        .product(name: "Vox", package: "Vox")
+    ])
+]</code></pre>
+      </div>
+      <div role="tabpanel" id="panel-pods" aria-labelledby="tab-pods" class="window glow" hidden>
+        <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span class="window-title">Podfile</span></div>
+        <pre><code class="lang-ruby">pod 'Vox', '~&gt; 2.0.0'</code></pre>
+      </div>
+      <div role="tabpanel" id="panel-xcode" aria-labelledby="tab-xcode" class="window glow" hidden>
+        <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span class="window-title">File › Add Package Dependencies…</span></div>
+        <pre><code class="lang-text">https://github.com/aronbalog/Vox.git</code></pre>
+      </div>
+      <div class="requirements">
+        <span>Swift 6.1</span><span>iOS 13</span><span>macOS 10.15</span><span>tvOS 13</span><span>watchOS 6</span><span>Linux</span>
+      </div>
+    </div>
+
+    <div class="doc-links reveal">
+      <a class="spot doc-link" href="https://github.com/aronbalog/Vox#readme"><strong>README</strong><span>Every feature, from resources to custom routing</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      <a class="spot doc-link" href="https://github.com/aronbalog/Vox/blob/master/MIGRATION.md"><strong>Migration guide</strong><span>Upgrading from Vox 1.x</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      <a class="spot doc-link" href="https://github.com/aronbalog/Vox/blob/master/CHANGELOG.md"><strong>Changelog</strong><span>What’s new in 2.0</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      <a class="spot doc-link" href="https://jsonapi.org/format/"><strong>JSON:API specification</strong><span>The latest version, 1.1, at jsonapi.org</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+    </div>
+  </div>
+
+  <div class="spot closing reveal">
+    <h2>Stop bikeshedding. <span class="gradient-text">Start shipping.</span></h2>
+    <p>JSON:API gives your team one way to shape its JSON, and Vox gives your app typed resources for it.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/aronbalog/Vox">View on GitHub</a>
+      <a class="btn btn-ghost" href="https://jsonapi.org/">Visit jsonapi.org</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <p>Vox is available under the MIT license. The descriptions and examples of JSON:API are adapted from <a href="https://jsonapi.org">jsonapi.org</a>, which is licensed under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>.</p>
+  <nav aria-label="Footer">
+    <a href="https://github.com/aronbalog/Vox">GitHub</a>
+    <a href="https://cocoapods.org/pods/Vox">CocoaPods</a>
+    <a href="https://jsonapi.org/format/">Specification</a>
+    <a href="https://jsonapi.org/examples/">Examples</a>
+  </nav>
+</footer>
+</body>
+</html>
