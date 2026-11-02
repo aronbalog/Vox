@@ -24,7 +24,7 @@ A major release, which requires Swift 6. The [migration guide](MIGRATION.md) des
 - `Resource.register()` and the public member subscript, for platforms without the Objective-C runtime.
 - The `meta` of resources is serialized.
 - `ErrorObject.Source.header`.
-- Continuous integration with GitHub Actions on macOS, Linux, iOS, tvOS and watchOS, and CocoaPods linting.
+- Continuous integration with GitHub Actions on macOS, Linux, iOS, tvOS and watchOS, CocoaPods linting, and a coverage check on Linux that fails unless the tests cover all of the library code.
 
 ### Changed
 

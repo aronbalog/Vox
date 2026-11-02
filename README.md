@@ -597,6 +597,8 @@ The tests use Swift Testing, and the performance tests use XCTest. Xcode runs th
 xcodebuild test -scheme Vox-Package -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
+The tests cover all of the library code that's built on Linux, and the Linux job of the [CI workflow](.github/workflows/ci.yml) fails when a change leaves some of it uncovered. Its steps show how to measure the coverage.
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you'd like to change, and please update the tests as appropriate.

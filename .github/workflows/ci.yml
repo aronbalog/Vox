@@ -38,10 +38,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Toolchain
         run: swift --version
+      # The tests run in parallel, and non-atomic counters lose updates, so code that runs once
+      # can look uncovered.
       - name: Build
-        run: swift build --build-tests
+        run: swift build --build-tests --enable-code-coverage -Xswiftc -Xllvm -Xswiftc -instrprof-atomic-counter-update-all
       - name: Test
-        run: swift test --skip-build
+        run: swift test --skip-build --enable-code-coverage
+      - name: Coverage
+        run: |
+          bin=$(swift build --show-bin-path)
+          report=$(llvm-cov report "$bin/VoxPackageTests.xctest" \
+            -instr-profile="$bin/codecov/default.profdata" \
+            -ignore-filename-regex='/(Tests|\.build)/')
+          echo "$report"
+          echo "$report" | awk '
+            $1 == "TOTAL" { found = 1; missed = $3 + $6 + $9 }
+            END { if (!found || missed) { print "::error::Some library code is not covered by the tests."; exit 1 } }'
 
   ios:
     name: iOS Simulator (xcodebuild test)
