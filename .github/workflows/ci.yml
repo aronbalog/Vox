@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-  pull_request:
+    branches: [master]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -88,9 +88,8 @@ jobs:
   coverage-badge:
     name: Coverage badge
     needs: linux
-    # Publishes badges/coverage.svg to the gh-pages branch, next to the project site, for pushes to
-    # any branch or tag. The linux job fails when any library code isn't covered.
-    if: github.event_name == 'push'
+    # Publishes badges/coverage.svg to the gh-pages branch, next to the project site. The linux job
+    # fails when any library code isn't covered.
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -121,8 +120,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          # Runs for other branches and tags can push in between, so every attempt starts from the
-          # latest gh-pages.
+          # Another run can push in between, so every attempt starts from the latest gh-pages.
           for attempt in 1 2 3 4 5; do
             git fetch origin gh-pages
             git reset --hard origin/gh-pages
