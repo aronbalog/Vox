@@ -41,6 +41,17 @@ open class Resource: NSObject {
         return [:]
     }
     
+    /// Registers the class for its `resourceType`, so documents decode resources of that type as
+    /// instances of the class. The class must override `resourceType`.
+    ///
+    /// On Apple platforms, classes are found in the Objective-C runtime, and registering them is
+    /// optional. On other platforms, the resource classes of data sources and deserializers are
+    /// registered when they're used, and the classes of related and included resources must be
+    /// registered before documents containing them are decoded.
+    public static func register() {
+        ResourceRuntime.register(self)
+    }
+    
     /// Guarded by `ResourceGraph.lock`.
     private var storage: (object: ResourceObject, graph: ResourceGraph)?
     
