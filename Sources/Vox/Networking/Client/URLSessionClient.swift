@@ -63,13 +63,9 @@ public struct URLSessionClient: Client {
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
                 task.start(session.dataTask(with: request) { data, response, error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else if let response = response as? HTTPURLResponse {
-                        continuation.resume(returning: ClientResponse(statusCode: response.statusCode, headers: URLSessionClient.headers(of: response), data: data ?? Data()))
-                    } else {
-                        continuation.resume(throwing: URLError(.badServerResponse))
-                    }
+                    continuation.resume(with: Result {
+                        try URLSessionClient.clientResponse(data: data, response: response, error: error)
+                    })
                 })
             }
         } onCancel: {
@@ -77,14 +73,23 @@ public struct URLSessionClient: Client {
         }
     }
     
-    private static func headers(of response: HTTPURLResponse) -> [String: String] {
-        var headers: [String: String] = [:]
-        
-        for case let (name as String, value) in response.allHeaderFields {
-            headers[name] = value as? String ?? String(describing: value)
+    /// The response for the arguments of a data task's completion handler.
+    static func clientResponse(data: Data?, response: URLResponse?, error: (any Error)?) throws -> ClientResponse {
+        if let error {
+            throw error
         }
         
-        return headers
+        guard let response = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        
+        var headers: [String: String] = [:]
+        
+        for case let (name as String, value as String) in response.allHeaderFields {
+            headers[name] = value
+        }
+        
+        return ClientResponse(statusCode: response.statusCode, headers: headers, data: data ?? Data())
     }
 }
 

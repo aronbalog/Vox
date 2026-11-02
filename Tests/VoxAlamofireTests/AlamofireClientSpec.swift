@@ -5,10 +5,11 @@ import FoundationNetworking
 #endif
 import Testing
 @testable import Vox
-import VoxAlamofire
+@testable import VoxAlamofire
 
 /// Answers the requests of `StubURLProtocol.session` with `handler` and records them with their
-/// bodies, which URL loading moves into a stream.
+/// bodies, which URL loading moves into a stream. Requests the handler returns `nil` for are
+/// never answered.
 fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     struct Response {
         var statusCode = 200
@@ -17,13 +18,13 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     }
     
     private struct State {
-        var handler: (URLRequest) throws -> Response = { _ in Response() }
+        var handler: (URLRequest) throws -> Response? = { _ in Response() }
         var requests: [(request: URLRequest, body: Data?)] = []
     }
     
     private static let state = Locked(State())
     
-    static var handler: (URLRequest) throws -> Response {
+    static var handler: (URLRequest) throws -> Response? {
         get { state.withLock { $0.handler } }
         set { state.withLock { $0.handler = newValue } }
     }
@@ -53,7 +54,10 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         StubURLProtocol.state.withLock { $0.requests.append((request, body)) }
         
         do {
-            let stub = try StubURLProtocol.handler(request)
+            guard let stub = try StubURLProtocol.handler(request) else {
+                return
+            }
+            
             let response = HTTPURLResponse(url: request.url!, statusCode: stub.statusCode, httpVersion: "HTTP/1.1", headerFields: stub.headers)!
             
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
@@ -166,6 +170,64 @@ struct AlamofireClientSpec {
             Issue.record("Expected AFError")
         } catch let error as AFError {
             #expect((error.underlyingError as? URLError)?.code == .timedOut)
+        } catch {
+            Issue.record("Unexpected error \(error)")
+        }
+    }
+    
+    @Test("links that aren't URLs throw URLError.badURL")
+    func badURL() async {
+        do {
+            _ = try await AlamofireClient(baseURL: baseURL, session: StubURLProtocol.session).execute(ClientRequest(method: "GET", target: .link("https://example.com:port/widgets")))
+            Issue.record("Expected URLError")
+        } catch let error as URLError {
+            #expect(error.code == .badURL)
+        } catch {
+            Issue.record("Unexpected error \(error)")
+        }
+        
+        #expect(StubURLProtocol.requests.isEmpty)
+    }
+    
+    @Test("cancelling the task that awaits a request cancels the request")
+    func cancellation() async {
+        StubURLProtocol.handler = { _ in nil }
+        let client = AlamofireClient(baseURL: baseURL, session: StubURLProtocol.session)
+        
+        let task = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            
+            return try await client.execute(ClientRequest(method: "GET", target: .path("widgets")))
+        }
+        
+        do {
+            _ = try await task.value
+            Issue.record("Expected AFError")
+        } catch let error as AFError {
+            #expect(error.isExplicitlyCancelledError)
+        } catch {
+            Issue.record("Unexpected error \(error)")
+        }
+    }
+    
+    @Test("responses without a body have empty data")
+    func missingBody() throws {
+        let response = HTTPURLResponse(url: baseURL, statusCode: 204, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": "application/vnd.api+json"])
+        
+        let clientResponse = try AlamofireClient.clientResponse(data: nil, response: response, error: nil)
+        
+        #expect(clientResponse.statusCode == 204)
+        #expect(clientResponse.headers == ["Content-Type": "application/vnd.api+json"])
+        #expect(clientResponse.data.isEmpty)
+    }
+    
+    @Test("requests without a response throw URLError.badServerResponse")
+    func missingResponse() {
+        do {
+            _ = try AlamofireClient.clientResponse(data: nil, response: nil, error: nil)
+            Issue.record("Expected URLError")
+        } catch let error as URLError {
+            #expect(error.code == .badServerResponse)
         } catch {
             Issue.record("Unexpected error \(error)")
         }

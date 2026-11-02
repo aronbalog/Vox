@@ -40,18 +40,27 @@ public struct AlamofireClient: Client {
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
                 dataRequest.response(queue: .global()) { response in
-                    if let error = response.error {
-                        continuation.resume(throwing: error)
-                    } else if let httpResponse = response.response {
-                        continuation.resume(returning: ClientResponse(statusCode: httpResponse.statusCode, headers: httpResponse.headers.dictionary, data: response.data ?? Data()))
-                    } else {
-                        continuation.resume(throwing: URLError(.badServerResponse))
-                    }
+                    continuation.resume(with: Result {
+                        try AlamofireClient.clientResponse(data: response.data, response: response.response, error: response.error)
+                    })
                 }
             }
         } onCancel: {
             dataRequest.cancel()
         }
+    }
+    
+    /// The response for the members of a data request's response.
+    static func clientResponse(data: Data?, response: HTTPURLResponse?, error: AFError?) throws -> ClientResponse {
+        if let error {
+            throw error
+        }
+        
+        guard let response else {
+            throw URLError(.badServerResponse)
+        }
+        
+        return ClientResponse(statusCode: response.statusCode, headers: response.headers.dictionary, data: data ?? Data())
     }
     
     /// The URL request for `request`, before interceptors change it.
