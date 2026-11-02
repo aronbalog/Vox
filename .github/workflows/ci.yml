@@ -13,8 +13,10 @@ defaults:
     shell: bash
 
 jobs:
-  macos:
-    name: macOS (swift test)
+  # One job for every Apple platform, because hosted macOS runners are scarce and each job waits
+  # for one. The iOS, tvOS and watchOS steps run even when the macOS build or tests fail.
+  apple:
+    name: Apple platforms
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +27,22 @@ jobs:
         run: command -v xcbeautify || brew install xcbeautify
       - name: Toolchain
         run: swift --version
-      - name: Build
+      - name: Build (macOS)
         run: swift build --build-tests 2>&1 | xcbeautify --renderer github-actions
-      - name: Test
+      - name: Test (macOS)
         run: swift test --skip-build 2>&1 | xcbeautify --renderer github-actions
+      - name: Test (iOS Simulator)
+        if: ${{ !cancelled() }}
+        run: |
+          device=$(xcrun simctl list devices available --json \
+            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          xcodebuild test -scheme Vox-Package -destination "id=$device" 2>&1 | xcbeautify --renderer github-actions
+      - name: Build (tvOS)
+        if: ${{ !cancelled() }}
+        run: xcodebuild build -scheme Vox-Package -destination "generic/platform=tvOS" 2>&1 | xcbeautify --renderer github-actions
+      - name: Build (watchOS)
+        if: ${{ !cancelled() }}
+        run: xcodebuild build -scheme Vox-Package -destination "generic/platform=watchOS" 2>&1 | xcbeautify --renderer github-actions
 
   linux:
     name: Linux (swift test)
@@ -124,39 +138,6 @@ jobs:
             sleep $((attempt * 5))
           done
           exit 1
-
-  ios:
-    name: iOS Simulator (xcodebuild test)
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-      - name: Install xcbeautify
-        run: command -v xcbeautify || brew install xcbeautify
-      - name: Test
-        run: |
-          device=$(xcrun simctl list devices available --json \
-            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
-          xcodebuild test -scheme Vox-Package -destination "id=$device" 2>&1 | xcbeautify --renderer github-actions
-
-  platforms:
-    name: ${{ matrix.platform }} (xcodebuild build)
-    runs-on: macos-15
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [tvOS, watchOS]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-      - name: Install xcbeautify
-        run: command -v xcbeautify || brew install xcbeautify
-      - name: Build
-        run: xcodebuild build -scheme Vox-Package -destination "generic/platform=${{ matrix.platform }}" 2>&1 | xcbeautify --renderer github-actions
 
   cocoapods:
     name: CocoaPods (pod lib lint)
