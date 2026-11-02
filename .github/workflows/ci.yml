@@ -74,18 +74,56 @@ jobs:
   coverage-badge:
     name: Coverage badge
     needs: linux
-    # Publishes badges/coverage.svg to the gh-pages branch, for pushes to the default branch only.
-    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    # Publishes badges/coverage.svg to the gh-pages branch, next to the project site, for pushes to
+    # any branch or tag. The linux job fails when any library code isn't covered.
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
       - uses: actions/download-artifact@v4
         with:
           name: coverage-summary
-          path: coverage
-      - uses: we-cli/coverage-badge-action@8a0b6ee05f6dd0f294089cbe7a848452a2b43eef
+          path: ${{ runner.temp }}/coverage
+      - name: Render
+        run: |
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP" badgen@3.3.2
+          # badgen names the gradient and the mask randomly, and fixed names leave the file
+          # unchanged while the coverage is.
+          node -e '
+            const { badgen } = require(process.env.RUNNER_TEMP + "/node_modules/badgen");
+            const total = require(process.env.RUNNER_TEMP + "/coverage/coverage-summary.json").total;
+            const pct = Math.min(...["lines", "statements", "functions", "branches"].map(key => total[key].pct));
+            let svg = badgen({ label: "coverage", status: pct + "%", color: pct >= 95 ? "green" : "orange" });
+            [...svg.matchAll(/ id="(\w+)"/g)].forEach(([, id], index) => {
+              svg = svg.replaceAll(`"${id}"`, `"badge-${index}"`).replaceAll(`#${id})`, `#badge-${index})`);
+            });
+            require("fs").writeFileSync(process.env.RUNNER_TEMP + "/coverage.svg", svg + "\n");
+          '
+      - name: Publish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Runs for other branches and tags can push in between, so every attempt starts from the
+          # latest gh-pages.
+          for attempt in 1 2 3 4 5; do
+            git fetch origin gh-pages
+            git reset --hard origin/gh-pages
+            mkdir -p badges
+            cp "$RUNNER_TEMP/coverage.svg" badges/coverage.svg
+            git add badges/coverage.svg
+            if git diff --cached --quiet; then
+              echo "The badge is up to date."
+              exit 0
+            fi
+            git commit -m 'Update badges [skip ci]'
+            git push origin HEAD:gh-pages && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1
 
   ios:
     name: iOS Simulator (xcodebuild test)
