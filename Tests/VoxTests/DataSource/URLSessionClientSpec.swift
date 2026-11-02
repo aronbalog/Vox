@@ -7,8 +7,7 @@ import Testing
 @testable import Vox
 
 /// Answers the requests of `StubURLProtocol.session` with `handler` and records them with their
-/// bodies, which URL loading moves into a stream. Requests the handler returns `nil` for are
-/// never answered.
+/// bodies, which URL loading moves into a stream.
 fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     struct Response {
         var statusCode = 200
@@ -17,13 +16,13 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     }
     
     private struct State {
-        var handler: (URLRequest) throws -> Response? = { _ in Response() }
+        var handler: (URLRequest) throws -> Response = { _ in Response() }
         var requests: [(request: URLRequest, body: Data?)] = []
     }
     
     private static let state = Locked(State())
     
-    static var handler: (URLRequest) throws -> Response? {
+    static var handler: (URLRequest) throws -> Response {
         get { state.withLock { $0.handler } }
         set { state.withLock { $0.handler = newValue } }
     }
@@ -53,10 +52,7 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         StubURLProtocol.state.withLock { $0.requests.append((request, body)) }
         
         do {
-            guard let stub = try StubURLProtocol.handler(request) else {
-                return
-            }
-            
+            let stub = try StubURLProtocol.handler(request)
             let response = HTTPURLResponse(url: request.url!, statusCode: stub.statusCode, httpVersion: "HTTP/1.1", headerFields: stub.headers)!
             
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
@@ -96,6 +92,30 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         
         return body
     }
+}
+
+/// Never answers the requests of `HangingURLProtocol.session`, so they only end when they're
+/// cancelled. URL loading can start a cancelled request after its test has finished, so these
+/// requests stay out of the requests `StubURLProtocol` records.
+fileprivate final class HangingURLProtocol: URLProtocol, @unchecked Sendable {
+    static var session: URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [HangingURLProtocol.self]
+        
+        return URLSession(configuration: configuration)
+    }
+    
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+    
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+    
+    override func startLoading() {}
+    
+    override func stopLoading() {}
 }
 
 fileprivate final class Gizmo: Resource, @unchecked Sendable {
@@ -175,8 +195,7 @@ struct URLSessionClientSpec {
     
     @Test("cancelling the task that awaits a request cancels the request")
     func cancellation() async {
-        StubURLProtocol.handler = { _ in nil }
-        let client = client()
+        let client = URLSessionClient(baseURL: baseURL, session: HangingURLProtocol.session)
         
         let task = Task {
             withUnsafeCurrentTask { $0?.cancel() }
