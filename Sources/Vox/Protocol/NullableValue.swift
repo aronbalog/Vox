@@ -4,30 +4,28 @@ import Foundation
 // property to `nil` leaves the member out instead.
 private let nullString = UUID().uuidString
 
-protocol NullableAware {
-    var isNull: Bool { get }
-}
-
-/// Whether `value` is one of the `null` placeholders, which are stored as JSON `null`.
+/// Whether `value` is one of the `null` placeholders of attributes, which are stored as JSON
+/// `null`.
 func isNullValue(_ value: Any) -> Bool {
-    if let value = value as? any NullableAware {
-        return value.isNull
-    } else if let value = value as? String {
-        return value.isNull
-    } else if let value = value as? [String] {
-        return value.isNull
-    } else if let value = value as? [String: Any] {
-        return value.isNull
-    } else if let value = value as? [[String: Any]] {
-        return value.isNull
-    } else if let value = value as? [NSNumber] {
-        return value.isNull
+    switch value {
+    case let value as String:
+        value.isNull
+    case let value as NSNumber:
+        value.isNull
+    case let value as [String]:
+        value.isNull
+    case let value as [NSNumber]:
+        value.isNull
+    case let value as [String: Any]:
+        value.isNull
+    case let value as [[String: Any]]:
+        value.isNull
+    default:
+        false
     }
-    
-    return false
 }
 
-extension String: NullableAware {
+extension String {
     var isNull: Bool {
         self == nullString
     }
@@ -67,11 +65,11 @@ extension [[String: Any]] {
     }
     
     var isNull: Bool {
-        self.first?.isNull ?? false
+        self.first?.isNull == true
     }
 }
 
-extension NSNumber: NullableAware {
+extension NSNumber {
     /// Every NaN counts as the placeholder, as NaN can't be represented in JSON.
     var isNull: Bool {
         doubleValue.isNaN
@@ -90,11 +88,11 @@ extension [NSNumber] {
     }
     
     var isNull: Bool {
-        self.first?.isNull ?? false
+        self.first?.isNull == true
     }
 }
 
-extension Resource: NullableAware {
+extension Resource {
     var isNull: Bool {
         self.id == .null
     }

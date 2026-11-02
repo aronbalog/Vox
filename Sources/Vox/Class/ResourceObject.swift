@@ -172,21 +172,11 @@ enum ResourceReference {
     case object(ObjectIdentifier)
     
     init?(json: [String: Any]) {
-        guard let type = json["type"] as? String else {
+        guard let key = ResourceKey(json: json) else {
             return nil
         }
         
-        let identifier: ResourceKey.Identifier
-        
-        if let id = resourceIdentifier(json["id"]) {
-            identifier = .id(id)
-        } else if let lid = json["lid"] as? String {
-            identifier = .lid(lid)
-        } else {
-            return nil
-        }
-        
-        self = .identifier(ResourceKey(type: type, identifier: identifier), meta: json["meta"] as? [String: Any])
+        self = .identifier(key, meta: json["meta"] as? [String: Any])
     }
 }
 

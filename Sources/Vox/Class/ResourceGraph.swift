@@ -159,9 +159,16 @@ final class ResourceGraph {
     }
     
     private func absorb(_ graph: ResourceGraph) {
-        objects.merge(graph.objects) { object, _ in object }
+        // An object belongs to one graph, so the identifiers of the two graphs don't overlap.
+        for (identifier, object) in graph.objects {
+            objects[identifier] = object
+        }
+        
+        for (identifier, instance) in graph.instances {
+            instances[identifier] = instance
+        }
+        
         objectsByKey.merge(graph.objectsByKey) { object, _ in object }
-        instances.merge(graph.instances) { instance, _ in instance }
         
         finishAbsorbing(graph)
     }
@@ -196,7 +203,9 @@ final class ResourceGraph {
             for relationship in object.relationships.values {
                 switch relationship.data {
                 case .toOne(let reference?)?:
-                    pending.append(contentsOf: self.object(for: reference).map { [$0] } ?? [])
+                    if let relatedObject = self.object(for: reference) {
+                        pending.append(relatedObject)
+                    }
                 case .toMany(let references)?:
                     pending.append(contentsOf: references.compactMap(self.object(for:)))
                 default:

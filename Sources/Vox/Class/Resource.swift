@@ -138,7 +138,7 @@ open class Resource: NSObject {
         return ResourceGraph.lock.withLock {
             let (object, graph) = storageLocked()
             
-            return (try? relationshipsJSON(of: object, in: graph, skippingInvalid: true)) ?? [:]
+            return relationshipsJSON(of: object, in: graph) { _ in }
         }
     }
     
@@ -235,28 +235,6 @@ open class Resource: NSObject {
     func bind(to object: ResourceObject, in graph: ResourceGraph) {
         storage = (object, graph)
         graph.register(self, for: object)
-    }
-    
-    /// The value of the JSON-backed property `name`.
-    func value(forProperty name: String) -> Any? {
-        guard let property = classMetadata.properties[name] else {
-            return nil
-        }
-        
-        return ResourceGraph.lock.withLock {
-            valueLocked(for: property)
-        }
-    }
-    
-    /// Sets the value of the JSON-backed property `name`.
-    func setValue(_ value: Any?, forProperty name: String) {
-        guard let property = classMetadata.properties[name] else {
-            return
-        }
-        
-        ResourceGraph.lock.withLock {
-            setValueLocked(value, for: property)
-        }
     }
     
     /// The value of the property `name`, or of the JSON member `name` when no property has that
@@ -450,7 +428,9 @@ open class Resource: NSObject {
                 json["attributes"] = object.attributes
             }
             
-            let relationships = try relationshipsJSON(of: object, in: graph, skippingInvalid: false)
+            let relationships = try relationshipsJSON(of: object, in: graph) { error throws(JSONAPIError) in
+                throw error
+            }
             
             if !relationships.isEmpty {
                 json["relationships"] = relationships
@@ -469,8 +449,9 @@ open class Resource: NSObject {
     }
     
     /// The relationships with resource linkage as JSON. Relationships with only links or meta are
-    /// left out.
-    private func relationshipsJSON(of object: ResourceObject, in graph: ResourceGraph, skippingInvalid: Bool) throws(JSONAPIError) -> [String: Any] {
+    /// left out, and so are relationships whose linkage can't be represented, unless
+    /// `handleInvalidLinkage` throws their error.
+    private func relationshipsJSON<E: Error>(of object: ResourceObject, in graph: ResourceGraph, handleInvalidLinkage: (JSONAPIError) throws(E) -> Void) throws(E) -> [String: Any] {
         var json: [String: Any] = [:]
         
         for (name, relationship) in object.relationships {
@@ -481,9 +462,7 @@ open class Resource: NSObject {
             do throws(JSONAPIError) {
                 json[name] = ["data": try linkageJSON(linkage, ofRelationship: name, in: graph)]
             } catch {
-                if !skippingInvalid {
-                    throw error
-                }
+                try handleInvalidLinkage(error)
             }
         }
         
@@ -519,9 +498,8 @@ open class Resource: NSObject {
             
             return json
         case .object:
-            guard let object = graph.object(for: reference) else {
-                preconditionFailure("A relationship refers to a resource object outside of its graph.")
-            }
+            // Assigning a resource merges the graphs of both resources, so the object is in `graph`.
+            let object = graph.object(for: reference)!
             
             if let id = object.id {
                 return ["type": object.type, "id": id]
@@ -536,6 +514,28 @@ open class Resource: NSObject {
 
 #if canImport(ObjectiveC)
 extension Resource {
+    /// The value of the JSON-backed property `name`, for its replaced getter.
+    func value(forProperty name: String) -> Any? {
+        guard let property = classMetadata.properties[name] else {
+            return nil
+        }
+        
+        return ResourceGraph.lock.withLock {
+            valueLocked(for: property)
+        }
+    }
+    
+    /// Sets the value of the JSON-backed property `name`, for its replaced setter.
+    func setValue(_ value: Any?, forProperty name: String) {
+        guard let property = classMetadata.properties[name] else {
+            return
+        }
+        
+        ResourceGraph.lock.withLock {
+            setValueLocked(value, for: property)
+        }
+    }
+    
     open override func value(forKey key: String) -> Any? {
         if classMetadata.properties[key] == nil, responds(to: NSSelectorFromString(key)) {
             return super.value(forKey: key)

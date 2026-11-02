@@ -6,30 +6,26 @@ import Foundation
 /// JSON as well.
 public final class Document<DataType>: @unchecked Sendable {
     /// The primary data: a resource or an array of resources.
-    public internal(set) var data: DataType? {
-        get { ResourceGraph.lock.withLock { _data } }
-        set { ResourceGraph.lock.withLock { _data = newValue } }
+    public var data: DataType? {
+        ResourceGraph.lock.withLock { _data }
     }
     
     /// The meta of the document, as JSON. After `appendNext()`, the meta of the appended page.
-    public internal(set) var meta: [String: Any]? {
-        get { ResourceGraph.lock.withLock { _meta } }
-        set { ResourceGraph.lock.withLock { _meta = newValue } }
+    public var meta: [String: Any]? {
+        ResourceGraph.lock.withLock { _meta }
     }
     
     /// The `jsonapi` member, which describes the server's implementation, as JSON.
     public let jsonapi: [String: Any]?
     
     /// The links of the document. After `appendNext()`, the links of the appended page.
-    public internal(set) var links: Links? {
-        get { ResourceGraph.lock.withLock { _links } }
-        set { ResourceGraph.lock.withLock { _links = newValue } }
+    public var links: Links? {
+        ResourceGraph.lock.withLock { _links }
     }
     
     /// The included resource objects as JSON.
-    public internal(set) var included: [[String: Any]]? {
-        get { ResourceGraph.lock.withLock { _included } }
-        set { ResourceGraph.lock.withLock { _included = newValue } }
+    public var included: [[String: Any]]? {
+        ResourceGraph.lock.withLock { _included }
     }
     
     /// The graph of the document's resources. Resources keep it alive on their own, so they work
