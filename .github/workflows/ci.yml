@@ -102,9 +102,9 @@ jobs:
 
   coverage-badge:
     name: Coverage badge
-    needs: linux
-    # Publishes badges/coverage.svg to the gh-pages branch, next to the project site. The linux job
-    # fails when any library code isn't covered.
+    needs: [apple, linux, cocoapods]
+    # Publishes badges/coverage.svg to the gh-pages branch, next to the project site, once every
+    # other job has passed. The linux job fails when any library code isn't covered.
     runs-on: ubuntu-latest
     permissions:
       contents: write
