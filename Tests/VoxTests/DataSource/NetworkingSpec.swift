@@ -96,12 +96,14 @@ struct NetworkingSpec {
         }
     }
     
-    @Test("updated resources must have an id")
-    func updateWithoutID() async {
+    @Test("updated resources must have an id", arguments: [nil, "local"])
+    func updateWithoutID(lid: String?) async {
         let client = RecordingClient()
+        let gadget = gadget(id: nil)
+        gadget.lid = lid
         
         do {
-            _ = try await dataSource(client).update(gadget(id: nil)).result()
+            _ = try await dataSource(client).update(gadget).result()
             Issue.record("Expected JSONAPIError.serialization")
         } catch JSONAPIError.serialization {
             #expect(client.requests.isEmpty)

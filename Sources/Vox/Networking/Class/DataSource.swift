@@ -62,12 +62,19 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
         })
     }
     
-    /// A `PATCH` request with the resource, which must have an `id`. The document is `nil` when
-    /// the server responds without content.
+    /// A `PATCH` request with the resource, which must have an `id`: a `lid` doesn't identify a
+    /// resource on the server. The document is `nil` when the server responds without content.
     public func update(_ resource: ResourceType) -> Request<ResourceType, Document<ResourceType>?> {
-        let path = self.path { router in router.update(resource: resource) }
+        let target: Result<ClientRequest.Target, Error>
         
-        return Request(client: client, method: "PATCH", target: .path(replacingPlaceholders(in: path, id: resource.id, type: resource.type)), body: { try resource.documentData(requiringID: true) }) { response, client in
+        if let id = resource.id {
+            let path = self.path { router in router.update(resource: resource) }
+            target = .success(.path(replacingPlaceholders(in: path, id: id, type: resource.type)))
+        } else {
+            target = .failure(JSONAPIError.serialization(reason: "A resource of type \"\(resource.type)\" has no id, so it can't be updated."))
+        }
+        
+        return Request(client: client, method: "PATCH", target: target, body: { try resource.documentData(requiringID: true) }) { response, client in
             try ResponseDecoding.optionalResource(response, client: client)
         }
     }
