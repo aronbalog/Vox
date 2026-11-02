@@ -41,6 +41,7 @@ Upgrading from 1.x? Read the [migration guide](MIGRATION.md). Changes are listed
 - Relationship endpoints: fetching related resources and linkage, and replacing, adding and removing members.
 - A `URLSession` client, or a client of your own.
 - The Swift 6 language mode with complete data-race checking.
+- A [project site](https://aronbalog.github.io/Vox/) with an interactive document explorer and query builder.
 
 ## Requirements
 
