@@ -545,7 +545,16 @@ extension Resource {
 #endif
 
 extension Resource {
-    subscript(key: String) -> Any? {
+    /// The value of the property `key`, or of the JSON member `key` when no property has that
+    /// name: an attribute value, a related resource or an array of related resources.
+    ///
+    /// Setting a value works like setting the property: `nil` leaves the member out, and the
+    /// `null` placeholders send JSON `null`. `id` and `lid` can be set, and `type` is read-only.
+    ///
+    /// On platforms without the Objective-C runtime, the stored properties of resource classes
+    /// aren't backed by the JSON. They declare the attributes and relationships, which are read
+    /// and written with the subscript.
+    public subscript(key: String) -> Any? {
         get {
             return value(forMember: key)
         }
