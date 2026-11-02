@@ -8,7 +8,7 @@ extension Int {
     }
     
     var isInvokedOnce: Bool {
-        return self == 1
+        self == 1
     }
 }
 
@@ -35,12 +35,12 @@ func isOnMainQueue() -> Bool {
 final class RecordingClient: Client {
     private struct State {
         var requests: [ClientRequest] = []
-        var responses: [Result<ClientResponse, Error>]
+        var responses: [Result<ClientResponse, any Error>]
     }
     
     private let state: Locked<State>
     
-    init(responses: [Result<ClientResponse, Error>]) {
+    init(responses: [Result<ClientResponse, any Error>]) {
         state = Locked(State(responses: responses))
     }
     
@@ -56,12 +56,12 @@ final class RecordingClient: Client {
         self.init(responses: jsonFileNames.map { .success(ClientResponse(statusCode: statusCode, data: Data(jsonFileName: $0))) })
     }
     
-    convenience init(error: Error) {
+    convenience init(error: any Error) {
         self.init(responses: [.failure(error)])
     }
     
     var requests: [ClientRequest] {
-        return state.withLock { $0.requests }
+        state.withLock { $0.requests }
     }
     
     func execute(_ request: ClientRequest) async throws -> ClientResponse {

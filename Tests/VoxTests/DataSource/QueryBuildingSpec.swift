@@ -5,7 +5,7 @@ import Testing
 
 fileprivate final class Song: Resource {
     override class var resourceType: String {
-        return "query-songs"
+        "query-songs"
     }
 }
 
@@ -14,7 +14,7 @@ struct QueryBuildingSpec {
     private let dataSource = DataSource<Song>(strategy: .path("songs"), client: RecordingClient())
     
     private func queryItems(of request: (DataSource<Song>) -> FetchRequest<Song, Document<[Song]>>) -> [URLQueryItem] {
-        return request(dataSource).makeQueryItems()
+        request(dataSource).makeQueryItems()
     }
     
     @Test("parameters are sent once, in a fixed order")

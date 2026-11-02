@@ -14,7 +14,7 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
         /// Requests for the collection leave `<id>` out, together with the slash before it.
         case path(_: String)
         /// A router that provides the path of each request.
-        case router(_: Router)
+        case router(_: any Router)
     }
     
     /// The success callback of `fetch(id:)`.
@@ -73,7 +73,7 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
     /// A `PATCH` request with the resource, which must have an `id`: a `lid` doesn't identify a
     /// resource on the server. The document is `nil` when the server responds without content.
     public func update(_ resource: ResourceType) -> Request<ResourceType, Document<ResourceType>?> {
-        let target: Result<ClientRequest.Target, Error>
+        let target: Result<ClientRequest.Target, any Error>
         
         if let id = resource.id {
             let path = self.path { router in router.update(resource: resource) }
@@ -151,7 +151,7 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
     /// `resource`.
     public func updateRelationship(_ relationship: String, of resource: ResourceType, to related: Resource?) -> Request<ResourceType, Void> {
         return relationshipRequest("PATCH", relationship, of: resource) {
-            guard let related = related else {
+            guard let related else {
                 return NSNull()
             }
             
@@ -205,11 +205,11 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
         }) { _, _ in }
     }
     
-    private func target(of endpoint: RelationshipEndpoint, _ relationship: String, of resource: ResourceType) -> Result<ClientRequest.Target, Error> {
+    private func target(of endpoint: RelationshipEndpoint, _ relationship: String, of resource: ResourceType) -> Result<ClientRequest.Target, any Error> {
         let links = resource.relationship(named: relationship)?.links
         let link = endpoint == .relationship ? links?.selfLink : links?.related
         
-        if let link = link {
+        if let link {
             return .success(.link(link.href))
         }
         
@@ -239,7 +239,7 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
         }
     }
     
-    private func path(fromRouter route: (Router) -> String) -> String {
+    private func path(fromRouter route: (any Router) -> String) -> String {
         switch strategy {
         case .path(let path):
             return path
@@ -253,7 +253,7 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
     private func replacingPlaceholders(in path: String, id: String?, type: String) -> String {
         let path = path.replacingOccurrences(of: "<type>", with: type)
         
-        if let id = id {
+        if let id {
             return path.replacingOccurrences(of: "<id>", with: id)
         }
         

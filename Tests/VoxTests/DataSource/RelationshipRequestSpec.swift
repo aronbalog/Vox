@@ -5,11 +5,11 @@ import Testing
 
 fileprivate final class Post: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "relationship-posts"
+        "relationship-posts"
     }
     
     override class var codingKeys: [String: String] {
-        return ["coAuthors": "co-authors"]
+        ["coAuthors": "co-authors"]
     }
     
     var author: Person?
@@ -19,7 +19,7 @@ fileprivate final class Post: Resource, @unchecked Sendable {
 
 fileprivate final class Person: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "relationship-people"
+        "relationship-people"
     }
     
     var name: String?
@@ -27,13 +27,13 @@ fileprivate final class Person: Resource, @unchecked Sendable {
 
 fileprivate final class Tag: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "relationship-tags"
+        "relationship-tags"
     }
 }
 
 fileprivate struct ResourceRouter: Router {
     func fetch(id: String, type: Resource.Type) -> String {
-        return "routed/\(type.resourceType)/\(id)"
+        "routed/\(type.resourceType)/\(id)"
     }
     
     func fetch(type: Resource.Type) -> String {
@@ -85,7 +85,7 @@ struct RelationshipRequestSpec {
     }
     
     private func linkedPost() throws -> Post {
-        return try #require(try Deserializer.Single<Post>().deserialize(data: Data(linkedPostJSON.utf8)).data)
+        try #require(try Deserializer.Single<Post>().deserialize(data: Data(linkedPostJSON.utf8)).data)
     }
     
     private func post(id: String? = "1") -> Post {

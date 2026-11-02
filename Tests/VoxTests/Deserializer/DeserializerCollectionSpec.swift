@@ -7,7 +7,7 @@ import Testing
 
 fileprivate class Article2: Resource {
     override class var resourceType: String {
-        return "articles2"
+        "articles2"
     }
     
     override class var codingKeys: [String: String] {
@@ -28,7 +28,7 @@ fileprivate class Article2: Resource {
 
 fileprivate class Person2: Resource {
     override class var resourceType: String {
-        return "persons2"
+        "persons2"
     }
     
     @objc dynamic var name: String?

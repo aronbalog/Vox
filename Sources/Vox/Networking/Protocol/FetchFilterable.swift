@@ -4,7 +4,7 @@ import Foundation
 public protocol FetchFilterable {
     associatedtype FetchConfigurableType
     
-    var filter: FilterStrategy? { get }
+    var filter: (any FilterStrategy)? { get }
     
-    func filter(_ filter: FilterStrategy) -> FetchConfigurableType
+    func filter(_ filter: any FilterStrategy) -> FetchConfigurableType
 }

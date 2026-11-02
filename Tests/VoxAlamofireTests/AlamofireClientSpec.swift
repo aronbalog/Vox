@@ -41,11 +41,11 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     }
     
     override class func canInit(with request: URLRequest) -> Bool {
-        return true
+        true
     }
     
     override class func canonicalRequest(for request: URLRequest) -> URLRequest {
-        return request
+        request
     }
     
     override func startLoading() {
@@ -97,7 +97,7 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
 
 /// Adds an `Authorization` header to every request.
 fileprivate struct Authenticator: RequestInterceptor {
-    func adapt(_ urlRequest: URLRequest, for session: Session, completion: @escaping (Result<URLRequest, Error>) -> Void) {
+    func adapt(_ urlRequest: URLRequest, for session: Session, completion: @escaping (Result<URLRequest, any Error>) -> Void) {
         var urlRequest = urlRequest
         urlRequest.setValue("Bearer token", forHTTPHeaderField: "Authorization")
         
@@ -107,7 +107,7 @@ fileprivate struct Authenticator: RequestInterceptor {
 
 fileprivate final class Widget: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "alamofire-widgets"
+        "alamofire-widgets"
     }
 }
 

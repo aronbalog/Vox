@@ -7,7 +7,7 @@ import Testing
 
 fileprivate class Player: Resource {
     override class var resourceType: String {
-        return "Players"
+        "Players"
     }
     
     @objc dynamic var items: [Resource]?
@@ -16,7 +16,7 @@ fileprivate class Player: Resource {
 
 fileprivate class Weapon: Resource {
     override class var resourceType: String {
-        return "Weapons"
+        "Weapons"
     }
     
     @objc dynamic var hint: String?
@@ -25,7 +25,7 @@ fileprivate class Weapon: Resource {
 
 fileprivate class Shield: Resource {
     override class var resourceType: String {
-        return "Shields"
+        "Shields"
     }
     
     @objc dynamic var name: String?

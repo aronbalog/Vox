@@ -5,7 +5,7 @@ import Testing
 
 fileprivate final class Track: Resource {
     override class var resourceType: String {
-        return "serialization-tracks"
+        "serialization-tracks"
     }
     
     var title: String?
@@ -18,14 +18,14 @@ fileprivate final class Track: Resource {
 
 fileprivate final class Artist: Resource {
     override class var resourceType: String {
-        return "serialization-artists"
+        "serialization-artists"
     }
 }
 
 @Suite("Serialization")
 struct SerializationSpec {
     private func data(of resource: Resource) throws -> [String: Any] {
-        return try #require(try resource.documentDictionary()["data"] as? [String: Any])
+        try #require(try resource.documentDictionary()["data"] as? [String: Any])
     }
     
     private func expectSerializationError(_ reasonFragment: String, sourceLocation: SourceLocation = #_sourceLocation, _ body: () throws -> Void) {

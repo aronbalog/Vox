@@ -31,10 +31,10 @@ public protocol Router: Sendable {
 
 extension Router {
     public func relationship(_ name: String, of resource: Resource) -> String {
-        return fetch(id: resource.id ?? "", type: type(of: resource)) + "/relationships/" + name
+        fetch(id: resource.id ?? "", type: type(of: resource)) + "/relationships/" + name
     }
     
     public func related(_ name: String, of resource: Resource) -> String {
-        return fetch(id: resource.id ?? "", type: type(of: resource)) + "/" + name
+        fetch(id: resource.id ?? "", type: type(of: resource)) + "/" + name
     }
 }

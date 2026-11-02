@@ -122,7 +122,7 @@ enum JSONAPIDecoder {
     /// The error objects of a document, or `nil` when `data` isn't a JSON:API document with
     /// errors.
     static func apiError(in data: Data) -> JSONAPIError? {
-        return (try? topLevelObject(of: data)).flatMap(apiError(in:))
+        (try? topLevelObject(of: data)).flatMap(apiError(in:))
     }
     
     private static func apiError(in json: [String: Any]) -> JSONAPIError? {

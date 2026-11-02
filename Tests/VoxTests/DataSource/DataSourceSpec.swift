@@ -80,19 +80,19 @@ fileprivate final class MockRouter: Router, @unchecked Sendable {
 
 fileprivate struct MockFilterStrategy: FilterStrategy {
     func filterURLQueryItems() -> [URLQueryItem] {
-        return [filterQueryItem]
+        [filterQueryItem]
     }
 }
 
 fileprivate struct MockPaginationStrategy: PaginationStrategy {
     func paginationURLQueryItems() -> [URLQueryItem] {
-        return [paginationQueryItem]
+        [paginationQueryItem]
     }
 }
 
 fileprivate final class MockResource: Resource {
     override class var resourceType: String {
-        return "mock-resource"
+        "mock-resource"
     }
 }
 

@@ -5,11 +5,11 @@ import Vox
 
 fileprivate final class Album: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "subscript-albums"
+        "subscript-albums"
     }
     
     override class var codingKeys: [String: String] {
-        return ["releaseYear": "release-year"]
+        ["releaseYear": "release-year"]
     }
     
     var title: String?
@@ -19,7 +19,7 @@ fileprivate final class Album: Resource, @unchecked Sendable {
 
 fileprivate final class Band: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "subscript-bands"
+        "subscript-bands"
     }
 }
 

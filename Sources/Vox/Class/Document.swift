@@ -7,13 +7,13 @@ import Foundation
 public final class Document<DataType>: @unchecked Sendable {
     /// The primary data: a resource or an array of resources.
     public internal(set) var data: DataType? {
-        get { return ResourceGraph.lock.withLock { _data } }
+        get { ResourceGraph.lock.withLock { _data } }
         set { ResourceGraph.lock.withLock { _data = newValue } }
     }
     
     /// The meta of the document, as JSON. After `appendNext()`, the meta of the appended page.
     public internal(set) var meta: [String: Any]? {
-        get { return ResourceGraph.lock.withLock { _meta } }
+        get { ResourceGraph.lock.withLock { _meta } }
         set { ResourceGraph.lock.withLock { _meta = newValue } }
     }
     
@@ -22,13 +22,13 @@ public final class Document<DataType>: @unchecked Sendable {
     
     /// The links of the document. After `appendNext()`, the links of the appended page.
     public internal(set) var links: Links? {
-        get { return ResourceGraph.lock.withLock { _links } }
+        get { ResourceGraph.lock.withLock { _links } }
         set { ResourceGraph.lock.withLock { _links = newValue } }
     }
     
     /// The included resource objects as JSON.
     public internal(set) var included: [[String: Any]]? {
-        get { return ResourceGraph.lock.withLock { _included } }
+        get { ResourceGraph.lock.withLock { _included } }
         set { ResourceGraph.lock.withLock { _included = newValue } }
     }
     
@@ -38,7 +38,7 @@ public final class Document<DataType>: @unchecked Sendable {
     
     /// The client that fetched the document, for fetching other pages.
     var client: (any Client)? {
-        get { return ResourceGraph.lock.withLock { _client } }
+        get { ResourceGraph.lock.withLock { _client } }
         set { ResourceGraph.lock.withLock { _client = newValue } }
     }
     

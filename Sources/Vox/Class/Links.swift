@@ -7,52 +7,52 @@ public struct Links: @unchecked Sendable {
     
     /// The link with the name, including names without an accessor.
     public subscript(name: String) -> Link? {
-        return all[name]
+        all[name]
     }
     
     /// The link that generated the document, or that identifies the resource or relationship.
     public var selfLink: Link? {
-        return all["self"]
+        all["self"]
     }
     
     /// The related resource link of a relationship.
     public var related: Link? {
-        return all["related"]
+        all["related"]
     }
     
     /// A link to a description document, such as an OpenAPI or JSON Schema document.
     public var describedby: Link? {
-        return all["describedby"]
+        all["describedby"]
     }
     
     /// The first page of a paginated collection.
     public var first: Link? {
-        return all["first"]
+        all["first"]
     }
     
     /// The previous page of a paginated collection.
     public var prev: Link? {
-        return all["prev"]
+        all["prev"]
     }
     
     /// The next page of a paginated collection.
     public var next: Link? {
-        return all["next"]
+        all["next"]
     }
     
     /// The last page of a paginated collection.
     public var last: Link? {
-        return all["last"]
+        all["last"]
     }
     
     /// A link to details about a particular occurrence of an error.
     public var about: Link? {
-        return all["about"]
+        all["about"]
     }
     
     /// A link identifying the type of an error.
     public var type: Link? {
-        return all["type"]
+        all["type"]
     }
     
     init?(json: Any?) {
@@ -83,7 +83,7 @@ public struct Link: @unchecked Sendable {
     
     /// A link to a description document of the link target.
     public var describedby: Link? {
-        return describedbyLink.first
+        describedbyLink.first
     }
     
     /// `href` as a URL, relative when `href` is relative.
@@ -91,7 +91,7 @@ public struct Link: @unchecked Sendable {
     /// Characters that aren't allowed in URLs, such as the brackets of unencoded `page[number]`
     /// query parameters, are percent-encoded.
     public var url: URL? {
-        return Link.url(from: href, relativeTo: nil)
+        Link.url(from: href, relativeTo: nil)
     }
     
     /// Characters left unencoded when encoding a link: the ones allowed in a query, which

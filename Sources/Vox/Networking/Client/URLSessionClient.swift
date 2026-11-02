@@ -31,7 +31,7 @@ public struct URLSessionClient: Client {
     public func execute(_ request: ClientRequest) async throws -> ClientResponse {
         var urlRequest = try makeURLRequest(for: request)
         
-        if let adapter = adapter {
+        if let adapter {
             urlRequest = try await adapter(urlRequest)
         }
         
@@ -63,7 +63,7 @@ public struct URLSessionClient: Client {
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
                 task.start(session.dataTask(with: request) { data, response, error in
-                    if let error = error {
+                    if let error {
                         continuation.resume(throwing: error)
                     } else if let response = response as? HTTPURLResponse {
                         continuation.resume(returning: ClientResponse(statusCode: response.statusCode, headers: URLSessionClient.headers(of: response), data: data ?? Data()))

@@ -5,7 +5,7 @@ import Testing
 
 fileprivate final class Gadget: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "networking-gadgets"
+        "networking-gadgets"
     }
 }
 
@@ -29,7 +29,7 @@ struct NetworkingSpec {
     }
     
     private func dataSource(_ client: RecordingClient, path: String = "gadgets/<id>") -> DataSource<Gadget> {
-        return DataSource(strategy: .path(path), client: client)
+        DataSource(strategy: .path(path), client: client)
     }
     
     @Test("requests accept JSON:API documents and declare the media type of their body")
@@ -228,7 +228,7 @@ struct NetworkingSpec {
         let client = RecordingClient(error: TransportError())
         let request = dataSource(client).delete(id: "1")
         
-        let error: Error? = await withCheckedContinuation { continuation in
+        let error: (any Error)? = await withCheckedContinuation { continuation in
             request.result({
                 continuation.resume(returning: nil)
             }, { error in
@@ -246,7 +246,7 @@ struct ClientRequestURLSpec {
     private let baseURL = URL(string: "https://example.com/api/")!
     
     private func url(_ target: ClientRequest.Target, queryItems: [URLQueryItem] = [], relativeTo baseURL: URL? = nil) -> String? {
-        return ClientRequest(method: "GET", target: target, queryItems: queryItems).url(relativeTo: baseURL ?? self.baseURL)?.absoluteString
+        ClientRequest(method: "GET", target: target, queryItems: queryItems).url(relativeTo: baseURL ?? self.baseURL)?.absoluteString
     }
     
     @Test("paths are appended to the base URL", arguments: [

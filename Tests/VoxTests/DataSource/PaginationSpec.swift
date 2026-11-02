@@ -7,7 +7,7 @@ import Testing
 
 fileprivate class Article3: Resource {
     override class var resourceType: String {
-        return "articles3"
+        "articles3"
     }
     
     override class var codingKeys: [String: String] {
@@ -28,7 +28,7 @@ fileprivate class Article3: Resource {
 
 fileprivate class Person3: Resource {
     override class var resourceType: String {
-        return "persons3"
+        "persons3"
     }
     
     @objc dynamic var name: String?
@@ -44,7 +44,7 @@ fileprivate struct MockRouter: Router {
     }
     
     func fetch(type: Resource.Type) -> String {
-        return "mock"
+        "mock"
     }
     
     func create(resource: Resource) -> String {

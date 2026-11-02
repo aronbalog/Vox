@@ -5,11 +5,11 @@ import Testing
 
 fileprivate final class Post: Resource {
     override class var resourceType: String {
-        return "links-posts"
+        "links-posts"
     }
     
     override class var codingKeys: [String: String] {
-        return ["writer": "author"]
+        ["writer": "author"]
     }
     
     var title: String?
@@ -19,13 +19,13 @@ fileprivate final class Post: Resource {
 
 fileprivate final class Writer: Resource {
     override class var resourceType: String {
-        return "links-writers"
+        "links-writers"
     }
 }
 
 fileprivate final class Comment: Resource {
     override class var resourceType: String {
-        return "links-comments"
+        "links-comments"
     }
     
     var body: String?
@@ -72,7 +72,7 @@ struct LinksSpec {
     }
     
     private func decodePosts() throws -> Document<[Post]> {
-        return try Deserializer.Collection<Post>().deserialize(data: postsDocument)
+        try Deserializer.Collection<Post>().deserialize(data: postsDocument)
     }
     
     @Test("document links are decoded from strings and link objects")

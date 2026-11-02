@@ -10,7 +10,7 @@ public protocol DataSourceResultable: Sendable {
 
 extension DataSourceResultable {
     /// Sends the request and calls `success` or `failure` on the main actor.
-    public func result(_ success: @escaping @MainActor (Output) -> Void, _ failure: (@MainActor (Error) -> Void)? = nil) {
+    public func result(_ success: @escaping @MainActor (Output) -> Void, _ failure: (@MainActor (any Error) -> Void)? = nil) {
         Task { @MainActor in
             do {
                 success(try await self.result())
@@ -23,7 +23,7 @@ extension DataSourceResultable {
 
 extension DataSourceResultable where Output == Void {
     /// Sends the request and calls `success` or `failure` on the main actor.
-    public func result(_ success: @escaping @MainActor () -> Void, _ failure: (@MainActor (Error) -> Void)? = nil) {
+    public func result(_ success: @escaping @MainActor () -> Void, _ failure: (@MainActor (any Error) -> Void)? = nil) {
         Task { @MainActor in
             do {
                 try await self.result()

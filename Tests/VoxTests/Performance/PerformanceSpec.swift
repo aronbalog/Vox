@@ -7,7 +7,7 @@ import XCTest
 
 fileprivate class SomeResource: Resource {
     override class var resourceType: String {
-        return "SomeResource"
+        "SomeResource"
     }
     
     // attributes

@@ -5,7 +5,7 @@ import Testing
 
 fileprivate final class Story: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "paging-stories"
+        "paging-stories"
     }
     
     var title: String?
@@ -14,7 +14,7 @@ fileprivate final class Story: Resource, @unchecked Sendable {
 
 fileprivate final class Writer: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "paging-writers"
+        "paging-writers"
     }
     
     var name: String?
@@ -50,8 +50,8 @@ fileprivate let secondPage = #"""
 
 fileprivate let lastPage = #"{ "data": [{ "type": "paging-stories", "id": "s4" }] }"#
 
-fileprivate func response(_ json: String, statusCode: Int = 200) -> Result<ClientResponse, Error> {
-    return .success(ClientResponse(statusCode: statusCode, data: Data(json.utf8)))
+fileprivate func response(_ json: String, statusCode: Int = 200) -> Result<ClientResponse, any Error> {
+    .success(ClientResponse(statusCode: statusCode, data: Data(json.utf8)))
 }
 
 @Suite("Appending pages")
@@ -62,7 +62,7 @@ struct PageAppendingSpec {
     }
     
     private func fetchFirstPage(from client: RecordingClient) async throws -> Document<[Story]> {
-        return try await DataSource<Story>(strategy: .path("stories"), client: client).fetch().result()
+        try await DataSource<Story>(strategy: .path("stories"), client: client).fetch().result()
     }
     
     @Test("resources the document contains aren't appended again but take the newer values")

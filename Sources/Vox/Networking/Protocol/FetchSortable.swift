@@ -8,17 +8,17 @@ public struct Sort: Equatable, Sendable {
     
     /// Sorts by the field in ascending order.
     public static func ascending(_ field: String) -> Sort {
-        return Sort(field: field, isDescending: false)
+        Sort(field: field, isDescending: false)
     }
     
     /// Sorts by the field in descending order, which is sent as `-field`.
     public static func descending(_ field: String) -> Sort {
-        return Sort(field: field, isDescending: true)
+        Sort(field: field, isDescending: true)
     }
     
     /// The field as it appears in the `sort` query parameter.
     var value: String {
-        return isDescending ? "-" + field : field
+        isDescending ? "-" + field : field
     }
 }
 

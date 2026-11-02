@@ -5,7 +5,7 @@ import Testing
 
 fileprivate final class Event: Resource {
     override class var resourceType: String {
-        return "date-events"
+        "date-events"
     }
     
     var startsAt: Date?

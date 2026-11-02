@@ -110,7 +110,7 @@ public struct ClientRequest: Sendable {
     }()
     
     private static func encodeQueryComponent(_ component: String) -> String {
-        return component.addingPercentEncoding(withAllowedCharacters: queryComponentAllowedCharacters) ?? component
+        component.addingPercentEncoding(withAllowedCharacters: queryComponentAllowedCharacters) ?? component
     }
 }
 

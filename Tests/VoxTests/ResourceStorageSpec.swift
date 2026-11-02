@@ -7,7 +7,7 @@ import Testing
 // suite runs on platforms without the Objective-C runtime as well.
 fileprivate final class Author: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "storage-authors"
+        "storage-authors"
     }
     
     var name: String?
@@ -16,7 +16,7 @@ fileprivate final class Author: Resource, @unchecked Sendable {
 
 fileprivate final class Book: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "storage-books"
+        "storage-books"
     }
     
     var title: String?
@@ -75,7 +75,7 @@ struct ResourceStorageSpec {
     }
     
     private func decodeBook() throws -> Book {
-        return try #require(try Deserializer.Single<Book>().deserialize(data: bookDocument).data)
+        try #require(try Deserializer.Single<Book>().deserialize(data: bookDocument).data)
     }
     
     @Test("decoded values are typed by the declared properties")

@@ -5,7 +5,7 @@ import Testing
 
 fileprivate final class Planet: Resource {
     override class var resourceType: String {
-        return "edge-planets"
+        "edge-planets"
     }
     
     var name: String?
@@ -15,7 +15,7 @@ fileprivate final class Planet: Resource {
 
 fileprivate final class Moon: Resource {
     override class var resourceType: String {
-        return "edge-moons"
+        "edge-moons"
     }
     
     var name: String?
@@ -29,11 +29,11 @@ struct DeserializerEdgeCaseSpec {
     }
     
     private func single(_ json: String) throws -> Document<Planet> {
-        return try Deserializer.Single<Planet>().deserialize(data: Data(json.utf8))
+        try Deserializer.Single<Planet>().deserialize(data: Data(json.utf8))
     }
     
     private func collection(_ json: String) throws -> Document<[Planet]> {
-        return try Deserializer.Collection<Planet>().deserialize(data: Data(json.utf8))
+        try Deserializer.Collection<Planet>().deserialize(data: Data(json.utf8))
     }
     
     private func expectInvalidDocument(_ reasonFragment: String, sourceLocation: SourceLocation = #_sourceLocation, _ body: () throws -> Void) {

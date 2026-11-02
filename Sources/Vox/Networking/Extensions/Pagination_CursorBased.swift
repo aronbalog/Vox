@@ -13,7 +13,7 @@ extension Pagination {
         }
         
         public func paginationURLQueryItems() -> [URLQueryItem] {
-            return [URLQueryItem(name: "\(key)[cursor]", value: cursor)]
+            [URLQueryItem(name: "\(key)[cursor]", value: cursor)]
         }
     }
 }

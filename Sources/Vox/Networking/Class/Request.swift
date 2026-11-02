@@ -9,7 +9,7 @@ public struct Request<ResourceType: Resource, Output: Sendable>: DataSourceResul
     let client: any Client
     let method: String
     /// The target, or the error that prevents sending the request.
-    let target: Result<ClientRequest.Target, Error>
+    let target: Result<ClientRequest.Target, any Error>
     /// Creates the request document when the request is sent.
     let body: (() throws -> Data)?
     let decode: @Sendable (ClientResponse, any Client) throws -> Output
@@ -22,7 +22,7 @@ public struct Request<ResourceType: Resource, Output: Sendable>: DataSourceResul
     /// Values passed to the client with the request.
     public var userInfo: [String: any Sendable] = [:]
     
-    init(client: any Client, method: String, target: Result<ClientRequest.Target, Error>, body: (() throws -> Data)? = nil, decode: @escaping @Sendable (ClientResponse, any Client) throws -> Output) {
+    init(client: any Client, method: String, target: Result<ClientRequest.Target, any Error>, body: (() throws -> Data)? = nil, decode: @escaping @Sendable (ClientResponse, any Client) throws -> Output) {
         self.client = client
         self.method = method
         self.target = target
@@ -67,7 +67,7 @@ public struct Request<ResourceType: Resource, Output: Sendable>: DataSourceResul
     ///   `JSONAPIError.serialization` when the request document can't be created or the URL of
     ///   a relationship can't be determined, and the errors of the client.
     public func result() async throws -> Output {
-        return try await perform(queryItems: customQueryItems)
+        try await perform(queryItems: customQueryItems)
     }
     
     func perform(queryItems: [URLQueryItem]) async throws -> Output {
@@ -106,10 +106,10 @@ public struct FetchRequest<ResourceType: Resource, Output: Sendable>: DataSource
     private var request: Request<ResourceType, Output>
     
     /// The pagination set with `paginate(_:)`.
-    public private(set) var pagination: PaginationStrategy?
+    public private(set) var pagination: (any PaginationStrategy)?
     
     /// The filter set with `filter(_:)`.
-    public private(set) var filter: FilterStrategy?
+    public private(set) var filter: (any FilterStrategy)?
     
     /// The sort fields set with `sort(_:)`.
     public private(set) var sort: [Sort] = []
@@ -122,13 +122,13 @@ public struct FetchRequest<ResourceType: Resource, Output: Sendable>: DataSource
     
     /// Headers sent in addition to the JSON:API ones.
     public var headers: [String: String] {
-        get { return request.headers }
+        get { request.headers }
         set { request.headers = newValue }
     }
     
     /// Values passed to the client with the request.
     public var userInfo: [String: any Sendable] {
-        get { return request.userInfo }
+        get { request.userInfo }
         set { request.userInfo = newValue }
     }
     
@@ -165,7 +165,7 @@ public struct FetchRequest<ResourceType: Resource, Output: Sendable>: DataSource
     }
     
     /// Replaces the filter.
-    public func filter(_ filter: FilterStrategy) -> FetchRequest {
+    public func filter(_ filter: any FilterStrategy) -> FetchRequest {
         var request = self
         request.filter = filter
         
@@ -173,7 +173,7 @@ public struct FetchRequest<ResourceType: Resource, Output: Sendable>: DataSource
     }
     
     /// Replaces the pagination.
-    public func paginate(_ pagination: PaginationStrategy) -> FetchRequest {
+    public func paginate(_ pagination: any PaginationStrategy) -> FetchRequest {
         var request = self
         request.pagination = pagination
         
@@ -209,7 +209,7 @@ public struct FetchRequest<ResourceType: Resource, Output: Sendable>: DataSource
     ///
     /// - Throws: The errors of `Request.result()`.
     public func result() async throws -> Output {
-        return try await request.perform(queryItems: makeQueryItems())
+        try await request.perform(queryItems: makeQueryItems())
     }
     
     func makeQueryItems() -> [URLQueryItem] {
@@ -250,7 +250,7 @@ enum ResponseDecoding {
     
     /// `nil` for responses without content, such as 204 No Content.
     static func optionalResource<T: Resource>(_ response: ClientResponse, client: any Client) throws(JSONAPIError) -> Document<T>? {
-        return response.data.isEmpty ? nil : try resource(response, client: client)
+        response.data.isEmpty ? nil : try resource(response, client: client)
     }
     
     static func collection<T: Resource>(_ response: ClientResponse, client: any Client) throws(JSONAPIError) -> Document<[T]> {

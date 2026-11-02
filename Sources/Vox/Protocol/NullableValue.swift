@@ -10,7 +10,7 @@ protocol NullableAware {
 
 /// Whether `value` is one of the `null` placeholders, which are stored as JSON `null`.
 func isNullValue(_ value: Any) -> Bool {
-    if let value = value as? NullableAware {
+    if let value = value as? any NullableAware {
         return value.isNull
     } else if let value = value as? String {
         return value.isNull
@@ -29,74 +29,74 @@ func isNullValue(_ value: Any) -> Bool {
 
 extension String: NullableAware {
     var isNull: Bool {
-        return self == nullString
+        self == nullString
     }
     
     /// A placeholder that's sent as `null`.
     public static var null: String {
-        return nullString
+        nullString
     }
 }
 
-extension Array where Element == String {
+extension [String] {
     var isNull: Bool {
-        return self.first == .null
+        self.first == .null
     }
     
     /// A placeholder that's sent as `null`.
-    public static var null: Array<Element> {
-        return [.null]
+    public static var null: [String] {
+        [.null]
     }
 }
 
 extension Dictionary where Key == String {
     /// A placeholder that's sent as `null`.
-    public static var null: Dictionary<String, Any> {
-        return [.null: NSNull()]
+    public static var null: [String: Any] {
+        [.null: NSNull()]
     }
     
     var isNull: Bool {
-        return self[.null] is NSNull
+        self[.null] is NSNull
     }
 }
 
-extension Array where Element == Dictionary<String, Any> {
+extension [[String: Any]] {
     /// A placeholder that's sent as `null`.
-    public static var null: Array<Element> {
-        return [.null]
+    public static var null: [[String: Any]] {
+        [.null]
     }
     
     var isNull: Bool {
-        return self.first?.isNull ?? false
+        self.first?.isNull ?? false
     }
 }
 
 extension NSNumber: NullableAware {
     /// Every NaN counts as the placeholder, as NaN can't be represented in JSON.
     var isNull: Bool {
-        return doubleValue.isNaN
+        doubleValue.isNaN
     }
     
     /// A placeholder that's sent as `null`.
     public static var null: NSNumber {
-        return NSNumber(value: Double.nan)
+        NSNumber(value: Double.nan)
     }
 }
 
-extension Array where Element == NSNumber {
+extension [NSNumber] {
     /// A placeholder that's sent as `null`.
-    public static var null: Array<Element> {
-        return [.null]
+    public static var null: [NSNumber] {
+        [.null]
     }
     
     var isNull: Bool {
-        return self.first?.isNull ?? false
+        self.first?.isNull ?? false
     }
 }
 
 extension Resource: NullableAware {
     var isNull: Bool {
-        return self.id == .null
+        self.id == .null
     }
     
     /// A placeholder that empties a to-one relationship: it's sent as `"data": null`.
@@ -110,11 +110,11 @@ extension Resource: NullableAware {
 
 extension Array where Element: Resource {
     var isNull: Bool {
-        return self.first?.id == .null
+        self.first?.id == .null
     }
     
     /// A placeholder that empties a to-many relationship: it's sent as `"data": []`.
-    public static var null: Array<Element> {
-        return [.null()]
+    public static var null: [Element] {
+        [.null()]
     }
 }

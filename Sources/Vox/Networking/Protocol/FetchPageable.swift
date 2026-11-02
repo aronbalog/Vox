@@ -4,9 +4,9 @@ import Foundation
 public protocol FetchPageable {
     associatedtype FetchConfigurableType
 
-    var pagination: PaginationStrategy? { get }
+    var pagination: (any PaginationStrategy)? { get }
     
-    func paginate(_ pagination: PaginationStrategy) -> FetchConfigurableType
+    func paginate(_ pagination: any PaginationStrategy) -> FetchConfigurableType
 }
 
 /// The resources of a document before and after a page was appended to it.
@@ -26,27 +26,27 @@ extension Document where DataType: Collection, DataType.Element: Resource {
     
     /// A request for the first page, or `nil` when the document has no `first` link.
     public var first: PageRequest? {
-        return request(following: links?.first)
+        request(following: links?.first)
     }
     
     /// A request for the next page, or `nil` when the document has no `next` link.
     public var next: PageRequest? {
-        return request(following: links?.next)
+        request(following: links?.next)
     }
     
     /// A request for the previous page, or `nil` when the document has no `prev` link.
     public var previous: PageRequest? {
-        return request(following: links?.prev)
+        request(following: links?.prev)
     }
     
     /// A request for the last page, or `nil` when the document has no `last` link.
     public var last: PageRequest? {
-        return request(following: links?.last)
+        request(following: links?.last)
     }
     
     /// A request for the current page, or `nil` when the document has no `self` link.
     public var reload: PageRequest? {
-        return request(following: links?.selfLink)
+        request(following: links?.selfLink)
     }
     
     /// Fetches the next page and appends its resources and included resources to the document.
@@ -59,7 +59,7 @@ extension Document where DataType: Collection, DataType.Element: Resource {
     ///   document has no `next` link or wasn't fetched by a client.
     @discardableResult
     public func appendNext() async throws -> PaginationData<DataType.Element>? {
-        guard let next = next else {
+        guard let next else {
             return nil
         }
         
@@ -68,7 +68,7 @@ extension Document where DataType: Collection, DataType.Element: Resource {
     
     /// Fetches the next page, appends it like `appendNext()` and calls `completion` or `failure`
     /// on the main actor. `completion` receives `nil` when there's no next page.
-    public func appendNext(_ completion: @escaping @MainActor (PaginationData<DataType.Element>?) -> Void, _ failure: (@MainActor (Error) -> Void)? = nil) {
+    public func appendNext(_ completion: @escaping @MainActor (PaginationData<DataType.Element>?) -> Void, _ failure: (@MainActor (any Error) -> Void)? = nil) {
         Task { @MainActor in
             do {
                 completion(try await self.appendNext())
@@ -80,7 +80,7 @@ extension Document where DataType: Collection, DataType.Element: Resource {
     
     /// A request following `link` with the client that fetched the document.
     private func request(following link: Link?) -> PageRequest? {
-        guard let link = link, let client = client else {
+        guard let link, let client else {
             return nil
         }
         
@@ -123,7 +123,7 @@ extension Document where DataType: Collection, DataType.Element: Resource {
     /// `included` with the resource objects of `newer` appended, replacing the objects with the
     /// same type and `id` or `lid`.
     private static func merging(_ newer: [[String: Any]]?, into included: [[String: Any]]?) -> [[String: Any]]? {
-        guard let newer = newer else {
+        guard let newer else {
             return included
         }
         
@@ -139,10 +139,10 @@ extension Document where DataType: Collection, DataType.Element: Resource {
         for json in newer {
             let key = ResourceKey(json: json)
             
-            if let key = key, let index = indices[key] {
+            if let key, let index = indices[key] {
                 merged[index] = json
             } else {
-                if let key = key {
+                if let key {
                     indices[key] = merged.count
                 }
                 

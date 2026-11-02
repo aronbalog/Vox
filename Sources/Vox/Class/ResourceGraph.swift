@@ -28,7 +28,7 @@ final class ResourceGraph {
     
     /// The graph holding this graph's objects, which is a different one after a merge.
     var current: ResourceGraph {
-        guard let mergedGraph = mergedGraph else {
+        guard let mergedGraph else {
             return self
         }
         
@@ -88,7 +88,7 @@ final class ResourceGraph {
     }
     
     func instance(for reference: ResourceReference) -> Resource? {
-        return object(for: reference).map(instance(for:))
+        object(for: reference).map(instance(for:))
     }
     
     /// Records `instance` as the live instance of `object`.
@@ -155,7 +155,7 @@ final class ResourceGraph {
     /// The object with any of the keys of `object`, which is `object` itself unless a graph
     /// update replaced it.
     func object(matching object: ResourceObject) -> ResourceObject? {
-        return object.keys.lazy.compactMap { self.objectsByKey[$0] }.first
+        object.keys.lazy.compactMap { self.objectsByKey[$0] }.first
     }
     
     private func absorb(_ graph: ResourceGraph) {

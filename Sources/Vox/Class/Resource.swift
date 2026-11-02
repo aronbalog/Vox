@@ -38,7 +38,7 @@ open class Resource: NSObject {
     /// Maps property names to JSON member names, for properties named differently than their
     /// attribute or relationship.
     open class var codingKeys: [String: String] {
-        return [:]
+        [:]
     }
     
     /// Registers the class for its `resourceType`, so documents decode resources of that type as
@@ -168,18 +168,18 @@ open class Resource: NSObject {
     /// - Throws: `JSONAPIError.serialization` when an attribute or the meta can't be represented
     ///   in JSON, or when a related resource has neither `id` nor `lid`.
     public func documentDictionary() throws(JSONAPIError) -> [String: Any] {
-        return ["data": try resourceObjectJSON(requiringID: false)]
+        ["data": try resourceObjectJSON(requiringID: false)]
     }
     
     /// The JSON data of `documentDictionary()`.
     public func documentData() throws(JSONAPIError) -> Data {
-        return try JSONAPIEncoder.data(of: documentDictionary())
+        try JSONAPIEncoder.data(of: documentDictionary())
     }
     
     /// The request document of the resource, which must have an `id` or `lid` when
     /// `requiringID` is set.
     func documentData(requiringID: Bool) throws(JSONAPIError) -> Data {
-        return try JSONAPIEncoder.data(of: ["data": resourceObjectJSON(requiringID: requiringID)])
+        try JSONAPIEncoder.data(of: ["data": resourceObjectJSON(requiringID: requiringID)])
     }
     
     /// The resource identifier object of the resource, for relationship requests.
@@ -200,7 +200,7 @@ open class Resource: NSObject {
     /// The JSON member name of the property `name`, which is `name` itself unless `codingKeys`
     /// maps it or there's no such property.
     func memberName(forProperty name: String) -> String {
-        return classMetadata.properties[name]?.key ?? name
+        classMetadata.properties[name]?.key ?? name
     }
     
     // MARK: Storage
@@ -208,7 +208,7 @@ open class Resource: NSObject {
     /// The object and graph backing the resource. Resources created in code get a graph of their
     /// own on first use. Must be called while holding `ResourceGraph.lock`.
     func storageLocked() -> (object: ResourceObject, graph: ResourceGraph) {
-        if let storage = storage {
+        if let storage {
             let graph = storage.graph.current
             
             if graph !== storage.graph {
@@ -389,7 +389,7 @@ open class Resource: NSObject {
     }
     
     private func attributeValue(_ value: Any?) -> Any? {
-        guard let value = value else {
+        guard let value else {
             return nil
         }
         
@@ -568,7 +568,7 @@ extension Resource {
     /// and written with the subscript.
     public subscript(key: String) -> Any? {
         get {
-            return value(forMember: key)
+            value(forMember: key)
         }
         set {
             setValue(newValue, forMember: key)
@@ -589,6 +589,6 @@ extension Array where Element: Resource {
     
     /// The JSON data of `documentDictionary()`.
     public func documentData() throws(JSONAPIError) -> Data {
-        return try JSONAPIEncoder.data(of: documentDictionary())
+        try JSONAPIEncoder.data(of: documentDictionary())
     }
 }

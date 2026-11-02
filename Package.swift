@@ -2,6 +2,10 @@
 
 import PackageDescription
 
+let swiftSettings: [SwiftSetting] = [
+    .enableUpcomingFeature("ExistentialAny")
+]
+
 let package = Package(
     name: "Vox",
     platforms: [
@@ -18,19 +22,25 @@ let package = Package(
         .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.9.0")
     ],
     targets: [
-        .target(name: "Vox"),
+        .target(
+            name: "Vox",
+            swiftSettings: swiftSettings
+        ),
         .target(
             name: "VoxAlamofire",
-            dependencies: ["Vox", "Alamofire"]
+            dependencies: ["Vox", "Alamofire"],
+            swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "VoxTests",
             dependencies: ["Vox"],
-            resources: [.process("Fixtures")]
+            resources: [.process("Fixtures")],
+            swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "VoxAlamofireTests",
-            dependencies: ["Vox", "VoxAlamofire", "Alamofire"]
+            dependencies: ["Vox", "VoxAlamofire", "Alamofire"],
+            swiftSettings: swiftSettings
         )
     ],
     swiftLanguageModes: [.v6]

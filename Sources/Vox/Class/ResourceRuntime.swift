@@ -138,7 +138,7 @@ enum ResourceRuntime {
     
     static func isInstance(_ value: Any, of type: Any.Type) -> Bool {
         func check<T>(_: T.Type) -> Bool {
-            return value is T
+            value is T
         }
         
         return _openExistential(type, do: check)
@@ -292,11 +292,11 @@ enum ResourceRuntime {
 extension ResourceProperty.Kind {
     /// The kind of a property declared with `type`.
     init(_ type: Any.Type) {
-        let valueType = (type as? OptionalType.Type)?.wrappedType ?? type
+        let valueType = (type as? any OptionalType.Type)?.wrappedType ?? type
         
         if let resourceType = valueType as? Resource.Type {
             self = .toOne(resourceType)
-        } else if let elementType = (valueType as? ArrayType.Type)?.elementType as? Resource.Type {
+        } else if let elementType = (valueType as? any ArrayType.Type)?.elementType as? Resource.Type {
             self = .toMany(elementType)
         } else {
             self = .attribute(valueType)
@@ -310,7 +310,7 @@ fileprivate protocol OptionalType {
 
 extension Optional: OptionalType {
     fileprivate static var wrappedType: Any.Type {
-        return Wrapped.self
+        Wrapped.self
     }
 }
 
@@ -320,7 +320,7 @@ fileprivate protocol ArrayType {
 
 extension Array: ArrayType {
     fileprivate static var elementType: Any.Type {
-        return Element.self
+        Element.self
     }
 }
 

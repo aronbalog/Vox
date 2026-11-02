@@ -5,7 +5,7 @@ import Testing
 
 fileprivate class MockClass: Resource {
     override class var resourceType: String {
-        return "mock"
+        "mock"
     }
 }
 

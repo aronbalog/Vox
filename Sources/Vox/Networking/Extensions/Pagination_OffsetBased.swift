@@ -17,11 +17,11 @@ extension Pagination {
         public func paginationURLQueryItems() -> [URLQueryItem] {
             var items: [URLQueryItem] = []
             
-            if let offset = offset {
+            if let offset {
                 items.append(URLQueryItem(name: "\(key)[offset]", value: String(offset)))
             }
             
-            if let limit = limit {
+            if let limit {
                 items.append(URLQueryItem(name: "\(key)[limit]", value: String(limit)))
             }
             

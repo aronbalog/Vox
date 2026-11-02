@@ -72,11 +72,11 @@ final class ResourceObject {
     var keys: [ResourceKey] {
         var keys: [ResourceKey] = []
         
-        if let id = id {
+        if let id {
             keys.append(ResourceKey(type: type, identifier: .id(id)))
         }
         
-        if let lid = lid {
+        if let lid {
             keys.append(ResourceKey(type: type, identifier: .lid(lid)))
         }
         

@@ -5,7 +5,7 @@ import Testing
 
 fileprivate final class Galaxy: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "registration-galaxies"
+        "registration-galaxies"
     }
     
     var stars: [Star]?
@@ -13,7 +13,7 @@ fileprivate final class Galaxy: Resource, @unchecked Sendable {
 
 fileprivate final class Star: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "registration-stars"
+        "registration-stars"
     }
     
     var name: String?

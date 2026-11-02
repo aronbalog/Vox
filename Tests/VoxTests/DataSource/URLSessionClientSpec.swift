@@ -40,11 +40,11 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     }
     
     override class func canInit(with request: URLRequest) -> Bool {
-        return true
+        true
     }
     
     override class func canonicalRequest(for request: URLRequest) -> URLRequest {
-        return request
+        request
     }
     
     override func startLoading() {
@@ -96,7 +96,7 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
 
 fileprivate final class Gizmo: Resource, @unchecked Sendable {
     override class var resourceType: String {
-        return "session-gizmos"
+        "session-gizmos"
     }
 }
 
@@ -111,7 +111,7 @@ struct URLSessionClientSpec {
     }
     
     private func client(adapter: URLSessionClient.RequestAdapter? = nil) -> URLSessionClient {
-        return URLSessionClient(baseURL: baseURL, session: StubURLProtocol.session, adapter: adapter)
+        URLSessionClient(baseURL: baseURL, session: StubURLProtocol.session, adapter: adapter)
     }
     
     @Test("sends the method, URL, headers and body of the request")
