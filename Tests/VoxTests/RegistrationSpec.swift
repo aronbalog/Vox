@@ -19,6 +19,36 @@ fileprivate final class Star: Resource, @unchecked Sendable {
     var name: String?
 }
 
+fileprivate class Planet: Resource, @unchecked Sendable {
+    override class var resourceType: String {
+        "registration-planets"
+    }
+}
+
+fileprivate final class DwarfPlanet: Planet, @unchecked Sendable {}
+
+fileprivate final class GasGiant: Planet, @unchecked Sendable {
+    override class var resourceType: String {
+        "registration-gas-giants"
+    }
+}
+
+fileprivate class RegistrationNebula: Resource, @unchecked Sendable {}
+
+fileprivate final class RegistrationDarkNebula: RegistrationNebula, @unchecked Sendable {}
+
+fileprivate final class Quasar: Resource, @unchecked Sendable {
+    override class var resourceType: String {
+        "registration-quasars"
+    }
+}
+
+fileprivate final class Blazar: Resource, @unchecked Sendable {
+    override class var resourceType: String {
+        "registration-quasars"
+    }
+}
+
 fileprivate let galaxyJSON = #"""
 {
     "data": {
@@ -49,5 +79,39 @@ struct RegistrationSpec {
         Resource.register()
         
         #expect(ResourceRuntime.resourceClass(for: "registration-unknown") == nil)
+        #expect(ResourceRuntime.resourceClass(for: "Resource") == nil)
+    }
+    
+    @Test("classes that don't override resourceType are registered for their name")
+    func defaultType() {
+        RegistrationNebula.register()
+        RegistrationDarkNebula.register()
+        
+        #expect(RegistrationNebula.resourceType == "RegistrationNebula")
+        #expect(RegistrationDarkNebula.resourceType == "RegistrationDarkNebula")
+        #expect(ResourceRuntime.resourceClass(for: "RegistrationNebula") == RegistrationNebula.self)
+        #expect(ResourceRuntime.resourceClass(for: "RegistrationDarkNebula") == RegistrationDarkNebula.self)
+        #expect(RegistrationDarkNebula().type == "RegistrationDarkNebula")
+    }
+    
+    @Test("subclasses that inherit the type of their superclass aren't registered for it")
+    func inheritedType() {
+        DwarfPlanet.register()
+        Planet.register()
+        GasGiant.register()
+        
+        #expect(DwarfPlanet.resourceType == "registration-planets")
+        #expect(ResourceRuntime.resourceClass(for: "registration-planets") == Planet.self)
+        #expect(ResourceRuntime.resourceClass(for: "registration-gas-giants") == GasGiant.self)
+    }
+    
+    @Test("the first class registered for a type keeps it")
+    func duplicateType() {
+        Quasar.register()
+        let registeredClass = ResourceRuntime.resourceClass(for: "registration-quasars")
+        Blazar.register()
+        
+        #expect(registeredClass == Quasar.self || registeredClass == Blazar.self)
+        #expect(ResourceRuntime.resourceClass(for: "registration-quasars") == registeredClass)
     }
 }

@@ -37,6 +37,7 @@ A major release, which requires Swift 6. The [migration guide](MIGRATION.md) des
 - Property kinds come from the declared types of properties, instead of their values.
 - `attributes` and `relationships` return non-optional dictionaries, and `type` is read-only.
 - Resource classes are prepared when they're first used, instead of at launch.
+- `resourceType` is the name of the class when the class doesn't override it, instead of crashing. A subclass with the same type as its superclass isn't registered for it.
 - Fetch requests build their query parameters once, in a fixed order, without duplicates.
 - Appending pages skips the resources a document contains already, which take the newer values, and merges included resources. The document takes the links and meta of the appended page.
 - Requests for the collection leave `<id>` out of paths, and `create` always sends resources to the collection.

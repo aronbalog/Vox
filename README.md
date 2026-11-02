@@ -81,7 +81,7 @@ With CocoaPods, the Alamofire client is part of the `Vox` module. With the Swift
 
 ## Defining resources
 
-A resource is a subclass of `Resource` that overrides `resourceType` and declares its attributes and relationships as `@objc dynamic` properties:
+A resource is a subclass of `Resource` that declares its JSON:API type in `resourceType`, and its attributes and relationships as `@objc dynamic` properties:
 
 ```swift
 import Vox
@@ -113,6 +113,7 @@ final class Person: Resource {
 }
 ```
 
+- A class that doesn't override `resourceType` has the name of the class as its type. A subclass with the same type as its superclass isn't registered for it, so resources of that type decode as instances of the superclass.
 - A property typed as a `Resource` subclass is a to-one relationship, and a property typed as an array of one is a to-many relationship. All other properties are attributes.
 - A relationship declared as `Resource` or `[Resource]` can hold resources of any type. Each resource is an instance of the class of its type, so `as? Person` tells them apart.
 - Attributes can be strings, numbers, Booleans, dates, URLs, and arrays and dictionaries of JSON values. Numbers and Booleans are declared as `NSNumber`, because `Int`, `Double` and `Bool` properties can't be backed by the JSON.

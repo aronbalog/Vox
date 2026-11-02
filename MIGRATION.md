@@ -12,7 +12,7 @@ Vox 2.0 requires Swift 6 and is built around `async`/`await`. Resource definitio
 
 ## Resources
 
-Resource subclasses and their `@objc dynamic` properties don't change. Classes are now prepared when their first instance is created, instead of at launch. Abstract subclasses that don't override `resourceType` no longer crash.
+Resource subclasses and their `@objc dynamic` properties don't change. Classes are now prepared when their first instance is created, instead of at launch. Overriding `resourceType` is optional: a class that doesn't override it has the name of the class as its type, instead of crashing.
 
 ### Initialization and contexts
 

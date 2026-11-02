@@ -2,8 +2,9 @@ import Foundation
 
 /// A JSON:API resource.
 ///
-/// Subclasses override `resourceType` and declare attributes and relationships as stored
-/// `@objc dynamic` properties. Their values are read from and written to the resource's JSON:
+/// Subclasses declare their JSON:API type in `resourceType`, and their attributes and
+/// relationships as stored `@objc dynamic` properties. Their values are read from and written to
+/// the resource's JSON:
 ///
 /// ```swift
 /// final class Article: Resource {
@@ -24,14 +25,16 @@ import Foundation
 /// share its instances across isolation domains.
 open class Resource: NSObject {
     #if canImport(ObjectiveC)
-    /// The JSON:API `type` of the resource. Subclasses must override it.
+    /// The JSON:API `type` of the resource, which is the name of the class unless the class
+    /// overrides it.
     @objc open class var resourceType: String {
-        Resource.missingResourceType(self)
+        String(describing: self)
     }
     #else
-    /// The JSON:API `type` of the resource. Subclasses must override it.
+    /// The JSON:API `type` of the resource, which is the name of the class unless the class
+    /// overrides it.
     open class var resourceType: String {
-        Resource.missingResourceType(self)
+        String(describing: self)
     }
     #endif
     
@@ -42,7 +45,8 @@ open class Resource: NSObject {
     }
     
     /// Registers the class for its `resourceType`, so documents decode resources of that type as
-    /// instances of the class. The class must override `resourceType`.
+    /// instances of the class. A class whose `resourceType` is the same as its superclass's isn't
+    /// registered, and neither is `Resource` itself.
     ///
     /// On Apple platforms, classes are found in the Objective-C runtime, and registering them is
     /// optional. On other platforms, the resource classes of data sources and deserializers are
@@ -527,10 +531,6 @@ open class Resource: NSObject {
                 throw JSONAPIError.serialization(reason: "The relationship \"\(name)\" refers to a resource of type \"\(object.type)\" that has neither id nor lid.")
             }
         }
-    }
-    
-    private static func missingResourceType(_ resourceClass: AnyClass) -> Never {
-        fatalError("\(resourceClass) must override `class var resourceType: String`")
     }
 }
 

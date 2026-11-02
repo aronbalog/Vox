@@ -193,38 +193,28 @@ enum ResourceRuntime {
         return ResourceMetadata(properties: properties)
     }
     
-    /// The class's `resourceType`, or `nil` when the class doesn't override it itself.
-    ///
-    /// Abstract intermediate subclasses and subclasses inheriting the type of a concrete
-    /// superclass are not registered, and their `resourceType` is never called.
+    /// The class's `resourceType`, or `nil` when the class is `Resource` or has the same type as
+    /// its superclass, so subclasses of a concrete resource class don't take over its type.
     private static func declaredResourceType(of resourceClass: Resource.Type) -> String? {
         guard resourceClass != Resource.self else {
             return nil
         }
         
+        let type = resourceClass.resourceType
+        
+        if let superclass = superclass(of: resourceClass), superclass.resourceType == type {
+            return nil
+        }
+        
+        return type
+    }
+    
+    private static func superclass(of resourceClass: Resource.Type) -> Resource.Type? {
         #if canImport(ObjectiveC)
-        guard let metaclass = object_getClass(resourceClass) else {
-            return nil
-        }
-        
-        var methodCount: UInt32 = 0
-        
-        guard let methods = class_copyMethodList(metaclass, &methodCount) else {
-            return nil
-        }
-        defer { free(methods) }
-        
-        let selector = NSSelectorFromString("resourceType")
-        let declaresResourceType = (0..<Int(methodCount)).contains { index in
-            method_getName(methods[index]) == selector
-        }
-        
-        guard declaresResourceType else {
-            return nil
-        }
+        class_getSuperclass(resourceClass) as? Resource.Type
+        #else
+        resourceClass.superclass as? Resource.Type
         #endif
-        
-        return resourceClass.resourceType
     }
     
     #if canImport(ObjectiveC)
