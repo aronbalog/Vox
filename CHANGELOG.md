@@ -2,7 +2,7 @@
 
 The notable changes of each release. Vox follows [Semantic Versioning](https://semver.org).
 
-## 2.0.0 (unreleased)
+## 2.0.0
 
 A major release, which requires Swift 6.1. The [migration guide](MIGRATION.md) describes the breaking changes.
 
