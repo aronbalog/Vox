@@ -1,6 +1,6 @@
 # Vox
 
-Vox is a Swift implementation of [JSON:API](https://jsonapi.org) 1.1 for iOS, macOS, tvOS, watchOS and Linux. Resources are classes whose properties read and write the JSON of their document, and data sources send JSON:API requests with `async`/`await` or callbacks.
+Vox is a Swift implementation of [JSON:API](https://jsonapi.org) 1.1 for iOS, macOS, tvOS, watchOS and Linux. Resources are classes whose properties read and write the JSON of their document, and data sources send JSON:API requests with `async`/`await` or callbacks. The [Vox site](https://aronbalog.github.io/Vox/) walks through JSON:API with Vox examples.
 
 [![CI](https://github.com/aronbalog/Vox/actions/workflows/ci.yml/badge.svg)](https://github.com/aronbalog/Vox/actions/workflows/ci.yml)
 [![Coverage](https://aronbalog.github.io/Vox/badges/coverage.svg)](https://github.com/aronbalog/Vox/actions/workflows/ci.yml)
