@@ -41,7 +41,7 @@ public struct URLSessionClient: Client {
     /// The URL request for `request`, before the adapter changes it.
     ///
     /// - Throws: `URLError.badURL` when the target of the request isn't a valid URL.
-    public func makeURLRequest(for request: ClientRequest) throws -> URLRequest {
+    public func makeURLRequest(for request: ClientRequest) throws(URLError) -> URLRequest {
         guard let url = request.url(relativeTo: baseURL) else {
             throw URLError(.badURL)
         }

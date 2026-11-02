@@ -112,6 +112,8 @@ There are two new cases, which exhaustive `switch` statements need to handle:
 - `invalidDocument(reason:)` for data that isn't the expected document.
 - `unacceptableStatusCode(_:body:)` for responses with a status code outside 200–299 and without error objects.
 
+Deserialization and serialization are declared `throws(JSONAPIError)`. In `do` blocks that only deserialize or serialize, `error` is a `JSONAPIError`, so `catch let error as JSONAPIError` can become `catch`, and a `switch` over `error` can handle every case.
+
 `ErrorObject.Source` has a `header`, and `ErrorObject` accepts numeric `status` and `code` members.
 
 ## Clients

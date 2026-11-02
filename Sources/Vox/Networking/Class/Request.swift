@@ -237,7 +237,7 @@ public struct FetchRequest<ResourceType: Resource, Output: Sendable>: DataSource
 
 /// Decodes the responses of data source requests.
 enum ResponseDecoding {
-    static func resource<T: Resource>(_ response: ClientResponse, client: any Client) throws -> Document<T> {
+    static func resource<T: Resource>(_ response: ClientResponse, client: any Client) throws(JSONAPIError) -> Document<T> {
         guard !response.data.isEmpty else {
             throw JSONAPIError.invalidDocument(reason: "The response has no content.")
         }
@@ -249,11 +249,11 @@ enum ResponseDecoding {
     }
     
     /// `nil` for responses without content, such as 204 No Content.
-    static func optionalResource<T: Resource>(_ response: ClientResponse, client: any Client) throws -> Document<T>? {
+    static func optionalResource<T: Resource>(_ response: ClientResponse, client: any Client) throws(JSONAPIError) -> Document<T>? {
         return response.data.isEmpty ? nil : try resource(response, client: client)
     }
     
-    static func collection<T: Resource>(_ response: ClientResponse, client: any Client) throws -> Document<[T]> {
+    static func collection<T: Resource>(_ response: ClientResponse, client: any Client) throws(JSONAPIError) -> Document<[T]> {
         guard !response.data.isEmpty else {
             throw JSONAPIError.invalidDocument(reason: "The response has no content.")
         }

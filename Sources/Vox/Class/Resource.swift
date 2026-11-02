@@ -167,24 +167,24 @@ open class Resource: NSObject {
     ///
     /// - Throws: `JSONAPIError.serialization` when an attribute or the meta can't be represented
     ///   in JSON, or when a related resource has neither `id` nor `lid`.
-    public func documentDictionary() throws -> [String: Any] {
+    public func documentDictionary() throws(JSONAPIError) -> [String: Any] {
         return ["data": try resourceObjectJSON(requiringID: false)]
     }
     
     /// The JSON data of `documentDictionary()`.
-    public func documentData() throws -> Data {
-        return try JSONSerialization.data(withJSONObject: documentDictionary(), options: [])
+    public func documentData() throws(JSONAPIError) -> Data {
+        return try JSONAPIEncoder.data(of: documentDictionary())
     }
     
     /// The request document of the resource, which must have an `id` or `lid` when
     /// `requiringID` is set.
-    func documentData(requiringID: Bool) throws -> Data {
-        return try JSONSerialization.data(withJSONObject: ["data": try resourceObjectJSON(requiringID: requiringID)], options: [])
+    func documentData(requiringID: Bool) throws(JSONAPIError) -> Data {
+        return try JSONAPIEncoder.data(of: ["data": resourceObjectJSON(requiringID: requiringID)])
     }
     
     /// The resource identifier object of the resource, for relationship requests.
-    func identifierJSON() throws -> [String: Any] {
-        return try ResourceGraph.lock.withLock {
+    func identifierJSON() throws(JSONAPIError) -> [String: Any] {
+        return try ResourceGraph.lock.withLock { () throws(JSONAPIError) -> [String: Any] in
             let object = storageLocked().object
             
             if let id = object.id {
@@ -426,8 +426,8 @@ open class Resource: NSObject {
     /// - Throws: `JSONAPIError.serialization` when an attribute or the meta can't be represented
     ///   in JSON, when a related resource has neither `id` nor `lid`, or when `requiringID` is
     ///   set and the resource itself has neither.
-    func resourceObjectJSON(requiringID: Bool) throws -> [String: Any] {
-        return try ResourceGraph.lock.withLock {
+    func resourceObjectJSON(requiringID: Bool) throws(JSONAPIError) -> [String: Any] {
+        return try ResourceGraph.lock.withLock { () throws(JSONAPIError) -> [String: Any] in
             let (object, graph) = storageLocked()
             
             var json: [String: Any] = ["type": object.type]
@@ -466,7 +466,7 @@ open class Resource: NSObject {
     
     /// The relationships with resource linkage as JSON. Relationships with only links or meta are
     /// left out.
-    private func relationshipsJSON(of object: ResourceObject, in graph: ResourceGraph, skippingInvalid: Bool) throws -> [String: Any] {
+    private func relationshipsJSON(of object: ResourceObject, in graph: ResourceGraph, skippingInvalid: Bool) throws(JSONAPIError) -> [String: Any] {
         var json: [String: Any] = [:]
         
         for (name, relationship) in object.relationships {
@@ -474,7 +474,7 @@ open class Resource: NSObject {
                 continue
             }
             
-            do {
+            do throws(JSONAPIError) {
                 json[name] = ["data": try linkageJSON(linkage, ofRelationship: name, in: graph)]
             } catch {
                 if !skippingInvalid {
@@ -486,18 +486,20 @@ open class Resource: NSObject {
         return json
     }
     
-    private func linkageJSON(_ linkage: ResourceLinkage, ofRelationship name: String, in graph: ResourceGraph) throws -> Any {
+    private func linkageJSON(_ linkage: ResourceLinkage, ofRelationship name: String, in graph: ResourceGraph) throws(JSONAPIError) -> Any {
         switch linkage {
         case .toOne(nil):
             return NSNull()
         case .toOne(let reference?):
             return try identifierJSON(reference, ofRelationship: name, in: graph)
         case .toMany(let references):
-            return try references.map { try identifierJSON($0, ofRelationship: name, in: graph) }
+            return try references.map { reference throws(JSONAPIError) in
+                try identifierJSON(reference, ofRelationship: name, in: graph)
+            }
         }
     }
     
-    private func identifierJSON(_ reference: ResourceReference, ofRelationship name: String, in graph: ResourceGraph) throws -> [String: Any] {
+    private func identifierJSON(_ reference: ResourceReference, ofRelationship name: String, in graph: ResourceGraph) throws(JSONAPIError) -> [String: Any] {
         switch reference {
         case .identifier(let key, let meta):
             var json: [String: Any] = ["type": key.type]
@@ -579,12 +581,14 @@ extension Array where Element: Resource {
     ///
     /// - Throws: `JSONAPIError.serialization` when a resource has neither `id` nor `lid`, and for
     ///   the reasons of `Resource.documentDictionary()`.
-    public func documentDictionary() throws -> [String: Any] {
-        return ["data": try map { try $0.resourceObjectJSON(requiringID: true) }]
+    public func documentDictionary() throws(JSONAPIError) -> [String: Any] {
+        return ["data": try map { resource throws(JSONAPIError) in
+            try resource.resourceObjectJSON(requiringID: true)
+        }]
     }
     
     /// The JSON data of `documentDictionary()`.
-    public func documentData() throws -> Data {
-        return try JSONSerialization.data(withJSONObject: documentDictionary(), options: [])
+    public func documentData() throws(JSONAPIError) -> Data {
+        return try JSONAPIEncoder.data(of: documentDictionary())
     }
 }

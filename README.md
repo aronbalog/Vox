@@ -179,7 +179,7 @@ A `Document` has these properties:
 
 Documents with `"data": null` have no data, and documents with only `meta` are valid. Integer ids are converted to strings.
 
-Deserializers throw `JSONAPIError.API` with the error objects of error documents, and `JSONAPIError.invalidDocument(reason:)` for data that isn't the expected JSON:API document. The reason names the problem, such as "The resource object at included[3] has no type." Primary data of another class is invalid too, and so is an array when a single resource is expected.
+Deserializers throw `JSONAPIError.API` with the error objects of error documents, and `JSONAPIError.invalidDocument(reason:)` for data that isn't the expected JSON:API document. The reason names the problem, such as "The resource object at included[3] has no type." Primary data of another class is invalid too, and so is an array when a single resource is expected. Deserializers are declared `throws(JSONAPIError)`, so `error` is a `JSONAPIError` in their `catch` clauses.
 
 ```swift
 do {
@@ -269,7 +269,7 @@ Collections are serialized the same way. Each of their resources needs an `id` o
 let data = try [person1, person2].documentData()
 ```
 
-Serialization throws `JSONAPIError.serialization(reason:)` when the resource can't be represented: for example, when an attribute holds a value that isn't JSON, such as `Data`, or when a related resource has neither an `id` nor a `lid`.
+Serialization throws `JSONAPIError.serialization(reason:)` when the resource can't be represented: for example, when an attribute holds a value that isn't JSON, such as `Data`, or when a related resource has neither an `id` nor a `lid`. Like deserialization, it's declared `throws(JSONAPIError)`.
 
 ### Nullability
 

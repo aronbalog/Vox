@@ -21,12 +21,12 @@ struct DecodedDocument {
     ///
     /// - Throws: `JSONAPIError.invalidDocument` when the primary data is an array or a resource
     ///   that isn't a `T`.
-    func resource<T: Resource>(of _: T.Type) throws -> T? {
+    func resource<T: Resource>(of _: T.Type) throws(JSONAPIError) -> T? {
         switch primaryData {
         case .absent, .resource(nil):
             return nil
         case .resource(let object?):
-            return try ResourceGraph.lock.withLock {
+            return try ResourceGraph.lock.withLock { () throws(JSONAPIError) -> T in
                 try instance(of: object, as: T.self)
             }
         case .collection:
@@ -38,20 +38,22 @@ struct DecodedDocument {
     ///
     /// - Throws: `JSONAPIError.invalidDocument` when the primary data is a single resource or
     ///   contains a resource that isn't a `T`.
-    func resources<T: Resource>(of _: T.Type) throws -> [T]? {
+    func resources<T: Resource>(of _: T.Type) throws(JSONAPIError) -> [T]? {
         switch primaryData {
         case .absent, .resource(nil):
             return nil
         case .resource:
             throw JSONAPIError.invalidDocument(reason: "Expected an array of resources, but the primary data is a single resource.")
         case .collection(let objects):
-            return try ResourceGraph.lock.withLock {
-                try objects.map { try instance(of: $0, as: T.self) }
+            return try ResourceGraph.lock.withLock { () throws(JSONAPIError) -> [T] in
+                try objects.map { object throws(JSONAPIError) in
+                    try instance(of: object, as: T.self)
+                }
             }
         }
     }
     
-    private func instance<T: Resource>(of object: ResourceObject, as _: T.Type) throws -> T {
+    private func instance<T: Resource>(of object: ResourceObject, as _: T.Type) throws(JSONAPIError) -> T {
         guard let resource = graph.instance(for: object) as? T else {
             throw JSONAPIError.invalidDocument(reason: "Expected resources of class \(T.self), but the primary data contains a resource of type \"\(object.type)\".")
         }
@@ -65,7 +67,7 @@ enum JSONAPIDecoder {
     ///
     /// - Throws: `JSONAPIError.API` for documents with errors, `JSONAPIError.invalidDocument` for
     ///   data that isn't a JSON:API document.
-    static func decode(_ data: Data) throws -> DecodedDocument {
+    static func decode(_ data: Data) throws(JSONAPIError) -> DecodedDocument {
         let json = try topLevelObject(of: data)
         
         if let error = apiError(in: json) {
@@ -131,12 +133,8 @@ enum JSONAPIDecoder {
         return .API(errors.compactMap { $0 as? [String: Any] }.map(ErrorObject.init(dictionary:)))
     }
     
-    private static func topLevelObject(of data: Data) throws -> [String: Any] {
-        let json: Any
-        
-        do {
-            json = try JSONSerialization.jsonObject(with: data, options: [])
-        } catch {
+    private static func topLevelObject(of data: Data) throws(JSONAPIError) -> [String: Any] {
+        guard let json = try? JSONSerialization.jsonObject(with: data, options: []) else {
             throw JSONAPIError.invalidDocument(reason: "The data isn't valid JSON.")
         }
         
@@ -147,8 +145,8 @@ enum JSONAPIDecoder {
         return object
     }
     
-    private static func resourceObjects(_ array: [Any], at path: String) throws -> [ResourceObject] {
-        return try array.enumerated().map { index, element in
+    private static func resourceObjects(_ array: [Any], at path: String) throws(JSONAPIError) -> [ResourceObject] {
+        return try array.enumerated().map { (index, element) throws(JSONAPIError) -> ResourceObject in
             guard let json = element as? [String: Any] else {
                 throw JSONAPIError.invalidDocument(reason: "The element at \(path)[\(index)] isn't a resource object.")
             }

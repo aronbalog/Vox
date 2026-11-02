@@ -42,6 +42,7 @@ A major release, which requires Swift 6. The [migration guide](MIGRATION.md) des
 - Requests for the collection leave `<id>` out of paths, and `create` always sends resources to the collection.
 - `update` requires the resource to have an `id`.
 - Invalid documents throw `JSONAPIError.invalidDocument(reason:)` with a description of the problem. Primary data of an unexpected shape or class throws.
+- Deserialization and serialization are declared `throws(JSONAPIError)`, and `makeURLRequest(for:)` of the clients `throws(URLError)`.
 - Resources of types without a class decode as plain `Resource` instances.
 - `Sort` is a struct, and the `Pagination` strategies are structs.
 - The minimum deployment target is iOS 13.

@@ -4,7 +4,7 @@ import Foundation
 final class Lock: @unchecked Sendable {
     private let lock = NSRecursiveLock()
     
-    func withLock<T>(_ body: () throws -> T) rethrows -> T {
+    func withLock<T, E: Error>(_ body: () throws(E) -> T) throws(E) -> T {
         lock.lock()
         defer { lock.unlock() }
         
@@ -28,8 +28,8 @@ final class Locked<Value>: @unchecked Sendable {
     
     /// Calls `body` with exclusive access to the value, so `body` must not call `withLock` on the
     /// same instance.
-    func withLock<T>(_ body: (inout Value) throws -> T) rethrows -> T {
-        try lock.withLock {
+    func withLock<T, E: Error>(_ body: (inout Value) throws(E) -> T) throws(E) -> T {
+        try lock.withLock { () throws(E) -> T in
             try body(&value)
         }
     }

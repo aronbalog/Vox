@@ -201,7 +201,7 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
     
     private func relationshipRequest(_ method: String, _ relationship: String, of resource: ResourceType, linkage: @escaping () throws -> Any) -> Request<ResourceType, Void> {
         return Request(client: client, method: method, target: target(of: .relationship, relationship, of: resource), body: {
-            try JSONSerialization.data(withJSONObject: ["data": try linkage()], options: [])
+            try JSONAPIEncoder.data(of: ["data": linkage()])
         }) { _, _ in }
     }
     

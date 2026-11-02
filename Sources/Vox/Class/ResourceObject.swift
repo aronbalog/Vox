@@ -52,7 +52,7 @@ final class ResourceObject {
     }
     
     /// Parses the resource object at `path` of a JSON:API document.
-    init(json: [String: Any], at path: String) throws {
+    init(json: [String: Any], at path: String) throws(JSONAPIError) {
         guard let type = json["type"] as? String, !type.isEmpty else {
             throw JSONAPIError.invalidDocument(reason: "The resource object at \(path) has no type.")
         }
