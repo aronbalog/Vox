@@ -3,6 +3,7 @@ import Foundation
 extension Pagination {
     /// Sends `page[offset]` and `page[limit]`.
     public struct OffsetBased: PaginationStrategy {
+        /// The name of the parameter family, `page` by default.
         public let key: String
         public let offset: Int?
         public let limit: Int?

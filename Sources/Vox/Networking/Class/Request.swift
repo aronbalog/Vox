@@ -105,14 +105,19 @@ public struct Request<ResourceType: Resource, Output: Sendable>: DataSourceResul
 public struct FetchRequest<ResourceType: Resource, Output: Sendable>: DataSourceResultable, QueryItemsCustomizable, FetchConfigurable, @unchecked Sendable {
     private var request: Request<ResourceType, Output>
     
+    /// The pagination set with `paginate(_:)`.
     public private(set) var pagination: PaginationStrategy?
     
+    /// The filter set with `filter(_:)`.
     public private(set) var filter: FilterStrategy?
     
+    /// The sort fields set with `sort(_:)`.
     public private(set) var sort: [Sort] = []
     
+    /// The sparse fieldsets by resource type, set with `fields(_:)`.
     public private(set) var fields: Fields?
     
+    /// The relationship paths added with `include(_:)`.
     public private(set) var include: [String] = []
     
     /// Headers sent in addition to the JSON:API ones.

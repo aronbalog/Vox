@@ -1,5 +1,6 @@
 import Foundation
 
+/// Creates requests that update resources.
 public protocol Updatable {
     associatedtype ResourceType
     associatedtype UpdatableResourceTypeCompletable

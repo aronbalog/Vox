@@ -11,13 +11,20 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
     /// How the paths of requests are determined.
     public enum Strategy: Sendable {
         /// A path for all requests, in which the `<type>` and `<id>` placeholders are replaced.
+        /// Requests for the collection leave `<id>` out, together with the slash before it.
         case path(_: String)
+        /// A router that provides the path of each request.
         case router(_: Router)
     }
     
+    /// The success callback of `fetch(id:)`.
     public typealias ResourceSuccessBlock = @MainActor (_ document: Document<ResourceType>) -> Void
+    /// The success callback of `create(_:)` and `update(_:)`, which receives `nil` for responses
+    /// without content.
     public typealias OptionalResourceSuccessBlock = @MainActor (_ document: Document<ResourceType>?) -> Void
+    /// The success callback of `fetch()`.
     public typealias ResourceCollectionSuccessBlock = @MainActor (_ document: Document<[ResourceType]>) -> Void
+    /// The success callback of `delete(id:)` and of the requests that change relationships.
     public typealias DeleteSuccessBlock = @MainActor () -> Void
     
     public typealias CreatableResourceTypeCompletable = Request<ResourceType, Document<ResourceType>?>
@@ -27,6 +34,7 @@ public final class DataSource<ResourceType: Resource>: CRUD, Sendable {
     public typealias DeletableResourceTypeCompletable = Request<ResourceType, Void>
     
     public let strategy: Strategy
+    /// The client that sends the requests.
     public let client: any Client
     
     public init(strategy: Strategy, client: any Client) {

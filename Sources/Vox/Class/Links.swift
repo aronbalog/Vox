@@ -5,6 +5,7 @@ public struct Links: @unchecked Sendable {
     /// The links by name. Links whose value is `null` are left out.
     public let all: [String: Link]
     
+    /// The link with the name, including names without an accessor.
     public subscript(name: String) -> Link? {
         return all[name]
     }
@@ -75,6 +76,7 @@ public struct Link: @unchecked Sendable {
     public let type: String?
     /// The languages of the link target.
     public let hreflang: [String]?
+    /// The meta of the link object, as JSON.
     public let meta: [String: Any]?
     
     private let describedbyLink: [Link]

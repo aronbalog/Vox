@@ -22,8 +22,10 @@ import Vox
 /// Responses with any status code are returned to the data source, which maps them to results
 /// and errors. Errors of Alamofire are thrown as they are.
 public struct AlamofireClient: Client {
+    /// The URL that paths are appended to and links are resolved against.
     public let baseURL: URL
     public let session: Session
+    /// Adapts and retries the requests, in addition to the interceptor of `session`.
     public let interceptor: (any RequestInterceptor)?
     
     public init(baseURL: URL, session: Session = .default, interceptor: (any RequestInterceptor)? = nil) {

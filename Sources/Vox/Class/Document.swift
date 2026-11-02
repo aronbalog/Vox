@@ -11,13 +11,16 @@ public final class Document<DataType>: @unchecked Sendable {
         set { ResourceGraph.lock.withLock { _data = newValue } }
     }
     
+    /// The meta of the document, as JSON. After `appendNext()`, the meta of the appended page.
     public internal(set) var meta: [String: Any]? {
         get { return ResourceGraph.lock.withLock { _meta } }
         set { ResourceGraph.lock.withLock { _meta = newValue } }
     }
     
+    /// The `jsonapi` member, which describes the server's implementation, as JSON.
     public let jsonapi: [String: Any]?
     
+    /// The links of the document. After `appendNext()`, the links of the appended page.
     public internal(set) var links: Links? {
         get { return ResourceGraph.lock.withLock { _links } }
         set { ResourceGraph.lock.withLock { _links = newValue } }

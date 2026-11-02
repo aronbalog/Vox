@@ -1,5 +1,6 @@
 import Foundation
 
+/// Creates requests that create resources.
 public protocol Creatable {
     associatedtype ResourceType
     associatedtype CreatableResourceTypeCompletable

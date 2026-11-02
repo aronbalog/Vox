@@ -1,5 +1,7 @@
 import Foundation
 
+/// The errors of serialization, deserialization and requests. Requests also throw the errors of
+/// their client.
 public enum JSONAPIError: Error {
     /// A resource couldn't be serialized, for example because a related resource has neither `id`
     /// nor `lid`.

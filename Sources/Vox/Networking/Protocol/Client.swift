@@ -9,6 +9,10 @@ import FoundationNetworking
 /// A client only has to transmit it. Responses with any status code are returned; clients throw
 /// only when no response was received.
 public protocol Client: Sendable {
+    /// Sends the request and returns the response, whatever its status code.
+    ///
+    /// - Throws: An error when no response was received, for example because the network is
+    ///   unavailable or the task was cancelled.
     func execute(_ request: ClientRequest) async throws -> ClientResponse
 }
 
@@ -23,10 +27,12 @@ public struct ClientRequest: Sendable {
         case link(String)
     }
     
+    /// The HTTP method, such as `GET` or `PATCH`.
     public var method: String
     public var target: Target
     /// Query items, which are added after the query a link or path contains already.
     public var queryItems: [URLQueryItem]
+    /// The headers, including the JSON:API `Accept` and `Content-Type` headers.
     public var headers: [String: String]
     /// The JSON:API document to send.
     public var body: Data?
@@ -112,6 +118,7 @@ public struct ClientRequest: Sendable {
 public struct ClientResponse: Sendable {
     public var statusCode: Int
     public var headers: [String: String]
+    /// The body, which is empty when the response has no content.
     public var data: Data
     
     public init(statusCode: Int, headers: [String: String] = [:], data: Data) {

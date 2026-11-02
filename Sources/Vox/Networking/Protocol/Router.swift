@@ -5,10 +5,15 @@ import Foundation
 /// Paths can contain the `<type>` and `<id>` placeholders, which are replaced with the resource
 /// type and id.
 public protocol Router: Sendable {
+    /// The path of the resource of `type` with `id`, for fetching it.
     func fetch(id: String, type: Resource.Type) -> String
+    /// The path of the collection of `type`, for fetching it.
     func fetch(type: Resource.Type) -> String
+    /// The path of the collection that `resource` is created in.
     func create(resource: Resource) -> String
+    /// The path of `resource`, for updating it. `resource` has an `id`.
     func update(resource: Resource) -> String
+    /// The path of the resource of `type` with `id`, for deleting it.
     func delete(id: String, type: Resource.Type) -> String
     
     /// The path of the relationship `name` of `resource`, for fetching and changing its

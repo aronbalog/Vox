@@ -64,6 +64,8 @@ open class Resource: NSObject {
         classMetadata = ResourceRuntime.prepare(self)
     }
     
+    /// The id of the resource, which resources created on the client don't have until the server
+    /// assigns one, unless the server accepts client-generated ids.
     public var id: String? {
         get {
             return ResourceGraph.lock.withLock {
@@ -98,12 +100,15 @@ open class Resource: NSObject {
         }
     }
     
+    /// The JSON:API type of the resource: the `resourceType` of its class, or the type of the
+    /// resource object for resources whose type has no class.
     public var type: String {
         return ResourceGraph.lock.withLock {
             storageLocked().object.type
         }
     }
     
+    /// The meta of the resource, as JSON. It's sent with the resource.
     public var meta: [String: Any]? {
         get {
             return ResourceGraph.lock.withLock {
@@ -158,10 +163,15 @@ open class Resource: NSObject {
         }
     }
     
+    /// A document with the resource as primary data.
+    ///
+    /// - Throws: `JSONAPIError.serialization` when an attribute or the meta can't be represented
+    ///   in JSON, or when a related resource has neither `id` nor `lid`.
     public func documentDictionary() throws -> [String: Any] {
         return ["data": try resourceObjectJSON(requiringID: false)]
     }
     
+    /// The JSON data of `documentDictionary()`.
     public func documentData() throws -> Data {
         return try JSONSerialization.data(withJSONObject: documentDictionary(), options: [])
     }
@@ -565,10 +575,15 @@ extension Resource {
 }
 
 extension Array where Element: Resource {
+    /// A document with the resources as primary data.
+    ///
+    /// - Throws: `JSONAPIError.serialization` when a resource has neither `id` nor `lid`, and for
+    ///   the reasons of `Resource.documentDictionary()`.
     public func documentDictionary() throws -> [String: Any] {
         return ["data": try map { try $0.resourceObjectJSON(requiringID: true) }]
     }
     
+    /// The JSON data of `documentDictionary()`.
     public func documentData() throws -> Data {
         return try JSONSerialization.data(withJSONObject: documentDictionary(), options: [])
     }

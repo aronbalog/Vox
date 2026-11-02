@@ -16,8 +16,10 @@ public struct URLSessionClient: Client {
     /// Changes a request before it's sent, for example to add authentication.
     public typealias RequestAdapter = @Sendable (URLRequest) async throws -> URLRequest
     
+    /// The URL that paths are appended to and links are resolved against.
     public let baseURL: URL
     public let session: URLSession
+    /// Changes requests before they're sent.
     public let adapter: RequestAdapter?
     
     public init(baseURL: URL, session: URLSession = .shared, adapter: RequestAdapter? = nil) {

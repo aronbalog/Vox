@@ -8,7 +8,9 @@ import Foundation
 /// // filter[author]=9&filter[tag]=swift,ios
 /// ```
 public struct Filter: FilterStrategy {
+    /// The values by field.
     public let values: [String: String]
+    /// The name of the parameter family, `filter` by default.
     public let key: String
     
     public init(_ values: [String: String], key: String = "filter") {

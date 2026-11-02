@@ -3,6 +3,7 @@ import Foundation
 extension Pagination {
     /// Sends `page[number]` and `page[size]`.
     public struct PageBased: PaginationStrategy {
+        /// The name of the parameter family, `page` by default.
         public let key: String
         public let number: Int?
         public let size: Int?

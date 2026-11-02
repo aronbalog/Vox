@@ -1,5 +1,6 @@
 import Foundation
 
+/// A request whose collection can be paginated.
 public protocol FetchPageable {
     associatedtype FetchConfigurableType
 
@@ -20,6 +21,7 @@ public struct PaginationData<T>: @unchecked Sendable {
 }
 
 extension Document where DataType: Collection, DataType.Element: Resource {
+    /// A request for a page of the collection.
     public typealias PageRequest = FetchRequest<DataType.Element, Document<[DataType.Element]>>
     
     /// A request for the first page, or `nil` when the document has no `first` link.

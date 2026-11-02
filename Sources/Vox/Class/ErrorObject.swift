@@ -20,13 +20,17 @@ final public class ErrorObject: @unchecked Sendable {
         }
     }
     
+    /// An identifier of this occurrence of the problem.
     public let id: String?
     /// The `about` and `type` links of the error.
     public let links: Links?
     /// The HTTP status code as a string.
     public let status: String?
+    /// An application-specific error code.
     public let code: String?
+    /// A summary of the problem, which is the same for every occurrence.
     public let title: String?
+    /// An explanation of this occurrence of the problem.
     public let detail: String?
     public let source: Source?
     public let meta: [String: Any]?

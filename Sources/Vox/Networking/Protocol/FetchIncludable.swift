@@ -1,5 +1,6 @@
 import Foundation
 
+/// A request that can include related resources in the response document.
 public protocol FetchIncludable {
     associatedtype FetchConfigurableType
     
