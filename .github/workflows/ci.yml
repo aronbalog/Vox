@@ -13,18 +13,34 @@ defaults:
     shell: bash
 
 jobs:
-  # One job for every Apple platform, because hosted macOS runners are scarce and each job waits
-  # for one. The iOS, tvOS and watchOS steps run even when the macOS build or tests fail.
-  apple:
-    name: Apple platforms
+  # Indexing, which only an editor uses, is off in every build.
+  macos:
+    name: macOS (swift test)
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
-      # The simulator boots while the macOS build and tests run. The iOS step boots it otherwise.
-      - name: Boot the iOS Simulator
+      - name: Install xcbeautify
+        run: command -v xcbeautify || brew install xcbeautify
+      - name: Toolchain
+        run: swift --version
+      - name: Build
+        run: swift build --build-tests --disable-index-store 2>&1 | xcbeautify --renderer github-actions
+      - name: Test
+        run: swift test --skip-build 2>&1 | xcbeautify --renderer github-actions
+
+  ios:
+    name: iOS Simulator (xcodebuild test)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      # The simulator boots while the tests build. The test step boots it otherwise.
+      - name: Boot the simulator
         continue-on-error: true
         run: |
           device=$(xcrun simctl list devices available --json \
@@ -33,30 +49,35 @@ jobs:
           xcrun simctl boot "$device"
       - name: Install xcbeautify
         run: command -v xcbeautify || brew install xcbeautify
-      - name: Toolchain
-        run: swift --version
-      # Indexing, which only an editor uses, is off in every build.
-      - name: Build (macOS)
-        run: swift build --build-tests --disable-index-store 2>&1 | xcbeautify --renderer github-actions
-      - name: Test (macOS)
-        run: swift test --skip-build 2>&1 | xcbeautify --renderer github-actions
+      - name: Build
+        run: |
+          xcodebuild build-for-testing -scheme Vox-Package -destination "id=$IOS_SIMULATOR" \
+            COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | xcbeautify --renderer github-actions
       # Swift Testing runs the tests in parallel in one process. Parallel testing in xcodebuild would
       # clone and boot more simulators.
-      - name: Test (iOS Simulator)
-        if: ${{ !cancelled() }}
+      - name: Test
         run: |
           xcrun simctl bootstatus "$IOS_SIMULATOR" -b
-          xcodebuild test -scheme Vox-Package -destination "id=$IOS_SIMULATOR" -parallel-testing-enabled NO \
-            COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | xcbeautify --renderer github-actions
-      - name: Build (tvOS)
-        if: ${{ !cancelled() }}
+          xcodebuild test-without-building -scheme Vox-Package -destination "id=$IOS_SIMULATOR" \
+            -parallel-testing-enabled NO 2>&1 | xcbeautify --renderer github-actions
+
+  platforms:
+    name: ${{ matrix.platform }} (xcodebuild build)
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [tvOS, watchOS]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Install xcbeautify
+        run: command -v xcbeautify || brew install xcbeautify
+      - name: Build
         run: |
-          xcodebuild build -scheme Vox-Package -destination "generic/platform=tvOS" \
-            COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | xcbeautify --renderer github-actions
-      - name: Build (watchOS)
-        if: ${{ !cancelled() }}
-        run: |
-          xcodebuild build -scheme Vox-Package -destination "generic/platform=watchOS" \
+          xcodebuild build -scheme Vox-Package -destination "generic/platform=${{ matrix.platform }}" \
             COMPILER_INDEX_STORE_ENABLE=NO 2>&1 | xcbeautify --renderer github-actions
 
   linux:
@@ -102,7 +123,7 @@ jobs:
 
   coverage-badge:
     name: Coverage badge
-    needs: [apple, linux, cocoapods]
+    needs: [macos, ios, platforms, linux, cocoapods]
     # Publishes badges/coverage.svg to the gh-pages branch, next to the project site, once every
     # other job has passed. The linux job fails when any library code isn't covered.
     runs-on: ubuntu-latest
