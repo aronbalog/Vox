@@ -108,7 +108,7 @@ public struct Link: @unchecked Sendable {
             return url
         }
         
-        return href.addingPercentEncoding(withAllowedCharacters: allowedCharacters).flatMap { URL(string: $0, relativeTo: baseURL) }
+        return URL(string: href.percentEncoded(allowing: allowedCharacters), relativeTo: baseURL)
     }
     
     init?(json: Any?) {

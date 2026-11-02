@@ -286,6 +286,12 @@ struct ClientRequestURLSpec {
         #expect(url(.path("articles"), queryItems: queryItems) == "https://example.com/api/articles?filter%5Bname%5D=a%26b%3Dc%2Bd&include=author,comments.author&flag")
         #expect(url(.link("https://example.com/articles?page[number]=2"), queryItems: [queryItems[2]]) == "https://example.com/articles?page%5Bnumber%5D=2&flag")
     }
+    
+    @Test("links that aren't URLs, even when percent-encoded, have no URL")
+    func invalidLinks() {
+        #expect(url(.link("https://example.com:port/articles")) == nil)
+        #expect(url(.link("https://example.com:port/articles"), queryItems: [URLQueryItem(name: "flag", value: nil)]) == nil)
+    }
 }
 
 @Suite("Page links")

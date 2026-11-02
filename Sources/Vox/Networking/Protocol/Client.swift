@@ -53,53 +53,27 @@ public struct ClientRequest: Sendable {
     /// Query item names and values are percent-encoded, including the brackets of parameters
     /// such as `page[number]` and plus signs, which some servers decode as spaces.
     public func url(relativeTo baseURL: URL) -> URL? {
-        let url: URL?
+        var components: URLComponents?
         
         switch target {
         case .path(let path):
-            url = ClientRequest.url(appending: path, to: baseURL)
+            components = URLComponents(url: baseURL, resolvingAgainstBaseURL: true)
+            components?.append(path: path)
         case .link(let link):
-            url = Link.url(from: link, relativeTo: baseURL)
-        }
-        
-        guard let resolvedURL = url, var components = URLComponents(url: resolvedURL, resolvingAgainstBaseURL: true) else {
-            return nil
+            components = Link.url(from: link, relativeTo: baseURL).flatMap { url in
+                URLComponents(url: url, resolvingAgainstBaseURL: true)
+            }
         }
         
         if !queryItems.isEmpty {
-            let query = queryItems.map { item in
+            let query = [components?.percentEncodedQuery].compactMap { $0 }.filter { !$0.isEmpty } + queryItems.map { item in
                 ClientRequest.encodeQueryComponent(item.name) + (item.value.map { "=" + ClientRequest.encodeQueryComponent($0) } ?? "")
             }
             
-            components.percentEncodedQuery = ([components.percentEncodedQuery].compactMap { $0 }.filter { !$0.isEmpty } + query).joined(separator: "&")
+            components?.percentEncodedQuery = query.joined(separator: "&")
         }
         
-        return components.url
-    }
-    
-    private static func url(appending path: String, to baseURL: URL) -> URL? {
-        guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: true) else {
-            return nil
-        }
-        
-        let parts = path.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)
-        let relativePath = parts[0].drop { $0 == "/" }
-        var basePath = Substring(components.percentEncodedPath)
-        
-        while basePath.hasSuffix("/") {
-            basePath = basePath.dropLast()
-        }
-        
-        guard let encodedPath = relativePath.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
-            return nil
-        }
-        
-        components.percentEncodedPath = String(basePath) + "/" + encodedPath
-        components.percentEncodedQuery = parts.count > 1
-            ? String(parts[1]).addingPercentEncoding(withAllowedCharacters: Link.allowedCharacters)
-            : nil
-        
-        return components.url
+        return components?.url
     }
     
     private static let queryComponentAllowedCharacters: CharacterSet = {
@@ -110,7 +84,22 @@ public struct ClientRequest: Sendable {
     }()
     
     private static func encodeQueryComponent(_ component: String) -> String {
-        component.addingPercentEncoding(withAllowedCharacters: queryComponentAllowedCharacters) ?? component
+        component.percentEncoded(allowing: queryComponentAllowedCharacters)
+    }
+}
+
+private extension URLComponents {
+    /// Appends `path`, which can have a query, to the path and replaces the query with it.
+    mutating func append(path: String) {
+        let parts = path.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)
+        var basePath = Substring(percentEncodedPath)
+        
+        while basePath.hasSuffix("/") {
+            basePath = basePath.dropLast()
+        }
+        
+        percentEncodedPath = String(basePath) + "/" + parts[0].drop { $0 == "/" }.percentEncoded(allowing: .urlPathAllowed)
+        percentEncodedQuery = parts.count > 1 ? parts[1].percentEncoded(allowing: Link.allowedCharacters) : nil
     }
 }
 
