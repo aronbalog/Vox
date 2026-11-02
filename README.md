@@ -107,13 +107,25 @@ final class Person: Resource {
 }
 ```
 
+Properties can also be declared with `@Member`, which reads and writes the JSON on every platform, including Linux. `@Member` properties can have Swift types such as `Int`, `Double` and `Bool`, and an initial value:
+
+```swift
+final class Comment: Resource {
+    override class var resourceType: String { "comments" }
+
+    @Member var body: String?
+    @Member var likeCount: Int = 0
+    @Member var author: Person?
+}
+```
+
 - A class that doesn't override `resourceType` has the name of the class as its type. A subclass with the same type as its superclass isn't registered for it, so resources of that type decode as instances of the superclass.
 - A property typed as a `Resource` subclass is a to-one relationship, and a property typed as an array of one is a to-many relationship. All other properties are attributes.
 - A relationship declared as `Resource` or `[Resource]` can hold resources of any type. Each resource is an instance of the class of its type, so `as? Person` tells them apart.
-- Attributes can be strings, numbers, Booleans, dates, URLs, and arrays and dictionaries of JSON values. Numbers and Booleans are declared as `NSNumber`, because `Int`, `Double` and `Bool` properties can't be backed by the JSON.
+- Attributes can be strings, numbers, Booleans, dates, URLs, and arrays and dictionaries of JSON values. With `@objc dynamic`, numbers and Booleans are declared as `NSNumber`, because `Int`, `Double` and `Bool` properties can't be backed by the JSON.
 - `Date` attributes are ISO 8601 strings in JSON. Date-times can have any offset and fractional seconds, and plain dates are taken as midnight UTC. Dates are sent as UTC date-times.
 - `URL` attributes are strings in JSON.
-- A value whose JSON type doesn't match the property reads as `nil`.
+- A value whose JSON type doesn't match the property reads as `nil`, like a missing one. A `@Member` property with an initial value reads that value instead.
 
 Properties named differently than their member are mapped with `codingKeys`:
 
@@ -264,7 +276,7 @@ Collections are serialized the same way. Each of their resources needs an `id` o
 let data = try [person1, person2].documentData()
 ```
 
-Serialization throws `JSONAPIError.serialization(reason:)` when the resource can't be represented: for example, when an attribute holds a value that isn't JSON, such as `Data`, or when a related resource has neither an `id` nor a `lid`. Like deserialization, it's declared `throws(JSONAPIError)`.
+Serialization throws `JSONAPIError.serialization(reason:)` when the resource can't be represented: for example, when an attribute holds a value that isn't JSON, such as `Data`, or when a related resource has neither an `id` nor a `lid`. It also throws for attributes and relationships named `type` or `id`, and for an attribute and a relationship with the same name, which JSON:API doesn't allow. Like deserialization, it's declared `throws(JSONAPIError)`.
 
 ### Nullability
 
@@ -281,7 +293,7 @@ author.lid = "new-author"
 article.author = author
 ```
 
-In received documents, resource identifiers with a `lid` resolve to the resource with that `lid`.
+Once the resource has an `id`, the `id` is sent instead of the `lid`. In received documents, resource identifiers with a `lid` resolve to the resource with that `lid`.
 
 ## Networking
 
@@ -433,7 +445,7 @@ Requests throw these errors:
 | `JSONAPIError.unacceptableStatusCode(statusCode, body:)` | The status code is outside 200–299 and the response has no error objects. |
 | `JSONAPIError.invalidDocument(reason:)` | The response isn't the expected document. |
 | `JSONAPIError.serialization(reason:)` | The request document or URL couldn't be built. Nothing was sent. |
-| The errors of the client | The request failed, for example with a `URLError` or an `AFError`. |
+| The errors of the client | The request failed, for example with a `URLError`. |
 
 ```swift
 do {
@@ -565,9 +577,9 @@ final class Article: Resource, @unchecked Sendable {
 
 ## Linux
 
-Vox builds on Linux, with both clients. Without the Objective-C runtime, two things work differently:
+Vox builds on Linux, including `URLSessionClient`. Without the Objective-C runtime, two things work differently:
 
-- `@objc dynamic` properties can't be backed by the JSON. Declare those properties with `@Member` instead. `@Member` reads and writes the JSON on every platform: `article.title = "Dune"`. A plain stored property still only declares the member's type, and is read and written with the subscript: `article["title"] as? String`.
+- There are no `@objc dynamic` properties, so properties are declared with `@Member`, which reads and writes the JSON on every platform: `article.title = "Dune"`. A plain stored property only declares the member's type, and is read and written with the subscript: `article["title"] as? String`.
 - Classes aren't found by scanning the process. A class is registered when its first instance is created, and when it is the resource type of a data source or a deserializer. The classes of related and included resources still need to be registered before documents containing them are decoded, unless an instance of the class was created first:
 
 ```swift
@@ -596,4 +608,3 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 ## License
 
 Vox is available under the MIT license. See [LICENSE.md](LICENSE.md).
-	

@@ -8,8 +8,8 @@ import Foundation
 /// A JSON:API resource.
 ///
 /// Subclasses declare their JSON:API type in `resourceType`, and their attributes and
-/// relationships as stored `@objc dynamic` properties. Their values are read from and written to
-/// the resource's JSON:
+/// relationships as `@objc dynamic` properties, or as `@Member` properties, which work on every
+/// platform. Their values are read from and written to the resource's JSON:
 ///
 /// ```swift
 /// final class Article: Resource {
@@ -54,9 +54,10 @@ open class Resource: NSObject {
     /// registered, and neither is `Resource` itself.
     ///
     /// On Apple platforms, classes are found in the Objective-C runtime, and registering them is
-    /// optional. On other platforms, the resource classes of data sources and deserializers are
-    /// registered when they're used, and the classes of related and included resources must be
-    /// registered before documents containing them are decoded.
+    /// optional. On other platforms, a class is registered when its first instance is created, and
+    /// when it's the resource class of a data source or deserializer. The classes of related and
+    /// included resources that have no instance yet must be registered before documents
+    /// containing them are decoded.
     public static func register() {
         ResourceRuntime.register(self)
     }
@@ -92,7 +93,7 @@ open class Resource: NSObject {
     }
     
     /// A local identifier for a resource that has no `id` yet, which other resources in the same
-    /// request document can refer to it by.
+    /// request document can refer to it by. It's sent only while the resource has no `id`.
     public var lid: String? {
         get {
             return ResourceGraph.lock.withLock {
@@ -175,7 +176,8 @@ open class Resource: NSObject {
     /// A document with the resource as primary data.
     ///
     /// - Throws: `JSONAPIError.serialization` when an attribute or the meta can't be represented
-    ///   in JSON, or when a related resource has neither `id` nor `lid`.
+    ///   in JSON, when an attribute or relationship is named `type` or `id` or an attribute and a
+    ///   relationship have the same name, or when a related resource has neither `id` nor `lid`.
     public func documentDictionary() throws(JSONAPIError) -> [String: Any] {
         ["data": try resourceObjectJSON(requiringID: false)]
     }
@@ -411,8 +413,9 @@ open class Resource: NSObject {
     /// The resource object of the resource for a request document.
     ///
     /// - Throws: `JSONAPIError.serialization` when an attribute or the meta can't be represented
-    ///   in JSON, when a related resource has neither `id` nor `lid`, or when `requiringID` is
-    ///   set and the resource itself has neither.
+    ///   in JSON, when an attribute or relationship is named `type` or `id` or an attribute and a
+    ///   relationship have the same name, when a related resource has neither `id` nor `lid`, or
+    ///   when `requiringID` is set and the resource itself has neither.
     func resourceObjectJSON(requiringID: Bool) throws(JSONAPIError) -> [String: Any] {
         return try ResourceGraph.lock.withLock { () throws(JSONAPIError) -> [String: Any] in
             let (object, graph) = storageLocked()

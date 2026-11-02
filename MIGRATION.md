@@ -6,12 +6,12 @@ Vox 2.0 requires Swift 6.1 and is built around `async`/`await`. Resource definit
 
 - Vox 2.0 requires Swift 6.1, which comes with Xcode 16.3 and later. Vox builds in the Swift 6 language mode, and apps can still use the Swift 5 mode.
 - The minimum deployment target is iOS 13, which was iOS 8. Vox also supports macOS 10.15, tvOS 13, watchOS 6 and Linux.
-- Vox is a Swift package with the product `Vox`. The CocoaPods pod is `Vox`, without subspecs: the `Vox/Alamofire` subspec is removed, and Vox no longer depends on Alamofire.
-- The sources moved from `Vox/Core` to `Sources/Vox`. Vox no longer contains Objective-C code, an umbrella header or an Xcode project.
+- Vox is a Swift package with the product `Vox`. The CocoaPods pod is `Vox`, without subspecs, so Podfiles that use `Vox/Core` or `Vox/Alamofire` depend on `Vox` instead. Vox no longer depends on Alamofire.
+- The sources moved from `Vox/Core` to `Sources/Vox`. Vox no longer contains Objective-C code or an umbrella header.
 
 ## Resources
 
-Resource subclasses and their `@objc dynamic` properties don't change. Classes are now prepared when their first instance is created, instead of at launch. Overriding `resourceType` is optional: a class that doesn't override it has the name of the class as its type, instead of crashing.
+Resource subclasses and their `@objc dynamic` properties don't change. Classes are now prepared when their first instance is created, instead of at launch. Overriding `resourceType` is optional: a class that doesn't override it has the name of the class as its type, instead of crashing. Properties can also be declared with the new `@Member` property wrapper, which works on Linux too and supports types such as `Int` and `Bool`.
 
 ### Initialization and contexts
 
@@ -25,7 +25,7 @@ let person = Person(context: nil)
 let person = Person()
 ```
 
-`Context.registerClass(_:)` is replaced by `Resource.register()`, which is needed only on platforms without the Objective-C runtime:
+`Context.registerClass(_:)` is replaced by `Resource.register()`. Only platforms without the Objective-C runtime need it, for the classes of related and included resources that have no instance yet:
 
 ```swift
 // 1.x
@@ -56,6 +56,7 @@ person["name"] = "Ann"
 - Setting a relationship to `nil` leaves it out of the document. Use `.null()` and `.null` to empty relationships.
 - An empty to-many relationship is sent as `"data": []` instead of `"data": null`.
 - Values that can't be represented in JSON throw instead of crashing with an Objective-C exception.
+- Attributes and relationships named `type` or `id`, and an attribute and a relationship with the same name, throw `JSONAPIError.serialization(reason:)` instead of being sent, because JSON:API doesn't allow them.
 - `NSNumber.null` is now NaN. An attribute set to 2147483647 used to be sent as `null`.
 - `isNull` is internal.
 

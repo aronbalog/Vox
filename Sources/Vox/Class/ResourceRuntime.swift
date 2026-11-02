@@ -29,9 +29,10 @@ struct ResourceProperty {
 /// Connects `Resource` subclasses to the runtime.
 ///
 /// The first time a resource class is instantiated, its stored properties are inspected with
-/// `Mirror` to tell attributes, to-one and to-many relationships apart. On Apple platforms, the
-/// accessors of its `@objc dynamic` properties are then replaced with implementations that read
-/// from and write to the resource's JSON, and the class is registered for its `resourceType`.
+/// `Mirror` to tell attributes, to-one and to-many relationships apart, and the class is
+/// registered for its `resourceType`. On Apple platforms, the accessors of its `@objc dynamic`
+/// properties are then replaced with implementations that read from and write to the resource's
+/// JSON.
 enum ResourceRuntime {
     private struct State {
         var metadataByClass: [ObjectIdentifier: ResourceMetadata] = [:]
@@ -118,8 +119,6 @@ enum ResourceRuntime {
         }
     }
     
-    /// `value` if it's an instance of `type`, with JSON strings converted for `URL` and `Date`
-    /// properties.
     /// The names of `@Member` properties by the key paths of their storage.
     private static let memberNames = Locked<[AnyKeyPath: String]>([:])
     
@@ -158,6 +157,8 @@ enum ResourceRuntime {
         return cast(raw, to: type) as? Value ?? fallback
     }
     
+    /// `value` if it's an instance of `type`, with JSON strings converted for `URL` and `Date`
+    /// properties.
     static func cast(_ value: Any, to type: Any.Type) -> Any? {
         if type == Any.self || type == AnyObject.self {
             return value
