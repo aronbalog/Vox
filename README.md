@@ -54,7 +54,7 @@ Upgrading from 1.x? Read the [migration guide](MIGRATION.md). Changes are listed
 Add the package to the dependencies in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/aronbalog/Vox.git", from: "2.0.0")
+.package(url: "https://github.com/aronbalog/Vox.git", .upToNextMinor(from: "2.0.0"))
 ```
 
 and the `Vox` product to your target:
@@ -70,7 +70,7 @@ In Xcode, choose File > Add Package Dependencies and enter the URL of the reposi
 ### CocoaPods
 
 ```ruby
-pod 'Vox', '~> 2.0'
+pod 'Vox', '~> 2.0.0'
 ```
 
 ## Defining resources
