@@ -4,7 +4,7 @@ import Foundation
 import FoundationNetworking
 #endif
 import Testing
-import Vox
+@testable import Vox
 import VoxAlamofire
 
 /// Answers the requests of `StubURLProtocol.session` with `handler` and records them with their
@@ -16,8 +16,22 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         var body = ""
     }
     
-    nonisolated(unsafe) static var handler: (URLRequest) throws -> Response = { _ in Response() }
-    nonisolated(unsafe) static var requests: [(request: URLRequest, body: Data?)] = []
+    private struct State {
+        var handler: (URLRequest) throws -> Response = { _ in Response() }
+        var requests: [(request: URLRequest, body: Data?)] = []
+    }
+    
+    private static let state = Locked(State())
+    
+    static var handler: (URLRequest) throws -> Response {
+        get { state.withLock { $0.handler } }
+        set { state.withLock { $0.handler = newValue } }
+    }
+    
+    static var requests: [(request: URLRequest, body: Data?)] {
+        get { state.withLock { $0.requests } }
+        set { state.withLock { $0.requests = newValue } }
+    }
     
     static var session: Session {
         let configuration = URLSessionConfiguration.ephemeral
@@ -35,7 +49,8 @@ fileprivate final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     }
     
     override func startLoading() {
-        StubURLProtocol.requests.append((request, StubURLProtocol.body(of: request)))
+        let body = StubURLProtocol.body(of: request)
+        StubURLProtocol.state.withLock { $0.requests.append((request, body)) }
         
         do {
             let stub = try StubURLProtocol.handler(request)

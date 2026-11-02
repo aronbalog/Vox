@@ -32,13 +32,16 @@ func isOnMainQueue() -> Bool {
 
 /// A client that records requests and responds to each with the next of `responses`, repeating
 /// the last one.
-final class RecordingClient: Client, @unchecked Sendable {
-    private let lock = Lock()
-    private var _requests: [ClientRequest] = []
-    private var responses: [Result<ClientResponse, Error>]
+final class RecordingClient: Client {
+    private struct State {
+        var requests: [ClientRequest] = []
+        var responses: [Result<ClientResponse, Error>]
+    }
+    
+    private let state: Locked<State>
     
     init(responses: [Result<ClientResponse, Error>]) {
-        self.responses = responses
+        state = Locked(State(responses: responses))
     }
     
     convenience init(response: ClientResponse = ClientResponse(statusCode: 204, data: Data())) {
@@ -58,14 +61,14 @@ final class RecordingClient: Client, @unchecked Sendable {
     }
     
     var requests: [ClientRequest] {
-        return lock.withLock { _requests }
+        return state.withLock { $0.requests }
     }
     
     func execute(_ request: ClientRequest) async throws -> ClientResponse {
-        let response = lock.withLock {
-            _requests.append(request)
+        let response = state.withLock { state in
+            state.requests.append(request)
             
-            return responses.count > 1 ? responses.removeFirst() : responses[0]
+            return state.responses.count > 1 ? state.responses.removeFirst() : state.responses[0]
         }
         
         return try response.get()

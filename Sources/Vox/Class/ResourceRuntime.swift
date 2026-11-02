@@ -33,27 +33,32 @@ struct ResourceProperty {
 /// accessors of its `@objc dynamic` properties are then replaced with implementations that read
 /// from and write to the resource's JSON, and the class is registered for its `resourceType`.
 enum ResourceRuntime {
-    // All state is guarded by `ResourceGraph.lock`.
-    nonisolated(unsafe) private static var metadataByClass: [ObjectIdentifier: ResourceMetadata] = [:]
-    nonisolated(unsafe) private static var classesByType: [String: Resource.Type] = [:]
-    #if canImport(ObjectiveC)
-    nonisolated(unsafe) private static var preparedClasses = Set<ObjectIdentifier>()
-    nonisolated(unsafe) private static var scannedClassCount: Int32 = -1
-    /// Types no class was found for in the latest scan.
-    nonisolated(unsafe) private static var unknownTypes = Set<String>()
-    #endif
+    private struct State {
+        var metadataByClass: [ObjectIdentifier: ResourceMetadata] = [:]
+        var classesByType: [String: Resource.Type] = [:]
+        #if canImport(ObjectiveC)
+        var preparedClasses = Set<ObjectIdentifier>()
+        var scannedClassCount: Int32 = -1
+        /// Types no class was found for in the latest scan.
+        var unknownTypes = Set<String>()
+        #endif
+    }
+    
+    /// Guarded by `ResourceGraph.lock`, which is held while a class is prepared or the runtime is
+    /// scanned, so other threads only see classes that are prepared completely.
+    private static let state = Locked(State(), guardedBy: ResourceGraph.lock)
     
     /// The metadata of the class of `resource`, which is prepared first if needed.
     static func prepare(_ resource: Resource) -> ResourceMetadata {
-        let resourceClass = type(of: resource)
+        let classID = ObjectIdentifier(type(of: resource))
         
         return ResourceGraph.lock.withLock {
-            if let metadata = metadataByClass[ObjectIdentifier(resourceClass)] {
+            if let metadata = state.withLock({ $0.metadataByClass[classID] }) {
                 return metadata
             }
             
             let metadata = makeMetadata(for: resource)
-            metadataByClass[ObjectIdentifier(resourceClass)] = metadata
+            state.withLock { $0.metadataByClass[classID] = metadata }
             
             return metadata
         }
@@ -62,8 +67,21 @@ enum ResourceRuntime {
     /// Registers `resourceClass` for its `resourceType`, unless another class is registered for
     /// that type already.
     static func register(_ resourceClass: Resource.Type) {
-        ResourceGraph.lock.withLock {
-            registerLocked(resourceClass)
+        guard let type = declaredResourceType(of: resourceClass) else {
+            return
+        }
+        
+        state.withLock { state in
+            if let registeredClass = state.classesByType[type] {
+                #if DEBUG
+                if registeredClass != resourceClass {
+                    print("[Vox] Both \(registeredClass) and \(resourceClass) declare resource type \"\(type)\"; \(registeredClass) is used.")
+                }
+                #endif
+                return
+            }
+            
+            state.classesByType[type] = resourceClass
         }
     }
     
@@ -74,25 +92,29 @@ enum ResourceRuntime {
     /// classes have been loaded and another type is missing.
     static func resourceClass(for type: String) -> Resource.Type? {
         return ResourceGraph.lock.withLock {
-            if let resourceClass = classesByType[type] {
+            if let resourceClass = state.withLock({ $0.classesByType[type] }) {
                 return resourceClass
             }
             
             #if canImport(ObjectiveC)
-            guard !unknownTypes.contains(type) else {
+            guard !state.withLock({ $0.unknownTypes.contains(type) }) else {
                 return nil
             }
             
             scanLoadedClassesIfNeeded()
             
-            if let resourceClass = classesByType[type] {
-                return resourceClass
+            return state.withLock { state -> Resource.Type? in
+                if let resourceClass = state.classesByType[type] {
+                    return resourceClass
+                }
+                
+                state.unknownTypes.insert(type)
+                
+                return nil
             }
-            
-            unknownTypes.insert(type)
-            #endif
-            
+            #else
             return nil
+            #endif
         }
     }
     
@@ -154,14 +176,14 @@ enum ResourceRuntime {
             }
             
             #if canImport(ObjectiveC)
-            if preparedClasses.insert(ObjectIdentifier(resourceClass)).inserted {
+            if state.withLock({ $0.preparedClasses.insert(ObjectIdentifier(resourceClass)).inserted }) {
                 for property in objectiveCProperties.values where property.isObject {
                     if properties[property.name] != nil {
                         installAccessors(for: property, on: resourceClass)
                     }
                 }
                 
-                registerLocked(resourceClass)
+                register(resourceClass)
             }
             #endif
             
@@ -169,23 +191,6 @@ enum ResourceRuntime {
         }
         
         return ResourceMetadata(properties: properties)
-    }
-    
-    private static func registerLocked(_ resourceClass: Resource.Type) {
-        guard let type = declaredResourceType(of: resourceClass) else {
-            return
-        }
-        
-        if let registeredClass = classesByType[type] {
-            #if DEBUG
-            if registeredClass != resourceClass {
-                print("[Vox] Both \(registeredClass) and \(resourceClass) declare resource type \"\(type)\"; \(registeredClass) is used.")
-            }
-            #endif
-            return
-        }
-        
-        classesByType[type] = resourceClass
     }
     
     /// The class's `resourceType`, or `nil` when the class doesn't override it itself.
@@ -226,7 +231,7 @@ enum ResourceRuntime {
     private static func scanLoadedClassesIfNeeded() {
         let classCount = objc_getClassList(nil, 0)
         
-        guard classCount != scannedClassCount else {
+        guard classCount != state.withLock({ $0.scannedClassCount }) else {
             return
         }
         
@@ -234,14 +239,17 @@ enum ResourceRuntime {
         defer { classes.deallocate() }
         
         let copiedCount = objc_getClassList(AutoreleasingUnsafeMutablePointer<AnyClass>(classes), classCount)
-        scannedClassCount = classCount
-        unknownTypes.removeAll()
+        
+        state.withLock { state in
+            state.scannedClassCount = classCount
+            state.unknownTypes.removeAll()
+        }
         
         for index in 0..<Int(min(classCount, copiedCount)) {
             let loadedClass: AnyClass = classes[index]
             
             if isStrictSubclassOfResource(loadedClass), let resourceClass = loadedClass as? Resource.Type {
-                registerLocked(resourceClass)
+                register(resourceClass)
             }
         }
     }

@@ -1,13 +1,8 @@
 import Foundation
 
-// Placeholders a property can be set to in order to send JSON `null`. Setting a property to `nil`
-// leaves the member out instead. The dictionaries are constants holding only strings and NSNull.
-let nullString: String = UUID().uuidString
-let nullNumber: NSNumber = NSNumber(value: Double.nan)
-nonisolated(unsafe) let nullDictionary: [String: Any] = [.null: NSNull()]
-let nullStringArray: [String] = [.null]
-let nullNumberArray: [NSNumber] = [.null]
-nonisolated(unsafe) let nullDictionaryArray: [[String: Any]] = [.null]
+// A property can be set to one of the `null` placeholders in order to send JSON `null`. Setting a
+// property to `nil` leaves the member out instead.
+private let nullString = UUID().uuidString
 
 protocol NullableAware {
     var isNull: Bool { get }
@@ -50,14 +45,14 @@ extension Array where Element == String {
     
     /// A placeholder that's sent as `null`.
     public static var null: Array<Element> {
-        return nullStringArray
+        return [.null]
     }
 }
 
 extension Dictionary where Key == String {
     /// A placeholder that's sent as `null`.
     public static var null: Dictionary<String, Any> {
-        return nullDictionary
+        return [.null: NSNull()]
     }
     
     var isNull: Bool {
@@ -68,7 +63,7 @@ extension Dictionary where Key == String {
 extension Array where Element == Dictionary<String, Any> {
     /// A placeholder that's sent as `null`.
     public static var null: Array<Element> {
-        return nullDictionaryArray
+        return [.null]
     }
     
     var isNull: Bool {
@@ -84,14 +79,14 @@ extension NSNumber: NullableAware {
     
     /// A placeholder that's sent as `null`.
     public static var null: NSNumber {
-        return nullNumber
+        return NSNumber(value: Double.nan)
     }
 }
 
 extension Array where Element == NSNumber {
     /// A placeholder that's sent as `null`.
     public static var null: Array<Element> {
-        return nullNumberArray
+        return [.null]
     }
     
     var isNull: Bool {

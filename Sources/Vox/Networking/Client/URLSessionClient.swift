@@ -89,16 +89,19 @@ public struct URLSessionClient: Client {
 }
 
 /// A data task that can be cancelled before it exists.
-private final class CancellableDataTask: @unchecked Sendable {
-    private let lock = Lock()
-    private var task: URLSessionDataTask?
-    private var isCancelled = false
+private final class CancellableDataTask: Sendable {
+    private struct State {
+        var task: URLSessionDataTask?
+        var isCancelled = false
+    }
+    
+    private let state = Locked(State())
     
     func start(_ task: URLSessionDataTask) {
-        let isCancelled = lock.withLock { () -> Bool in
-            self.task = task
+        let isCancelled = state.withLock { state -> Bool in
+            state.task = task
             
-            return self.isCancelled
+            return state.isCancelled
         }
         
         task.resume()
@@ -109,10 +112,10 @@ private final class CancellableDataTask: @unchecked Sendable {
     }
     
     func cancel() {
-        let task = lock.withLock { () -> URLSessionDataTask? in
-            isCancelled = true
+        let task = state.withLock { state -> URLSessionDataTask? in
+            state.isCancelled = true
             
-            return self.task
+            return state.task
         }
         
         task?.cancel()
