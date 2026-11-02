@@ -1,13 +1,13 @@
 import Foundation
 
 // Placeholders a property can be set to in order to send JSON `null`. Setting a property to `nil`
-// leaves the member out instead.
+// leaves the member out instead. The dictionaries are constants holding only strings and NSNull.
 let nullString: String = UUID().uuidString
 let nullNumber: NSNumber = NSNumber(value: Double.nan)
-let nullDictionary: [String: Any] = [.null: NSNull()]
+nonisolated(unsafe) let nullDictionary: [String: Any] = [.null: NSNull()]
 let nullStringArray: [String] = [.null]
 let nullNumberArray: [NSNumber] = [.null]
-let nullDictionaryArray: [[String: Any]] = [.null]
+nonisolated(unsafe) let nullDictionaryArray: [[String: Any]] = [.null]
 
 protocol NullableAware {
     var isNull: Bool { get }

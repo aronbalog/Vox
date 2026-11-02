@@ -6,7 +6,7 @@ Pod::Spec.new do |spec|
 	spec.author          = 'Aron Balog'
 	spec.homepage        = 'https://github.com/aronbalog/Vox'
 	spec.source          = { :git => 'https://github.com/aronbalog/Vox.git', :tag => spec.version }
-	spec.swift_versions  = ['5.0']
+	spec.swift_versions  = ['6.0']
 	spec.default_subspec = 'Core'
 
 	spec.ios.deployment_target     = '13.0'

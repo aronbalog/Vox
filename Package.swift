@@ -33,5 +33,5 @@ let package = Package(
             dependencies: ["Vox", "VoxAlamofire", "Alamofire"]
         )
     ],
-    swiftLanguageModes: [.v5]
+    swiftLanguageModes: [.v6]
 )

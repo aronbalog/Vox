@@ -1,9 +1,11 @@
 import Foundation
 
 /// An error object of a JSON:API document.
-final public class ErrorObject {
+///
+/// Error objects are immutable. `meta` holds the JSON values of the document.
+final public class ErrorObject: @unchecked Sendable {
     /// The part of the request document or request that caused the error.
-    final public class Source {
+    final public class Source: Sendable {
         /// A JSON Pointer to the value in the request document that caused the error.
         public let pointer: String?
         /// The URI query parameter that caused the error.
