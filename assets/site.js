@@ -5,6 +5,14 @@
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const escapeHTML = text => text.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // Plays a class's animation again from the start.
+  function restart(element, name) {
+    element.classList.remove(name);
+    void element.offsetWidth;
+    element.classList.add(name);
+  }
 
   // Highlighting
 
@@ -257,6 +265,11 @@
       return { tab, numbers };
     });
 
+    const scan = document.createElement('span');
+    scan.className = 'scan';
+    scan.setAttribute('aria-hidden', 'true');
+    pre.parentElement.append(scan);
+
     const show = tab => {
       const part = parts.find(candidate => candidate.tab === tab);
 
@@ -266,6 +279,7 @@
       const first = lines[Math.min(...part.numbers) - 1];
       const top = first.offsetTop - pre.clientHeight * 0.2;
       pre.scrollTo({ top: Math.max(0, top), behavior: reducedMotion ? 'auto' : 'smooth' });
+      restart(scan, 'run');
     };
 
     list.addEventListener('tabchange', event => show(event.detail));
@@ -318,6 +332,7 @@
     const input = id => $(`#${id}`, root);
     const http = $('#pg-http');
     const swift = $('#pg-swift');
+    let rendered = false;
 
     // The characters `ClientRequest.url(relativeTo:)` leaves unescaped in query components.
     const unescaped = /[A-Za-z0-9!$'()*,\-./:;?@_~]/;
@@ -461,6 +476,12 @@
       for (const group of $$('[data-strategy]', root)) {
         group.hidden = group.dataset.strategy !== strategy;
       }
+
+      if (rendered) {
+        restart(http.closest('.window'), 'ping');
+      }
+
+      rendered = true;
     }
 
     const toggle = (list, value) => (list.includes(value) ? list.filter(item => item !== value) : [...list, value]);
@@ -597,12 +618,417 @@
     }, { passive: true });
   }
 
+  // Effects
+
+  // Types the hero code one line at a time, and then the request it sends.
+  function initTyping() {
+    const codes = $$('.hero pre code');
+
+    if (reducedMotion || !codes.length) {
+      return;
+    }
+
+    let delay = 400;
+
+    codes.forEach((code, index) => {
+      const text = sourceOf.get(code).split('\n');
+      const html = code.innerHTML.split('\n');
+      const last = index === codes.length - 1;
+
+      code.innerHTML = html.map((line, n) => {
+        const caret = last && n === html.length - 1;
+        const length = Math.max(text[n].length, 1) + (caret ? 1 : 0);
+        const span = `<span class="tl" style="--n: ${length}; --d: ${delay}ms">${line || ' '}${caret ? '<span class="caret"></span>' : ''}</span>`;
+        delay += length * 8 + 30;
+        return span;
+      }).join('');
+
+      code.classList.add('typing');
+      delay += 300;
+    });
+  }
+
+  // Decodes the eyebrows from random glyphs when they scroll into view.
+  function initScramble() {
+    if (reducedMotion || !('IntersectionObserver' in window)) {
+      return;
+    }
+
+    const glyphs = '{}[]<>/:=+*#_01ABCDEFXYZ';
+
+    const decode = element => {
+      const text = element.dataset.text;
+      const start = performance.now();
+      const duration = 300 + text.length * 32;
+
+      const step = now => {
+        const progress = (now - start) / duration;
+        element.textContent = Array.from(text, (c, index) => {
+          if (c === ' ' || progress * text.length * 1.4 - index * 1.1 > 0.6) {
+            return c;
+          }
+          return glyphs[Math.floor(Math.random() * glyphs.length)];
+        }).join('');
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          element.textContent = text;
+        }
+      };
+
+      requestAnimationFrame(step);
+    };
+
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          observer.unobserve(entry.target);
+          decode(entry.target);
+        }
+      }
+    }, { threshold: 1 });
+
+    for (const eyebrow of $$('.eyebrow')) {
+      const text = eyebrow.textContent;
+      eyebrow.innerHTML = `<span class="sr-only">${escapeHTML(text)}</span><span aria-hidden="true"></span>`;
+      const visual = eyebrow.lastElementChild;
+      visual.dataset.text = text;
+      visual.textContent = text;
+      observer.observe(visual);
+    }
+  }
+
+  // A graph of drifting nodes behind the hero, with packets that travel along its links.
+  function initNetwork() {
+    const canvas = $('.network');
+
+    if (!canvas || reducedMotion || !canvas.getContext) {
+      return;
+    }
+
+    const context = canvas.getContext('2d');
+    const hero = canvas.parentElement;
+    const colors = ['255, 138, 61', '255, 77, 141', '139, 92, 246', '34, 211, 238'];
+    const reach = 140;
+    let width = 0;
+    let height = 0;
+    let nodes = [];
+    let packets = [];
+    let pointer = null;
+    let visible = false;
+    let frame = 0;
+    let tick = 0;
+
+    const spawn = () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.32,
+      vy: (Math.random() - 0.5) * 0.32,
+      r: 1 + Math.random() * 1.5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+    });
+
+    const resize = () => {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const count = Math.min(90, Math.round((width * height) / 15000));
+      nodes = Array.from({ length: count }, (_, index) => nodes[index] ?? spawn());
+      packets = [];
+
+      for (const node of nodes) {
+        node.x = Math.min(node.x, width);
+        node.y = Math.min(node.y, height);
+      }
+    };
+
+    const draw = () => {
+      tick += 1;
+      context.clearRect(0, 0, width, height);
+
+      for (const node of nodes) {
+        node.x += node.vx;
+        node.y += node.vy;
+
+        if (node.x < 0) node.vx = Math.abs(node.vx);
+        if (node.x > width) node.vx = -Math.abs(node.vx);
+        if (node.y < 0) node.vy = Math.abs(node.vy);
+        if (node.y > height) node.vy = -Math.abs(node.vy);
+
+        if (pointer) {
+          const dx = node.x - pointer.x;
+          const dy = node.y - pointer.y;
+          const distance = Math.hypot(dx, dy);
+
+          if (distance < 120 && distance > 0.1) {
+            node.x += (dx / distance) * (120 - distance) * 0.02;
+            node.y += (dy / distance) * (120 - distance) * 0.02;
+          }
+        }
+      }
+
+      context.lineWidth = 1;
+
+      for (let i = 0; i < nodes.length; i += 1) {
+        for (let j = i + 1; j < nodes.length; j += 1) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const distance = Math.hypot(a.x - b.x, a.y - b.y);
+
+          if (distance < reach) {
+            context.strokeStyle = `rgba(${a.color}, ${(1 - distance / reach) * 0.22})`;
+            context.beginPath();
+            context.moveTo(a.x, a.y);
+            context.lineTo(b.x, b.y);
+            context.stroke();
+          }
+        }
+      }
+
+      if (pointer) {
+        for (const node of nodes) {
+          const distance = Math.hypot(node.x - pointer.x, node.y - pointer.y);
+
+          if (distance < 200) {
+            context.strokeStyle = `rgba(${node.color}, ${(1 - distance / 200) * 0.45})`;
+            context.beginPath();
+            context.moveTo(pointer.x, pointer.y);
+            context.lineTo(node.x, node.y);
+            context.stroke();
+          }
+        }
+      }
+
+      for (const node of nodes) {
+        context.fillStyle = `rgba(${node.color}, 0.75)`;
+        context.beginPath();
+        context.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+        context.fill();
+      }
+
+      if (tick % 18 === 0 && packets.length < 14 && nodes.length > 1) {
+        const from = nodes[Math.floor(Math.random() * nodes.length)];
+        const near = nodes.filter(node => node !== from && Math.hypot(node.x - from.x, node.y - from.y) < reach);
+        const to = near[Math.floor(Math.random() * near.length)];
+
+        if (to) {
+          packets.push({ from, to, t: 0 });
+        }
+      }
+
+      packets = packets.filter(packet => {
+        packet.t += 0.018;
+        const x = packet.from.x + (packet.to.x - packet.from.x) * packet.t;
+        const y = packet.from.y + (packet.to.y - packet.from.y) * packet.t;
+        const glow = context.createRadialGradient(x, y, 0, x, y, 7);
+        glow.addColorStop(0, `rgba(${packet.from.color}, 0.95)`);
+        glow.addColorStop(1, `rgba(${packet.from.color}, 0)`);
+        context.fillStyle = glow;
+        context.beginPath();
+        context.arc(x, y, 7, 0, Math.PI * 2);
+        context.fill();
+        return packet.t < 1;
+      });
+    };
+
+    const loop = () => {
+      draw();
+      frame = requestAnimationFrame(loop);
+    };
+
+    const update = () => {
+      cancelAnimationFrame(frame);
+
+      if (visible && !document.hidden) {
+        frame = requestAnimationFrame(loop);
+      }
+    };
+
+    hero.addEventListener('pointermove', event => {
+      const rect = canvas.getBoundingClientRect();
+      pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    }, { passive: true });
+    hero.addEventListener('pointerleave', () => { pointer = null; });
+
+    new ResizeObserver(resize).observe(canvas);
+    new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      update();
+    }).observe(canvas);
+    document.addEventListener('visibilitychange', update);
+  }
+
+  // A soft light that follows the pointer.
+  function initAura() {
+    const aura = $('.aura');
+
+    if (!aura || reducedMotion || !finePointer) {
+      return;
+    }
+
+    let x = window.innerWidth / 2;
+    let y = window.innerHeight / 3;
+    let targetX = x;
+    let targetY = y;
+    let frame = 0;
+
+    const step = () => {
+      x += (targetX - x) * 0.12;
+      y += (targetY - y) * 0.12;
+      aura.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+      frame = Math.abs(targetX - x) + Math.abs(targetY - y) > 0.5 ? requestAnimationFrame(step) : 0;
+    };
+
+    window.addEventListener('pointermove', event => {
+      targetX = event.clientX;
+      targetY = event.clientY;
+      aura.classList.add('on');
+
+      if (!frame) {
+        frame = requestAnimationFrame(step);
+      }
+    }, { passive: true });
+
+    document.documentElement.addEventListener('pointerleave', () => aura.classList.remove('on'));
+  }
+
+  // Tilts the hero and the cards toward the pointer.
+  function initTilt() {
+    if (reducedMotion || !finePointer) {
+      return;
+    }
+
+    for (const element of $$('.hero-visual, .cards > .card')) {
+      const max = element.classList.contains('card') ? 5 : 6;
+      let rect = null;
+
+      element.classList.add('tilt');
+      element.addEventListener('pointerenter', () => {
+        rect = element.getBoundingClientRect();
+      });
+      element.addEventListener('pointermove', event => {
+        rect ??= element.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        element.style.setProperty('--ry', `${(x * max * 2).toFixed(2)}deg`);
+        element.style.setProperty('--rx', `${(-y * max * 2).toFixed(2)}deg`);
+        element.classList.add('tilting');
+      });
+      element.addEventListener('pointerleave', () => {
+        rect = null;
+        element.style.setProperty('--rx', '0deg');
+        element.style.setProperty('--ry', '0deg');
+        element.classList.remove('tilting');
+      });
+    }
+  }
+
+  // Pulls the call-to-action buttons toward the pointer.
+  function initMagnetic() {
+    if (reducedMotion || !finePointer) {
+      return;
+    }
+
+    for (const button of $$('.cta .btn')) {
+      button.classList.add('magnetic');
+      button.addEventListener('pointermove', event => {
+        const rect = button.getBoundingClientRect();
+        button.style.setProperty('--tx', `${((event.clientX - rect.left - rect.width / 2) * 0.22).toFixed(1)}px`);
+        button.style.setProperty('--ty', `${((event.clientY - rect.top - rect.height / 2) * 0.32).toFixed(1)}px`);
+      });
+      button.addEventListener('pointerleave', () => {
+        button.style.setProperty('--tx', '0px');
+        button.style.setProperty('--ty', '0px');
+      });
+    }
+  }
+
+  function initProgress() {
+    const bar = $('.progress');
+
+    if (!bar) {
+      return;
+    }
+
+    let queued = false;
+
+    const update = () => {
+      queued = false;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.transform = `scaleX(${max > 0 ? Math.min(1, window.scrollY / max).toFixed(4) : 0})`;
+    };
+
+    window.addEventListener('scroll', () => {
+      if (!queued) {
+        queued = true;
+        requestAnimationFrame(update);
+      }
+    }, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+
+  // Runs the looping animations only while their elements are on screen.
+  function initLive() {
+    const items = $$('.glow, .closing, .floor');
+
+    if (!('IntersectionObserver' in window)) {
+      items.forEach(item => item.classList.add('live'));
+      return;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        entry.target.classList.toggle('live', entry.isIntersecting);
+      }
+    });
+
+    items.forEach(item => observer.observe(item));
+  }
+
+  function initTimeline() {
+    const timeline = $('.timeline');
+
+    if (!timeline) {
+      return;
+    }
+
+    $$('.milestone', timeline).forEach((milestone, index) => milestone.style.setProperty('--i', index));
+
+    if (reducedMotion || !('IntersectionObserver' in window)) {
+      timeline.classList.add('drawn');
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        timeline.classList.add('drawn');
+        observer.disconnect();
+      }
+    }, { threshold: 0.4 });
+
+    observer.observe(timeline);
+  }
+
   $$('pre code[class*="lang-"]').filter(code => !code.closest('#explorer-json')).forEach(paint);
   initTabs();
   initExplorer();
   initPlayground();
   addCopyButtons();
+  initTyping();
+  initScramble();
   initReveal();
   initNavigation();
   initSpotlight();
+  initNetwork();
+  initAura();
+  initTilt();
+  initMagnetic();
+  initProgress();
+  initLive();
+  initTimeline();
 })();
