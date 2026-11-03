@@ -6,7 +6,7 @@ Vox 2.0 requires Swift 6.1 and is built around `async`/`await`. Resource definit
 
 - Vox 2.0 requires Swift 6.1, which comes with Xcode 16.3 and later. Vox builds in the Swift 6 language mode, and apps can still use the Swift 5 mode.
 - The minimum deployment target is iOS 13, which was iOS 8. Vox also supports macOS 10.15, tvOS 13, watchOS 6 and Linux.
-- Vox is a Swift package with the product `Vox`. The CocoaPods pod is `Vox`, without subspecs, so Podfiles that use `Vox/Core` or `Vox/Alamofire` depend on `Vox` instead. Vox no longer depends on Alamofire.
+- Vox is a Swift package with the product `Vox`. The CocoaPods pod is `Vox`, without subspecs, so Podfiles that use `Vox/Core` or `Vox/Alamofire` depend on `Vox` instead. Vox no longer depends on Alamofire. Carthage builds Vox too, as `Vox.xcframework`.
 - The sources moved from `Vox/Core` to `Sources/Vox`. Vox no longer contains Objective-C code or an umbrella header.
 
 ## Resources

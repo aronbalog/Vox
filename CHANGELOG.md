@@ -9,6 +9,7 @@ A major release, which requires Swift 6.1. The [migration guide](MIGRATION.md) d
 ### Added
 
 - Swift Package Manager support, with the product `Vox`.
+- Carthage support. Carthage builds the `Vox` framework of `Vox.xcodeproj`, which can be linked into app extensions, as an XCFramework.
 - Support for macOS 10.15, tvOS 13, watchOS 6 and Linux.
 - The Swift 6 language mode, with complete data-race checking. Clients, data sources, requests and documents are `Sendable`.
 - `async` variants of `result()` and `appendNext()`.
@@ -25,7 +26,7 @@ A major release, which requires Swift 6.1. The [migration guide](MIGRATION.md) d
 - `Resource.register()` and the public member subscript, for platforms without the Objective-C runtime. There, creating the first instance of a class also registers it.
 - The `meta` of resources is serialized.
 - `ErrorObject.Source.header`.
-- Continuous integration with GitHub Actions on macOS, Linux, iOS, tvOS and watchOS, CocoaPods linting, and a coverage check on Linux that fails unless the tests cover all of the library code. Pushes to the default branch publish the coverage badge.
+- Continuous integration with GitHub Actions on macOS, Linux, iOS, tvOS and watchOS, CocoaPods linting, a Carthage build, and a coverage check on Linux that fails unless the tests cover all of the library code. Pushes to the default branch publish the coverage badge.
 
 ### Changed
 

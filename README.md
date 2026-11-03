@@ -5,6 +5,7 @@ Vox is a Swift implementation of [JSON:API](https://jsonapi.org) 1.1 for iOS, ma
 [![CI](https://github.com/aronbalog/Vox/actions/workflows/ci.yml/badge.svg)](https://github.com/aronbalog/Vox/actions/workflows/ci.yml)
 [![Coverage](https://aronbalog.github.io/Vox/badges/coverage.svg)](https://github.com/aronbalog/Vox/actions/workflows/ci.yml)
 [![CocoaPods](https://img.shields.io/cocoapods/v/Vox.svg)](https://cocoapods.org/pods/Vox)
+[![Carthage](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg)](https://github.com/Carthage/Carthage)
 [![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20macOS%20%7C%20tvOS%20%7C%20watchOS%20%7C%20Linux-blue.svg)](https://github.com/aronbalog/Vox)
 
 Upgrading from 1.x? Read the [migration guide](MIGRATION.md). Changes are listed in the [changelog](CHANGELOG.md).
@@ -73,6 +74,22 @@ In Xcode, choose File > Add Package Dependencies and enter the URL of the reposi
 ```ruby
 pod 'Vox', '~> 2.0.0'
 ```
+
+### Carthage
+
+Add Vox to your `Cartfile`:
+
+```
+github "aronbalog/Vox" ~> 2.0.0
+```
+
+and build it as an XCFramework, which needs Carthage 0.38 or later:
+
+```sh
+carthage update --use-xcframeworks
+```
+
+Then drag `Carthage/Build/Vox.xcframework` to the Frameworks, Libraries, and Embedded Content section of your target, and choose Embed & Sign. Vox can be linked into app extensions too.
 
 ## Defining resources
 
@@ -594,10 +611,10 @@ Comment.register()
 swift test
 ```
 
-The tests use Swift Testing, and the performance tests use XCTest. Xcode runs them with the `Vox-Package` scheme, which also covers the Apple platforms:
+The tests use Swift Testing, and the performance tests use XCTest. Xcode runs them with the `Vox` scheme, which also covers the Apple platforms:
 
 ```sh
-xcodebuild test -scheme Vox-Package -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodebuild test -scheme Vox -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
 The tests cover all of the library code that's built on Linux, and the Linux job of the [CI workflow](.github/workflows/ci.yml) fails when a change leaves some of it uncovered. Its steps show how to measure the coverage.
